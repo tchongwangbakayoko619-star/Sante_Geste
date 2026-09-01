@@ -60,16 +60,16 @@ dev = [
 
 # ==== djLint ====
 [tool.djlint]
-blank_line_after_tag = "load,extends"
-custom_blocks = "element,slot"
-close_void_tags = true
-format_css = true
-format_js = true
-ignore = "H006,H030,H031"
+profile = "django"
 include = "H017,H035"
 indent = 2
 max_line_length = 119
-profile = "django"
+blank_line_after_tag = "load,extends"
+close_void_tags = true
+format_css = true
+format_js = true
+custom_blocks = "element,slot"
+ignore = "H006,H030,H031"
 css.indent_size = 2
 js.indent_size = 2
 
@@ -80,7 +80,6 @@ extend-exclude = [
   "*/migrations/*.py",
   "staticfiles/*",
 ]
-
 lint.select = [
   "A",
   "ASYNC",
@@ -132,6 +131,7 @@ lint.select = [
   "YTT",
 ]
 lint.ignore = [
+  "COM812", # Missing trailing comma in a tuple/list/argument list
   "RUF012", # Mutable class attributes should be annotated with `typing.ClassVar`
   "S101",   # Use of assert detected https://docs.astral.sh/ruff/rules/assert/
   "SIM102", # sometimes it's better to nest
@@ -144,6 +144,25 @@ lint.isort.force-single-line = true
 # ==== pyproject-fmt ====
 [tool.pyproject-fmt]
 keep_full_version = true
+
+# ==== mypy ====
+[tool.mypy]
+ignore_missing_imports = true
+python_version = "3.14"
+check_untyped_defs = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+plugins = [
+  "mypy_django_plugin.main",
+]
+warn_unused_configs = true
+overrides = [
+  # Django migrations should not produce any errors:
+  { module = "*.migrations.*", ignore_errors = true },
+]
+
+[tool.django-stubs]
+django_settings_module = "config.settings.test"
 
 # ==== pytest ====
 [tool.pytest]
@@ -159,27 +178,7 @@ python_files = [
 ]
 
 # ==== Coverage ====
-[tool.coverage.run]
-include = [ "santegeste/**" ]
-omit = [ "*/migrations/*", "*/tests/*" ]
-plugins = [ "django_coverage_plugin" ]
-
-# ==== mypy ====
-[tool.mypy]
-python_version = "3.14"
-check_untyped_defs = true
-ignore_missing_imports = true
-warn_unused_ignores = true
-warn_redundant_casts = true
-warn_unused_configs = true
-plugins = [
-  "mypy_django_plugin.main",
-]
-
-[[tool.mypy.overrides]]
-# Django migrations should not produce any errors:
-module = "*.migrations.*"
-ignore_errors = true
-
-[tool.django-stubs]
-django_settings_module = "config.settings.test"
+[tool.coverage]
+run.include = [ "santegeste/**" ]
+run.omit = [ "*/migrations/*", "*/tests/*" ]
+run.plugins = [ "django_coverage_plugin" ]

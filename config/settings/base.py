@@ -1,5 +1,6 @@
 # ruff: noqa: ERA001, E501
 """Base settings to build other settings files upon."""
+
 import os
 import ssl
 from pathlib import Path
@@ -63,7 +64,6 @@ else:
 
 DATABASES["default"]["ATOMIC_REQUESTS"] = True
 # https://docs.djangoproject.com/en/stable/ref/settings/#std:setting-DEFAULT_AUTO_FIELD
-DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # URLS
 # ------------------------------------------------------------------------------
@@ -92,7 +92,6 @@ THIRD_PARTY_APPS = [
 ]
 
 LOCAL_APPS = [
-
     # Your stuff: custom apps go here
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
@@ -229,7 +228,10 @@ EMAIL_TIMEOUT = 5
 # Django Admin URL.
 ADMIN_URL = "admin/"
 # https://docs.djangoproject.com/en/dev/ref/settings/#admins
-ADMINS = ['"tchongwang fondjeu nathanael lea" <tchongwang-fondjeu-nathanael-lea@example.com>']
+ADMINS = [
+    '"tchongwang fondjeu nathanael lea" <tchongwang-fondjeu-nathanael-lea@example.com>'
+]
+
 # https://docs.djangoproject.com/en/dev/ref/settings/#managers
 MANAGERS = ADMINS
 
