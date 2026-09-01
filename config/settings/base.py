@@ -10,6 +10,8 @@ import environ
 BASE_DIR = Path(__file__).resolve(strict=True).parent.parent.parent
 # santegeste/
 APPS_DIR = BASE_DIR / "santegeste"
+
+
 env = environ.Env()
 
 READ_DOT_ENV_FILE = env.bool("DJANGO_READ_DOT_ENV_FILE", default=False)
@@ -94,6 +96,7 @@ THIRD_PARTY_APPS = [
 LOCAL_APPS = [
     "core",
     "utils",
+    "apps.users",
     # Your stuff: custom apps go here
 ]
 
@@ -107,10 +110,13 @@ MIGRATION_MODULES = {"sites": "santegeste.contrib.sites.migrations"}
 
 # AUTHENTICATION
 # ------------------------------------------------------------------------------
+# https://docs.djangoproject.com/en/dev/ref/settings/#auth-user-model
+AUTH_USER_MODEL = "users.User"
 # https://docs.djangoproject.com/en/dev/ref/settings/#authentication-backends
 AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
 ]
+
 
 # PASSWORDS
 # ------------------------------------------------------------------------------

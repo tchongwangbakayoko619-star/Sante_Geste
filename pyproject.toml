@@ -26,8 +26,10 @@ dependencies = [
   "flower==2.1.0",
   "gunicorn==26.1.0",
   "hiredis==3.4.1",
+  "phonenumbers==8.13.55",
   "pillow==12.3.0",
   "psycopg[c]==3.3.4",
+
   "python-slugify==8.0.4",
   "redis==8.1.0",
   "sentry-sdk==2.68.0",
@@ -164,17 +166,20 @@ overrides = [
 [tool.django-stubs]
 django_settings_module = "config.settings.test"
 
-# ==== pytest ====
 [tool.pytest]
-addopts = [
+ini_options.minversion = "9.0"
+ini_options.testpaths = [
+  "apps",
+  "tests",
+]
+ini_options.python_files = [
+  "test_*.py",
+  "tests.py",
+]
+ini_options.addopts = [
   "--ds=config.settings.test",
   "--reuse-db",
   "--import-mode=importlib",
-]
-minversion = "9.0"
-python_files = [
-  "tests.py",
-  "test_*.py",
 ]
 
 # ==== Coverage ====
