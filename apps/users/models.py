@@ -175,13 +175,14 @@ class MedicalProfile(BaseModel):
         """Validation défensive inter-modèle : garantit que l'utilisateur est bien du personnel médical."""
         super().clean()
         if self.user_id and not self.user.is_personnel_medical:
-            msg = _("Un profil médical ne peut être rattaché qu'à un utilisateur ayant le rôle personnel médical.")
-            raise ValidationError(msg)
+            raise ValidationError(
+                {
+                    "user": _(
+                        "Un profil médical ne peut être rattaché qu'à un utilisateur ayant le rôle personnel médical."
+                    )
+                }
+            )
 
-    def save(self, *args: Any, **kwargs: Any) -> None:
-        """Exécute automatiquement la validation défensive avant la sauvegarde."""
-        self.full_clean()
-        super().save(*args, **kwargs)
 
 
 class OTP(BaseModel):
