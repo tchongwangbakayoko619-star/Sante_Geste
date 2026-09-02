@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import secrets
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from django.conf import settings
 from django.contrib.auth.hashers import check_password
@@ -13,6 +13,9 @@ from django.core.signing import BadSignature
 from django.core.signing import SignatureExpired
 from django.core.signing import TimestampSigner
 from django.utils.translation import gettext_lazy as _
+
+if TYPE_CHECKING:
+    from uuid import UUID
 
 _TOKEN_SEP = ":"  # noqa: S105
 
@@ -44,7 +47,7 @@ def verify_otp_code(code: str, hashed: str) -> bool:
     return check_password(code, hashed)
 
 
-def create_otp_token(otp_id: str, user_id: str, purpose: str) -> str:
+def create_otp_token(otp_id: str | UUID, user_id: str | UUID, purpose: str) -> str:
     """Crée un jeton horodaté et signé cryptographiquement pour l'OTP."""
     payload = _TOKEN_SEP.join([str(otp_id), str(user_id), purpose])
     signer = TimestampSigner(salt=f"otp-token-{purpose}")
@@ -67,7 +70,7 @@ def validate_otp_token(signed_token: str, purpose: str) -> dict[str, str]:
 
     parts = payload.split(_TOKEN_SEP)
     if len(parts) != 3:  # noqa: PLR2004
-        msg = _("Le lien de vérification est invalide.")
+        msg = _("Le lien de vérification me invalide.")
         raise OtpTokenError(msg)
 
     otp_id, user_id, embedded_purpose = parts
@@ -78,12 +81,12 @@ def validate_otp_token(signed_token: str, purpose: str) -> dict[str, str]:
     return {"otp_id": otp_id, "user_id": user_id, "purpose": purpose}
 
 
-def _cooldown_key(user_id: str, purpose: str) -> str:
+def _cooldown_key(user_id: str | UUID, purpose: str) -> str:
     """Génère la clé de cache pour le cooldown des demandes d'OTP."""
-    return f"otp_cooldown:{purpose}:{user_id}"
+    return f"otp_cooldown:{purpose}:{str(user_id)}"
 
 
-def check_cooldown(user_id: str, purpose: str) -> tuple[bool, int]:
+def check_cooldown(user_id: str | UUID, purpose: str) -> tuple[bool, int]:
     """Vérifie si un délai d'attente (cooldown) est actif pour cet utilisateur et cet objectif."""
     key = _cooldown_key(user_id, purpose)
     remaining: Any = cache.ttl(key) if hasattr(cache, "ttl") else None
@@ -94,7 +97,7 @@ def check_cooldown(user_id: str, purpose: str) -> tuple[bool, int]:
     return False, 0
 
 
-def set_cooldown(user_id: str, purpose: str) -> None:
+def set_cooldown(user_id: str | UUID, purpose: str) -> None:
     """Définit un délai d'attente (cooldown) dans le cache pour cet utilisateur et cet objectif."""
     timeout = int(getattr(settings, "OTP_REQUEST_COOLDOWN_SECONDS", 60))
     cache.set(_cooldown_key(user_id, purpose), value=True, timeout=timeout)
