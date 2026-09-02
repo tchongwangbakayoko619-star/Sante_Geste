@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from django.conf import settings
 from django.contrib.auth.models import AbstractBaseUser
 from django.contrib.auth.models import PermissionsMixin
@@ -18,11 +16,9 @@ from utils.constants.otp import OTP_MAX_ATTEMPTS
 from utils.enums import OTPPurposeEnum
 from utils.phone import validate_phone_number
 
-if TYPE_CHECKING:
-    from django.db.models import QuerySet
-
 
 class User(AbstractBaseUser, PermissionsMixin, BaseModel):
+
     """Modèle Utilisateur personnalisé avec authentification par email et rôles applicatifs."""
 
     # -------------------------------------------------------------------------
