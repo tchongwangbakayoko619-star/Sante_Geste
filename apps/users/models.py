@@ -178,6 +178,11 @@ class MedicalProfile(BaseModel):
             msg = _("Un profil médical ne peut être rattaché qu'à un utilisateur ayant le rôle personnel médical.")
             raise ValidationError(msg)
 
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        """Exécute automatiquement la validation défensive avant la sauvegarde."""
+        self.full_clean()
+        super().save(*args, **kwargs)
+
 
 class OTP(BaseModel):
     """Code temporaire à usage unique pour les opérations d’authentification."""
