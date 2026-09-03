@@ -70,7 +70,7 @@ def validate_otp_token(signed_token: str, purpose: str) -> dict[str, str]:
 
     parts = payload.split(_TOKEN_SEP)
     if len(parts) != 3:  # noqa: PLR2004
-        msg = _("Le lien de vérification me invalide.")
+        msg = _("Le lien de vérification est invalide.")
         raise OtpTokenError(msg)
 
     otp_id, user_id, embedded_purpose = parts
@@ -79,6 +79,29 @@ def validate_otp_token(signed_token: str, purpose: str) -> dict[str, str]:
         raise OtpTokenError(msg)
 
     return {"otp_id": otp_id, "user_id": user_id, "purpose": purpose}
+
+
+def verify_otp_with_lock(otp_id: str | UUID, raw_code: str) -> bool:
+    """Vérifie un code OTP de manière atomique avec verrouillage pessimiste anti-concurrence."""
+    from django.db import transaction
+    from apps.users.models import OTP
+
+    with transaction.atomic():
+        try:
+            otp = OTP.objects.select_for_update().get(id=otp_id)
+        except OTP.DoesNotExist:
+            return False
+
+        if not otp.is_valid():
+            return False
+
+        if not otp.verify_code(raw_code):
+            otp.increment_attempts()
+            return False
+
+        otp.mark_as_used()
+        return True
+
 
 
 def _cooldown_key(user_id: str | UUID, purpose: str) -> str:
