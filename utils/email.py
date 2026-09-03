@@ -69,6 +69,37 @@ def send_transactional_email(
         raise
 
 
+def get_base_url() -> str:
+    """Détermine l'URL de base absolue de l'application de manière ultra-robuste.
+
+    Priorités :
+    1. settings.BASE_URL ou settings.DOMAIN_NAME si configuré.
+    2. Framework Django Sites (Site.objects.get_current()).
+    3. Fallback sécurisé selon settings.DEBUG (http://localhost:8000 vs https://santegeste.com).
+    """
+    custom_domain = getattr(settings, "DOMAIN_NAME", None) or getattr(settings, "BASE_URL", None)
+    if custom_domain:
+        if custom_domain.startswith(("http://", "https://")):
+            return custom_domain.rstrip("/")
+        scheme = "http" if settings.DEBUG else "https"
+        return f"{scheme}://{custom_domain.rstrip('/')}"
+
+    try:
+        from django.contrib.sites.models import Site
+
+        current_site = Site.objects.get_current()
+        domain = current_site.domain
+        if domain and domain != "example.com":
+            scheme = "http" if settings.DEBUG else "https"
+            return f"{scheme}://{domain}"
+    except Exception:
+        pass
+
+    scheme = "http" if settings.DEBUG else "https"
+    default_host = "localhost:8000" if settings.DEBUG else "santegeste.com"
+    return f"{scheme}://{default_host}"
+
+
 def send_otp_email_helper(
     recipient_email: str,
     user_name: str,
@@ -99,15 +130,7 @@ def send_otp_email_helper(
 
     from django.urls import reverse
 
-    try:
-        from django.contrib.sites.models import Site
-
-        current_site = Site.objects.get_current()
-        domain = current_site.domain if current_site.domain != "example.com" else "localhost:8000"
-        scheme = "https" if not settings.DEBUG else "http"
-        base_url = f"{scheme}://{domain}"
-    except Exception:
-        base_url = "http://localhost:8000"
+    base_url = get_base_url()
 
     if target_purpose in (OTPPurposeEnum.PASSWORD_RESET, "password_reset", "réinitialisation"):
         action_path = reverse("users:password-reset-verify-otp")
@@ -117,6 +140,7 @@ def send_otp_email_helper(
     action_url = f"{base_url}{action_path}"
     if token:
         action_url = f"{action_url}?token={token}"
+
 
 
     message_text = str(

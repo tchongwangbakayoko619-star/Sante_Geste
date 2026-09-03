@@ -3,11 +3,24 @@
 from django.core import mail
 
 from utils.email import (
+    get_base_url,
     send_otp_email_helper,
     send_security_alert_email_helper,
     send_transactional_email,
     send_welcome_email_helper,
 )
+
+
+def test_get_base_url_resolution(settings) -> None:
+    """Vérifie la résolution robuste de l'URL de base avec fallbacks et variables de configuration."""
+    settings.DOMAIN_NAME = "app.santegeste.com"
+    settings.DEBUG = False
+    assert get_base_url() == "https://app.santegeste.com"
+
+    settings.DOMAIN_NAME = None
+    settings.DEBUG = True
+    assert "http://" in get_base_url()
+
 
 
 def test_send_transactional_email_plain_text() -> None:
