@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% translate "Connexion" %} - SantéGeste{% endblock title %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+      <div class="card shadow-sm border-0 rounded-3">
+        <div class="card-body p-4">
+          <h2 class="card-title text-center mb-4">{% translate "Connexion" %}</h2>
+          <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="btn btn-primary w-100 py-2">{% translate "Se connecter" %}</button>
+          </form>
+          <div class="text-center mt-3">
+            <a href="{% url 'users:forgot-password' %}">{% translate "Mot de passe oublié ?" %}</a>
+          </div>
+          <hr />
+          <div class="text-center">
+            <p class="mb-0">{% translate "Pas encore de compte ?" %} <a href="{% url 'users:register' %}">{% translate "S'inscrire" %}</a></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %}

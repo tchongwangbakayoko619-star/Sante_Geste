@@ -27,6 +27,27 @@ def test_user_creation_and_properties() -> None:
     assert "personnel_medical" in user.active_roles
 
 
+def test_user_manager_custom_methods() -> None:
+    """Teste les méthodes personnalisées du UserManager (get_by_email, active, verified, personnel_medical)."""
+    user = User.objects.create_user(
+        email="ManagerTest@SanteGeste.com",
+        password="Password123!",
+        is_active=True,
+        is_verified=True,
+        is_personnel_medical=True,
+    )
+
+    found = User.objects.get_by_email("managertest@santegeste.com")
+    assert found == user
+
+    assert user in User.objects.active()
+    assert user in User.objects.verified()
+    assert user in User.objects.personnel_medical()
+    assert user in User.objects.with_medical_profile()
+
+
+
+
 def test_medical_profile_defensive_validation() -> None:
     """Teste la validation défensive de MedicalProfile (User.is_personnel_medical=True)."""
     user_doctor = User.objects.create_user(

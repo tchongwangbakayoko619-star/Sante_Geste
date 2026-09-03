@@ -58,15 +58,43 @@
             </button>
             <a class="navbar-brand" href="{% url 'home' %}">SanteGeste</a>
             <div class="collapse navbar-collapse" id="navbarSupportedContent">
-              <ul class="navbar-nav mr-auto">
-                <li class="nav-item active">
-                  <a class="nav-link" href="{% url 'home' %}">Home <span class="visually-hidden">(current)</span></a>
+              <ul class="navbar-nav me-auto mb-2 mb-md-0">
+                <li class="nav-item">
+                  <a class="nav-link" href="{% url 'home' %}">{% translate "Accueil" %}</a>
                 </li>
                 <li class="nav-item">
-                  <a class="nav-link" href="{% url 'about' %}">About</a>
+                  <a class="nav-link" href="{% url 'about' %}">{% translate "À propos" %}</a>
                 </li>
               </ul>
+              <ul class="navbar-nav ms-auto align-items-center">
+                {% if request.user.is_authenticated %}
+                  <li class="nav-item me-3">
+                    <a class="nav-link fw-semibold d-flex align-items-center" href="{% url 'users:profile' %}">
+                      {% if request.user.avatar %}
+                        <img src="{{ request.user.avatar.url }}" alt="{{ request.user.full_name }}" class="rounded-circle me-2" style="width:32px; height:32px; object-fit:cover;">
+                      {% endif %}
+                      <span>{{ request.user.full_name|default:request.user.email }}</span>
+                    </a>
+                  </li>
+                  <li class="nav-item">
+                    <form method="post" action="{% url 'users:logout' %}" class="d-inline">
+                      {% csrf_token %}
+                      <button type="submit" class="btn btn-outline-danger btn-sm">
+                        {% translate "Déconnexion" %}
+                      </button>
+                    </form>
+                  </li>
+                {% else %}
+                  <li class="nav-item me-2">
+                    <a class="btn btn-outline-primary btn-sm" href="{% url 'users:login' %}">{% translate "Connexion" %}</a>
+                  </li>
+                  <li class="nav-item">
+                    <a class="btn btn-primary btn-sm" href="{% url 'users:register' %}">{% translate "Inscription" %}</a>
+                  </li>
+                {% endif %}
+              </ul>
             </div>
+
           </div>
         </nav>
       </div>
@@ -101,7 +129,8 @@ with a "defer" so that you run inline code:
     /* Run whatever you want */
   });
 </script>
-{% comment %}
+{% endcomment %}
 {% endblock inline_javascript %}
+
 </body>
 </html>

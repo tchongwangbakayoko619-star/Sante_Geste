@@ -1,5 +1,6 @@
 """Constants related to OTP (One-Time Password) generation and validation."""
 
-OTP_VALIDITY_MINUTES = 5
+OTP_CODE_LENGTH = 6
+OTP_VALIDITY_MINUTES = 10
 OTP_RESEND_COOLDOWN_SECONDS = 60
 OTP_MAX_ATTEMPTS = 5

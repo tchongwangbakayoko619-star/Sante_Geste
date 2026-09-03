@@ -1,0 +1,15 @@
+{% extends "emails/base_email.html" %}
+
+{% block title %}Bienvenue sur SantéGeste{% endblock %}
+
+{% block content %}
+<h2>Bienvenue sur SantéGeste !</h2>
+<p>Bonjour <strong>{{ user_name }}</strong>,</p>
+<p>Votre compte a été vérifié et activé avec succès. Vous pouvez dès à présent accéder à votre espace personnel et utiliser nos services de gestion de santé.</p>
+
+<div style="text-align: center;">
+  <a href="{{ login_url }}" class="btn-action">Accéder à mon espace</a>
+</div>
+
+<p>À très bientôt sur SantéGeste !</p>
+{% endblock %}

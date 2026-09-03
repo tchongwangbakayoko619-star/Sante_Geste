@@ -92,3 +92,27 @@ class UserManager(BaseUserManager):
             password,
             **extra_fields,
         )
+
+    def get_by_email(self, email: str) -> User | None:
+        """Récupère un utilisateur de manière insensible à la casse par son e-mail."""
+        if not email:
+            return None
+        return self.filter(email__iexact=email.strip().lower()).first()
+
+    def active(self):
+        """Retourne le QuerySet des utilisateurs actifs."""
+        return self.filter(is_active=True)
+
+    def verified(self):
+        """Retourne le QuerySet des utilisateurs vérifiés."""
+        return self.filter(is_verified=True)
+
+    def personnel_medical(self):
+        """Retourne le QuerySet du personnel médical."""
+        return self.filter(is_personnel_medical=True)
+
+    def with_medical_profile(self):
+        """Jointure automatique avec le profil médical pour éviter les requêtes N+1."""
+        return self.select_related("medical_profile")
+
+

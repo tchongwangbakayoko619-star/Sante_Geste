@@ -17,7 +17,15 @@ env = environ.Env()
 READ_DOT_ENV_FILE = env.bool("DJANGO_READ_DOT_ENV_FILE", default=False)
 if READ_DOT_ENV_FILE:
     # OS environment variables take precedence over variables from .env
-    env.read_env(str(BASE_DIR / ".env"))
+    for env_file in [
+        BASE_DIR / ".envs/.local/.django",
+        BASE_DIR / ".envs/.local/.postgres",
+        BASE_DIR / ".env",
+    ]:
+        if env_file.exists():
+            env.read_env(str(env_file), overwrite=True)
+
+
 
 # GENERAL
 # ------------------------------------------------------------------------------
@@ -53,16 +61,23 @@ LOCALE_PATHS = [str(BASE_DIR / "locale")]
 if os.getenv("DATABASE_URL", default=None):
     DATABASES = {"default": env.db("DATABASE_URL")}
 else:
+    postgres_host_default = "postgres" if env.bool("USE_DOCKER", default=False) else "localhost"
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql",
             "NAME": env.str("POSTGRES_DB", default="santegeste"),
             "USER": env.str("POSTGRES_USER", default="postgres"),
             "PASSWORD": env.str("POSTGRES_PASSWORD", default="postgres"),
-            "HOST": env.str("POSTGRES_HOST", default="postgres"),
+            "HOST": env.str("POSTGRES_HOST", default=postgres_host_default),
             "PORT": env.str("POSTGRES_PORT", default="5432"),
         },
     }
+
+# Durée de validité officielle des codes et jetons OTP en minutes
+OTP_VALID_MINUTES = env.int("OTP_VALID_MINUTES", default=10)
+
+
+
 
 DATABASES["default"]["ATOMIC_REQUESTS"] = True
 # https://docs.djangoproject.com/en/stable/ref/settings/#std:setting-DEFAULT_AUTO_FIELD
@@ -173,6 +188,28 @@ STATICFILES_FINDERS = [
 MEDIA_ROOT = str(APPS_DIR / "media")
 # https://docs.djangoproject.com/en/dev/ref/settings/#media-url
 MEDIA_URL = "/media/"
+
+# AUTHENTICATION SETTINGS
+# ------------------------------------------------------------------------------
+LOGIN_URL = "users:login"
+LOGIN_REDIRECT_URL = "home"
+LOGOUT_REDIRECT_URL = "home"
+
+# EMAIL
+# ------------------------------------------------------------------------------
+DEFAULT_FROM_EMAIL = env(
+    "DJANGO_DEFAULT_FROM_EMAIL",
+    default="SantéGeste <noreply@santegeste.com>",
+)
+
+
+
+# UPLOAD LIMITS
+# ------------------------------------------------------------------------------
+MAX_UPLOAD_SIZE_MB = env.int("MAX_UPLOAD_SIZE_MB", default=5)
+DATA_UPLOAD_MAX_MEMORY_SIZE = MAX_UPLOAD_SIZE_MB * 1024 * 1024  # 5 MB
+FILE_UPLOAD_MAX_MEMORY_SIZE = MAX_UPLOAD_SIZE_MB * 1024 * 1024  # 5 MB
+
 
 # TEMPLATES
 # ------------------------------------------------------------------------------

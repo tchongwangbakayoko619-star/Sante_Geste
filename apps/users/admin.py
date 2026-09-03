@@ -3,6 +3,8 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
+from apps.users.forms import UserAdminChangeForm
+from apps.users.forms import UserAdminCreationForm
 from apps.users.models import MedicalProfile
 from apps.users.models import User
 
@@ -20,6 +22,8 @@ class MedicalProfileInline(admin.StackedInline):
 class UserAdmin(BaseUserAdmin):
     """Admin configuration for User model."""
 
+    add_form = UserAdminCreationForm
+    form = UserAdminChangeForm
     inlines = [MedicalProfileInline]
     list_display = (
         "email",
@@ -30,6 +34,7 @@ class UserAdmin(BaseUserAdmin):
     )
     search_fields = ("email", "first_name", "last_name")
     ordering = ("email",)
+
 
 
 
