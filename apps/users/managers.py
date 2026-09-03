@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Any
 
 from django.contrib.auth.base_user import BaseUserManager
 from django.contrib.auth.password_validation import validate_password
+from django.db import transaction
 from django.utils.translation import gettext_lazy as _
 
 if TYPE_CHECKING:
@@ -30,21 +31,23 @@ class UserManager(BaseUserManager):
 
         email = self.normalize_email(email)
 
-        user = self.model(
-            email=email,
-            **extra_fields,
-        )
+        with transaction.atomic(using=self._db):
+            user = self.model(
+                email=email,
+                **extra_fields,
+            )
 
-        if password is not None:
-            validate_password(password, user=user)
-            user.set_password(password)
-        else:
-            user.set_unusable_password()
+            if password is not None:
+                validate_password(password, user=user)
+                user.set_password(password)
+            else:
+                user.set_unusable_password()
 
-        user.full_clean(exclude=["password"])
-        user.save(using=self._db)
+            user.full_clean(exclude=["password"])
+            user.save(using=self._db)
 
-        return user
+            return user
+
 
     def create_user(
         self,

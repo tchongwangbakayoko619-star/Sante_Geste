@@ -22,15 +22,15 @@ class UserAdmin(BaseUserAdmin):
 
     inlines = [MedicalProfileInline]
     list_display = (
-        "username",
         "email",
         "first_name",
         "last_name",
         "is_staff",
         "is_personnel_medical",
     )
-    search_fields = ("username", "email", "first_name", "last_name")
-    ordering = ("username",)
+    search_fields = ("email", "first_name", "last_name")
+    ordering = ("email",)
+
 
 
 @admin.register(MedicalProfile)
@@ -38,4 +38,5 @@ class MedicalProfileAdmin(admin.ModelAdmin):
     """Admin configuration for MedicalProfile model."""
 
     list_display = ("user", "specialite", "numero_ordre")
-    search_fields = ("user__email", "user__username", "specialite", "numero_ordre")
+    search_fields = ("user__email", "specialite", "numero_ordre")
+

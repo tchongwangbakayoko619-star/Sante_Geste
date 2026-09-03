@@ -2,26 +2,38 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from django.db import models
 from django.utils import timezone
+
 
 
 class SoftDeleteQuerySet(models.QuerySet):
     """QuerySet fournissant les opérations de suppression logique (soft delete)."""
 
-    def delete(self) -> int:
-        """Effectue une suppression logique en masse sur le QuerySet."""
-        return self.update(
-            is_deleted=True,
-            deleted_at=timezone.now(),
-        )
+    def delete(self, user: Any | None = None) -> int:
+        """Effectue une suppression logique en masse sur le QuerySet avec traçabilité d'auteur."""
+        update_kwargs: dict[str, Any] = {
+            "is_deleted": True,
+            "deleted_at": timezone.now(),
+        }
+        if user is not None:
+            update_kwargs["updated_by"] = user
 
-    def restore(self) -> int:
+        return self.update(**update_kwargs)
+
+    def restore(self, user: Any | None = None) -> int:
         """Restaure tous les enregistrements supprimés logiquement dans le QuerySet."""
-        return self.update(
-            is_deleted=False,
-            deleted_at=None,
-        )
+        update_kwargs: dict[str, Any] = {
+            "is_deleted": False,
+            "deleted_at": None,
+        }
+        if user is not None:
+            update_kwargs["updated_by"] = user
+
+        return self.update(**update_kwargs)
+
 
     def hard_delete(self) -> tuple[int, dict[str, int]]:
         """Supprime définitivement de la base de données tous les enregistrements du QuerySet."""
