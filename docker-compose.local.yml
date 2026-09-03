@@ -44,6 +44,8 @@ services:
     container_name: santegeste_local_mailpit
     ports:
       - "8025:8025"
+      - "1025:1025"
+
 
   redis:
     image: docker.io/redis:7.2

@@ -24,6 +24,7 @@ def _update_or_create_site_with_sequence(site_model, connection, domain, name):
         # To avoid this, we need to manually update DB sequence and make sure it's
         # greater than the maximum value.
         if connection.vendor == "postgresql":
+            max_id = settings.SITE_ID
             with connection.cursor() as cursor:
                 cursor.execute("SELECT last_value from django_site_id_seq")
                 (current_id,) = cursor.fetchone()
@@ -32,6 +33,7 @@ def _update_or_create_site_with_sequence(site_model, connection, domain, name):
                         "alter sequence django_site_id_seq restart with %s",
                         [max_id + 1],
                     )
+
 
 
 def update_site_forward(apps, schema_editor):

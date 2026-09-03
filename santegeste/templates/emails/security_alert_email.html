@@ -1,0 +1,17 @@
+{% extends "emails/base_email.html" %}
+
+{% block title %}Alerte de sécurité - SantéGeste{% endblock %}
+
+{% block content %}
+<h2>Alerte de sécurité</h2>
+<p>Bonjour <strong>{{ user_name }}</strong>,</p>
+<p>Nous vous informons qu'une opération sensible a été effectuée sur votre compte SantéGeste :</p>
+
+<p style="padding: 12px; background-color: #f8f9fa; border-left: 4px solid #0d6efd;">
+  <strong>Opération :</strong> {{ action_label }}
+</p>
+
+<div class="alert-warning">
+  <p style="margin:0;"><strong>Attention :</strong> Si vous n'avez pas effectué cette action, veuillez modifier immédiatement votre mot de passe et contacter le support.</p>
+</div>
+{% endblock %}

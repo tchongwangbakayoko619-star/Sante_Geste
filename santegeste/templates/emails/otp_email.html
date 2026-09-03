@@ -1,0 +1,32 @@
+{% extends "emails/base_email.html" %}
+
+{% block title %}{{ purpose_title|default:"Code de vérification" }} - SantéGeste{% endblock %}
+
+{% block content %}
+<h2>{{ purpose_title|default:"Code de vérification" }}</h2>
+<p>Bonjour <strong>{{ user_name }}</strong>,</p>
+<p>Vous avez demandé un code pour la {{ purpose_label|default:"vérification de votre compte" }} SantéGeste. Saisissez le code ci-dessous pour valider l'opération :</p>
+
+
+<div style="text-align: center; margin: 20px 0;">
+  <div class="otp-code">{{ raw_code }}</div>
+</div>
+
+{% if action_url %}
+<div style="text-align: center; margin: 25px 0;">
+  <a href="{{ action_url }}" class="btn" style="background-color: #0d6efd; color: #ffffff; padding: 12px 28px; text-decoration: none; border-radius: 6px; font-weight: 600; display: inline-block; font-size: 16px;">
+    {% if purpose_title %}{{ purpose_title }}{% else %}Accéder à la vérification{% endif %}
+  </a>
+</div>
+<p style="text-align: center; font-size: 13px; color: #6c757d; margin-top: 10px;">
+  Ou copiez directement ce lien dans votre navigateur : <br>
+  <a href="{{ action_url }}" style="color: #0d6efd; word-break: break-all;">{{ action_url }}</a>
+</p>
+{% endif %}
+
+<p>Ce code est à usage unique et expire dans <strong>10 minutes</strong>.</p>
+
+<div class="alert-warning">
+  <p style="margin:0;"><strong>Sécurité :</strong> Si vous n'êtes pas à l'origine de cette demande, veuillez ignorer cet e-mail. Ne partagez ce code avec personne.</p>
+</div>
+{% endblock %}

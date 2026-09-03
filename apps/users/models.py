@@ -15,6 +15,7 @@ from core.models import BaseModel
 from utils.constants.otp import OTP_MAX_ATTEMPTS
 from utils.enums import OTPPurposeEnum
 from utils.phone import validate_phone_number
+from utils.validators import validate_image_file_size
 
 
 class User(AbstractBaseUser, PermissionsMixin, BaseModel):
@@ -51,6 +52,15 @@ class User(AbstractBaseUser, PermissionsMixin, BaseModel):
         validators=[validate_phone_number],
         verbose_name=_("Téléphone"),
     )
+    avatar = models.ImageField(
+        upload_to="avatars/",
+        blank=True,
+        null=True,
+        validators=[validate_image_file_size],
+        verbose_name=_("Photo de profil"),
+    )
+
+
 
     # -------------------------------------------------------------------------
     # État du compte et sécurité
