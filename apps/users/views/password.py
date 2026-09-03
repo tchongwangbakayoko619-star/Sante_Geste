@@ -26,6 +26,8 @@ from apps.users.services import (
     request_password_reset,
     verify_password_reset_otp,
 )
+from utils.otp import OtpTokenError, OtpTokenExpiredError
+
 
 
 class ForgotPasswordView(AnonymousRequiredMixin, FormView):

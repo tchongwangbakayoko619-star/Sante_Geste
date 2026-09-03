@@ -141,7 +141,7 @@ def send_otp_email_helper(
     if token:
         action_url = f"{action_url}?token={token}"
 
-
+    validity_minutes = int(getattr(settings, "OTP_VALID_MINUTES", 10))
 
     message_text = str(
         _(
@@ -149,7 +149,7 @@ def send_otp_email_helper(
             "Vous avez demandé un code pour la %(purpose)s de votre compte SantéGeste.\n"
             "Voici votre code de sécurité : %(code)s.\n"
             "Accédez directement à la page de vérification : %(url)s\n"
-            "Ce code expire dans 10 minutes.\n\n"
+            "Ce code expire dans %(minutes)d minutes.\n\n"
             "Si vous n'êtes pas à l'origine de cette demande, veuillez ignorer ce message.\n\n"
             "L'équipe SantéGeste."
         )
@@ -158,6 +158,7 @@ def send_otp_email_helper(
             "purpose": p_label,
             "code": raw_code,
             "url": action_url,
+            "minutes": validity_minutes,
         }
     )
     context = {
@@ -166,7 +167,9 @@ def send_otp_email_helper(
         "purpose_label": p_label,
         "purpose_title": p_title,
         "action_url": action_url,
+        "validity_minutes": validity_minutes,
     }
+
     return send_transactional_email(
         subject=subject,
         recipient_list=[recipient_email],

@@ -13,12 +13,15 @@ from apps.users.models import OTP, MedicalProfile
 from utils.constants.otp import OTP_VALIDITY_MINUTES
 from utils.enums import OTPPurposeEnum
 from utils.otp import (
+    OtpTokenError,
+    OtpTokenExpiredError,
     check_cooldown,
     create_otp_token,
     generate_otp_code,
     hash_otp_code,
     set_cooldown,
 )
+
 
 User = get_user_model()
 
@@ -150,5 +153,4 @@ def confirm_registration_otp(
         return True, user
 
     return False, None
-
 

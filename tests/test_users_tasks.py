@@ -28,7 +28,7 @@ def test_send_otp_email_task_success() -> None:
         first_name="Paul",
     )
 
-    result = send_otp_email_task(str(user.id), "123456", OTPPurposeEnum.REGISTRATION)
+    result = send_otp_email_task.apply(args=[str(user.id), "123456", OTPPurposeEnum.REGISTRATION]).get()
     assert result is True
     assert len(mail.outbox) == 1
     assert "123456" in mail.outbox[0].subject
@@ -43,7 +43,7 @@ def test_send_welcome_email_task_success() -> None:
         password="ValidPassword123!",
     )
 
-    result = send_welcome_email_task(str(user.id))
+    result = send_welcome_email_task.apply(args=[str(user.id)]).get()
     assert result is True
     assert len(mail.outbox) == 1
     assert "Bienvenue" in mail.outbox[0].subject
@@ -57,7 +57,7 @@ def test_send_password_changed_notification_task_success() -> None:
         password="ValidPassword123!",
     )
 
-    result = send_password_changed_notification_task(str(user.id))
+    result = send_password_changed_notification_task.apply(args=[str(user.id)]).get()
     assert result is True
     assert len(mail.outbox) == 1
     assert "Alerte de sécurité" in mail.outbox[0].subject
@@ -96,7 +96,9 @@ def test_cleanup_expired_otps_task() -> None:
         is_used=True,
     )
 
-
-    deleted_count = cleanup_expired_otps_task()
+    deleted_count = cleanup_expired_otps_task.apply().get()
     assert deleted_count == 2
     assert OTP.objects.filter(user=user).count() == 1
+
+
+

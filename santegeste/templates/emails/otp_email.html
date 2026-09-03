@@ -24,7 +24,8 @@
 </p>
 {% endif %}
 
-<p>Ce code est à usage unique et expire dans <strong>10 minutes</strong>.</p>
+<p>Ce code est à usage unique et expire dans <strong>{{ validity_minutes|default:10 }} minutes</strong>.</p>
+
 
 <div class="alert-warning">
   <p style="margin:0;"><strong>Sécurité :</strong> Si vous n'êtes pas à l'origine de cette demande, veuillez ignorer cet e-mail. Ne partagez ce code avec personne.</p>

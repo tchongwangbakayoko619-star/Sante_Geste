@@ -14,7 +14,7 @@ APPS_DIR = BASE_DIR / "santegeste"
 
 env = environ.Env()
 
-READ_DOT_ENV_FILE = env.bool("DJANGO_READ_DOT_ENV_FILE", default=True)
+READ_DOT_ENV_FILE = env.bool("DJANGO_READ_DOT_ENV_FILE", default=False)
 if READ_DOT_ENV_FILE:
     # OS environment variables take precedence over variables from .env
     for env_file in [
@@ -66,12 +66,16 @@ else:
         "default": {
             "ENGINE": "django.db.backends.postgresql",
             "NAME": env.str("POSTGRES_DB", default="santegeste"),
-            "USER": env.str("POSTGRES_USER", default="debug"),
-            "PASSWORD": env.str("POSTGRES_PASSWORD", default="debug"),
+            "USER": env.str("POSTGRES_USER", default="postgres"),
+            "PASSWORD": env.str("POSTGRES_PASSWORD", default="postgres"),
             "HOST": env.str("POSTGRES_HOST", default=postgres_host_default),
             "PORT": env.str("POSTGRES_PORT", default="5432"),
         },
     }
+
+# Durée de validité officielle des codes et jetons OTP en minutes
+OTP_VALID_MINUTES = env.int("OTP_VALID_MINUTES", default=10)
+
 
 
 

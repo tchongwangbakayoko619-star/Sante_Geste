@@ -3,6 +3,14 @@ from .base import INSTALLED_APPS
 from .base import MIDDLEWARE
 from .base import env
 
+for env_file in [
+    BASE_DIR / ".envs/.local/.django",
+    BASE_DIR / ".envs/.local/.postgres",
+    BASE_DIR / ".env",
+]:
+    if env_file.exists():
+        env.read_env(str(env_file), overwrite=True)
+
 # GENERAL
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#debug
@@ -14,6 +22,7 @@ SECRET_KEY = env(
 )
 # https://docs.djangoproject.com/en/dev/ref/settings/#allowed-hosts
 ALLOWED_HOSTS = ["localhost", "0.0.0.0", "127.0.0.1"]  # noqa: S104
+
 
 # CACHES
 # ------------------------------------------------------------------------------
