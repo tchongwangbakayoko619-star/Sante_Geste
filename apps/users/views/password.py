@@ -93,7 +93,7 @@ class PasswordResetOTPVerifyView(AnonymousRequiredMixin, FormView):
             except (OtpTokenError, OtpTokenExpiredError, ValueError):
                 is_valid = False
 
-        if not is_valid and email:
+        if not is_valid and not signed_token and email:
             from apps.users.models import OTP, User
             from apps.users.services import verify_otp_by_user
             from utils.otp import create_otp_token

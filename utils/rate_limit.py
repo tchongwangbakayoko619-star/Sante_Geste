@@ -45,52 +45,84 @@ def _build_rate_limit_keys(ip: str, email: str = "") -> list[str]:
 def check_login_rate_limit(request: HttpRequest, email: str = "") -> tuple[bool, int]:
     """Vérifie si l'adresse IP ou le couple IP/email est actuellement bloqué.
 
+    Précision garantie à la seconde près sur n'importe quel backend de cache
+    (Redis, LocMemCache, etc.) sans dépendre de cache.ttl().
+
     Returns:
         tuple[bool, int]: (est_bloqué, secondes_restantes)
     """
+    import math
+    import time
+
+    now = time.time()
+    ip = get_client_ip(request)
+    keys = _build_rate_limit_keys(ip, email)
+
+    for key in keys:
+        record = cache.get(key)
+        if record and isinstance(record, dict):
+            blocked_until = record.get("blocked_until", 0)
+            if blocked_until > now:
+                remaining = int(math.ceil(blocked_until - now))
+                return True, max(1, remaining)
+        elif isinstance(record, int):
+            max_attempts = getattr(
+                settings, "AUTH_LOGIN_MAX_ATTEMPTS", DEFAULT_LOGIN_MAX_ATTEMPTS
+            )
+            lockout_duration = getattr(
+                settings, "AUTH_LOGIN_LOCKOUT_SECONDS", DEFAULT_LOGIN_LOCKOUT_SECONDS
+            )
+            if record >= max_attempts:
+                return True, lockout_duration
+
+    return False, 0
+
+
+def record_failed_login(request: HttpRequest, email: str = "") -> int:
+    """Incrémente le compteur d'échecs avec horodatage pour une précision TTL absolue.
+
+    Returns:
+        int: Nombre maximum d'échecs enregistrés.
+    """
+    import time
+
     max_attempts = getattr(
         settings, "AUTH_LOGIN_MAX_ATTEMPTS", DEFAULT_LOGIN_MAX_ATTEMPTS
     )
     lockout_duration = getattr(
         settings, "AUTH_LOGIN_LOCKOUT_SECONDS", DEFAULT_LOGIN_LOCKOUT_SECONDS
     )
-    ip = get_client_ip(request)
-    keys = _build_rate_limit_keys(ip, email)
-
-    for key in keys:
-        attempts = cache.get(key)
-        if attempts is not None and attempts >= max_attempts:
-            remaining: Any = cache.ttl(key) if hasattr(cache, "ttl") else None
-            if remaining is not None and remaining > 0:
-                return True, int(remaining)
-            return True, lockout_duration
-
-    return False, 0
-
-
-def record_failed_login(request: HttpRequest, email: str = "") -> int:
-    """Incrémente le compteur d'échecs de connexion pour l'IP et le couple IP/email.
-
-    Returns:
-        int: Nombre maximum d'échecs enregistrés.
-    """
-    lockout_duration = getattr(
-        settings, "AUTH_LOGIN_LOCKOUT_SECONDS", DEFAULT_LOGIN_LOCKOUT_SECONDS
-    )
+    now = time.time()
     ip = get_client_ip(request)
     keys = _build_rate_limit_keys(ip, email)
     highest_count = 1
 
     for key in keys:
-        try:
-            # Si la clé existe, incr() incrémente de façon atomique
-            new_count = cache.incr(key)
-        except (ValueError, KeyError):
-            # Clé inexistante dans le cache, on initialise avec timeout
-            cache.set(key, 1, timeout=lockout_duration)
-            new_count = 1
+        record = cache.get(key)
+        if record and isinstance(record, dict):
+            attempts = record.get("attempts", 0) + 1
+            first_attempt = record.get("first_attempt", now)
+            if now - first_attempt > lockout_duration:
+                attempts = 1
+                first_attempt = now
+            blocked_until = (
+                now + lockout_duration if attempts >= max_attempts else 0
+            )
+            new_record = {
+                "attempts": attempts,
+                "first_attempt": first_attempt,
+                "blocked_until": blocked_until,
+            }
+        else:
+            attempts = 1
+            new_record = {
+                "attempts": 1,
+                "first_attempt": now,
+                "blocked_until": now + lockout_duration if 1 >= max_attempts else 0,
+            }
 
-        highest_count = max(highest_count, new_count)
+        cache.set(key, new_record, timeout=lockout_duration)
+        highest_count = max(highest_count, attempts)
 
     return highest_count
 

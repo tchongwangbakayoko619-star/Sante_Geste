@@ -104,10 +104,12 @@ def confirm_password_reset(
             not otp.used_at
             or (timezone.now() - otp.used_at).total_seconds() > max_age_seconds
         ):
+            otp.increment_attempts()
             msg = _("Code de vérification invalide ou expiré.")
             raise PasswordResetError(msg)
         if not reset_ticket:
             if not raw_code or not otp.verify_code(raw_code):
+                otp.increment_attempts()
                 msg = _("Code de vérification invalide ou expiré.")
                 raise PasswordResetError(msg)
     else:

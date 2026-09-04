@@ -127,7 +127,7 @@ def confirm_registration_otp(
         except (OtpTokenError, OtpTokenExpiredError, ValueError):
             is_valid = False
 
-    if not is_valid and user_id:
+    if not is_valid and not signed_token and user_id:
         try:
             user_obj = User.objects.get(id=user_id)
             if verify_otp_by_user(user_obj, raw_code, purpose):
