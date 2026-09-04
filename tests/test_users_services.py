@@ -8,12 +8,14 @@ from apps.users.models import OTP, MedicalProfile
 from apps.users.services import (
     PasswordResetError,
     confirm_password_reset,
+    confirm_registration_otp,
     register_user,
     request_otp,
     request_password_reset,
     update_medical_profile,
     update_user_profile,
     verify_otp_by_token,
+    verify_password_reset_otp,
 )
 from utils.enums import OTPPurposeEnum
 
@@ -75,7 +77,9 @@ def test_request_and_verify_otp_service() -> None:
     assert is_valid is True
 
     # Deuxième tentative (code déjà consommé)
-    is_valid_retry = verify_otp_by_token(signed_token, raw_code, OTPPurposeEnum.REGISTRATION)
+    is_valid_retry = verify_otp_by_token(
+        signed_token, raw_code, OTPPurposeEnum.REGISTRATION
+    )
     assert is_valid_retry is False
 
 
@@ -88,7 +92,9 @@ def test_password_reset_flow_service() -> None:
     )
 
     # Demande de réinitialisation
-    reset_user, raw_code, signed_token = request_password_reset("reset-service@santegeste.com")
+    reset_user, raw_code, signed_token = request_password_reset(
+        "reset-service@santegeste.com"
+    )
     assert reset_user == user
     assert raw_code is not None
 
@@ -168,15 +174,74 @@ def test_password_reset_invalidates_old_otps() -> None:
         email="invalidate-otps@santegeste.com",
         password="OldPassword123!",
     )
-    reset_user, raw_code, signed_token = request_password_reset("invalidate-otps@santegeste.com")
+    reset_user, raw_code, signed_token = request_password_reset(
+        "invalidate-otps@santegeste.com"
+    )
 
     # Invalide et confirme le nouveau mot de passe
     success = confirm_password_reset(signed_token, raw_code, "BrandNewPassword2026!")
     assert success is True
 
-    # Tous les OTPs PASSWORD_RESET doivent être marqués comme is_used=True
+    # Tous les OTPs PASSWORD_RESET doivent être marqués comme is_used=True ou supprimés
     assert not OTP.objects.filter(
         user=user, purpose=OTPPurposeEnum.PASSWORD_RESET, is_used=False
     ).exists()
 
 
+@pytest.mark.django_db
+def test_confirm_registration_otp_without_user_id_in_arguments() -> None:
+    """Vérifie l'activation de compte lorsque user_id est vide (ex: lien direct)."""
+    user, raw_code, signed_token = register_user(
+        email="direct-link@santegeste.com",
+        password="ValidPassword123!",
+    )
+    assert user.is_active is False
+    assert user.is_verified is False
+
+    # Appel sans user_id explicite (uniquement signed_token)
+    is_valid, confirmed_user = confirm_registration_otp(
+        signed_token=signed_token,
+        user_id="",
+        raw_code=raw_code,
+    )
+    assert is_valid is True
+    assert confirmed_user is not None
+    assert confirmed_user.id == user.id
+
+    user.refresh_from_db()
+    assert user.is_active is True
+    assert user.is_verified is True
+
+
+@pytest.mark.django_db
+def test_confirm_password_reset_two_step_flow_service() -> None:
+    """Vérifie que confirm_password_reset fonctionne après validation OTP à l'étape 1."""
+    user = User.objects.create_user(
+        email="two-step-reset@santegeste.com",
+        password="OldPassword123!",
+    )
+    _, raw_code, signed_token = request_password_reset("two-step-reset@santegeste.com")
+
+    # Étape 1 : Validation de l'OTP (qui le marque comme utilisé)
+    step1_valid = verify_password_reset_otp(signed_token, raw_code)
+    assert step1_valid is True
+
+    # Étape 2 : Confirmation avec nouveau mot de passe
+    success = confirm_password_reset(signed_token, raw_code, "NewSecurePassword2026!")
+    assert success is True
+
+    user.refresh_from_db()
+    assert user.check_password("NewSecurePassword2026!") is True
+
+
+@pytest.mark.django_db
+def test_confirm_password_reset_wrong_code_fails() -> None:
+    """Vérifie que confirm_password_reset échoue si le code est incorrect."""
+    User.objects.create_user(
+        email="wrong-code-reset@santegeste.com",
+        password="OldPassword123!",
+    )
+    _, _, signed_token = request_password_reset("wrong-code-reset@santegeste.com")
+
+    with pytest.raises(PasswordResetError):
+        confirm_password_reset(signed_token, "000000", "NewSecurePassword2026!")

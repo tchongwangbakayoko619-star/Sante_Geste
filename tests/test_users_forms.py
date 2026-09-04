@@ -81,7 +81,6 @@ def test_otp_verification_form() -> None:
     assert "code" in form_invalid.errors
 
 
-
 def test_medical_profile_form() -> None:
     """Vérifie la création d'un profil médical via formulaire."""
     data = {

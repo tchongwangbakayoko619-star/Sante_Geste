@@ -8,3 +8,4 @@ class OTPPurposeEnum(models.TextChoices):
 
     REGISTRATION = "registration", "Inscription"
     PASSWORD_RESET = "password_reset", "Réinitialisation mot de passe"
+    TWO_FACTOR = "two_factor", "Authentification à deux facteurs"

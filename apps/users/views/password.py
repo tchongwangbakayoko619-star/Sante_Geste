@@ -15,7 +15,6 @@ from apps.users.forms import (
     ChangePasswordForm,
     ForgotPasswordForm,
     OTPVerificationForm,
-    PasswordResetConfirmForm,
     SetNewPasswordForm,
 )
 from apps.users.mixins import AnonymousRequiredMixin
@@ -26,8 +25,8 @@ from apps.users.services import (
     request_password_reset,
     verify_password_reset_otp,
 )
+from utils.enums import OTPPurposeEnum
 from utils.otp import OtpTokenError, OtpTokenExpiredError
-
 
 
 class ForgotPasswordView(AnonymousRequiredMixin, FormView):
@@ -41,7 +40,7 @@ class ForgotPasswordView(AnonymousRequiredMixin, FormView):
         email = form.cleaned_data["email"]
 
         try:
-            user, raw_code, signed_token = request_password_reset(email)
+            _, _, signed_token = request_password_reset(email)
 
             if signed_token:
                 self.request.session["reset_signed_token"] = signed_token
@@ -75,11 +74,12 @@ class PasswordResetOTPVerifyView(AnonymousRequiredMixin, FormView):
         if not request.session.get("reset_signed_token"):
             messages.info(
                 request,
-                _("Veuillez d'abord demander la réinitialisation de votre mot de passe."),
+                _(
+                    "Veuillez d'abord demander la réinitialisation de votre mot de passe."
+                ),
             )
             return HttpResponseRedirect(reverse_lazy("users:forgot-password"))
         return super().dispatch(request, *args, **kwargs)
-
 
     def form_valid(self, form: OTPVerificationForm) -> HttpResponse:
         signed_token = self.request.session.get("reset_signed_token", "")
@@ -93,22 +93,54 @@ class PasswordResetOTPVerifyView(AnonymousRequiredMixin, FormView):
             except (OtpTokenError, OtpTokenExpiredError, ValueError):
                 is_valid = False
 
-
-        if not is_valid and email:
-            from apps.users.models import User
+        if not is_valid and not signed_token and email:
+            from apps.users.models import OTP, User
             from apps.users.services import verify_otp_by_user
-            from utils.enums import OTPPurposeEnum
+            from utils.otp import create_otp_token
 
             user_obj = User.objects.filter(email__iexact=email).first()
-            if user_obj:
-                is_valid = verify_otp_by_user(user_obj, code, OTPPurposeEnum.PASSWORD_RESET)
+            if user_obj and verify_otp_by_user(
+                user_obj, code, OTPPurposeEnum.PASSWORD_RESET
+            ):
+                is_valid = True
+                latest_otp = (
+                    OTP.objects.filter(
+                        user=user_obj,
+                        purpose=OTPPurposeEnum.PASSWORD_RESET,
+                        is_used=True,
+                    )
+                    .order_by("-updated_at")
+                    .first()
+                )
+                if latest_otp:
+                    signed_token = create_otp_token(
+                        latest_otp.id, user_obj.id, OTPPurposeEnum.PASSWORD_RESET
+                    )
+                    self.request.session["reset_signed_token"] = signed_token
 
         if is_valid:
-            self.request.session["reset_otp_code"] = code
+            from utils.otp import create_password_reset_ticket, validate_otp_token
+
+            ticket = ""
+            if signed_token:
+                try:
+                    payload = validate_otp_token(
+                        signed_token, OTPPurposeEnum.PASSWORD_RESET
+                    )
+                    ticket = create_password_reset_ticket(
+                        payload["otp_id"], payload["user_id"]
+                    )
+                except (OtpTokenError, ValueError):
+                    pass
+
+            if ticket:
+                self.request.session["reset_auth_ticket"] = ticket
             self.request.session["reset_otp_verified"] = True
             messages.success(
                 self.request,
-                _("Code OTP vérifié avec succès ! Veuillez saisir votre nouveau mot de passe."),
+                _(
+                    "Code OTP vérifié avec succès ! Veuillez saisir votre nouveau mot de passe."
+                ),
             )
             return HttpResponseRedirect(reverse_lazy("users:password-reset-confirm"))
 
@@ -116,12 +148,12 @@ class PasswordResetOTPVerifyView(AnonymousRequiredMixin, FormView):
         return self.form_invalid(form)
 
 
-
 class PasswordResetConfirmView(AnonymousRequiredMixin, FormView):
     """Étape 2 : Saisie du nouveau mot de passe uniquement après validation de l'OTP."""
 
     template_name = "users/password_reset_confirm.html"
     form_class = SetNewPasswordForm
+    fallback_url = "users:login"
     success_url = reverse_lazy("users:login")
 
     def dispatch(self, request: Any, *args: Any, **kwargs: Any) -> HttpResponse:
@@ -131,33 +163,40 @@ class PasswordResetConfirmView(AnonymousRequiredMixin, FormView):
                 _("Veuillez d'abord valider votre code OTP de réinitialisation."),
             )
             if request.session.get("reset_signed_token"):
-                return HttpResponseRedirect(reverse_lazy("users:password-reset-verify-otp"))
+                return HttpResponseRedirect(
+                    reverse_lazy("users:password-reset-verify-otp")
+                )
             return HttpResponseRedirect(reverse_lazy("users:forgot-password"))
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form: SetNewPasswordForm) -> HttpResponse:
         signed_token = self.request.session.get("reset_signed_token", "")
-        code = self.request.session.get("reset_otp_code", "")
+        reset_ticket = self.request.session.get("reset_auth_ticket", "")
         new_password = form.cleaned_data["password1"]
 
         try:
-            confirm_password_reset(signed_token, code, new_password)
+            confirm_password_reset(
+                signed_token,
+                None,
+                new_password,
+                reset_ticket=reset_ticket,
+            )
         except PasswordResetError as err:
             form.add_error(None, str(err))
             return self.form_invalid(form)
 
         self.request.session.pop("reset_signed_token", None)
         self.request.session.pop("reset_email", None)
-        self.request.session.pop("reset_otp_code", None)
+        self.request.session.pop("reset_auth_ticket", None)
         self.request.session.pop("reset_otp_verified", None)
 
         messages.success(
             self.request,
-            _("Votre mot de passe a été réinitialisé avec succès. Vous pouvez vous connecter."),
+            _(
+                "Votre mot de passe a été réinitialisé avec succès. Vous pouvez vous connecter."
+            ),
         )
         return super().form_valid(form)
-
-
 
 
 class ChangePasswordView(LoginRequiredMixin, FormView):
@@ -182,6 +221,7 @@ class ChangePasswordView(LoginRequiredMixin, FormView):
 
         update_session_auth_hash(self.request, user)
 
-        messages.success(self.request, _("Votre mot de passe a été modifié avec succès."))
+        messages.success(
+            self.request, _("Votre mot de passe a été modifié avec succès.")
+        )
         return super().form_valid(form)
-

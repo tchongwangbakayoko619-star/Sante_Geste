@@ -97,5 +97,3 @@ def verify_otp_by_user(user: User, raw_code: str, purpose: str) -> bool:
 
     otp_obj.increment_attempts()
     return False
-
-
