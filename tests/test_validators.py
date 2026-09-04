@@ -41,4 +41,3 @@ def test_validate_image_extension_invalid() -> None:
         with pytest.raises(ValidationError) as exc_info:
             validate_image_extension(mock_file)
         assert "Format de fichier non pris en charge" in str(exc_info.value)
-

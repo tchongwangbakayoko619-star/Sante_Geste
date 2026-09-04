@@ -1,7 +1,6 @@
-# PostgreSQL
-# ------------------------------------------------------------------------------
-POSTGRES_HOST=postgres
+# Database Settings (PostgreSQL Local / Docker container port forward)
+POSTGRES_DB=cs2_health
+POSTGRES_USER=cs2_user
+POSTGRES_PASSWORD=lucresse237
+POSTGRES_HOST=127.0.0.1
 POSTGRES_PORT=5432
-POSTGRES_DB=santegeste
-POSTGRES_USER=debug
-POSTGRES_PASSWORD=debug

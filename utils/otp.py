@@ -81,6 +81,35 @@ def validate_otp_token(signed_token: str, purpose: str) -> dict[str, str]:
     return {"otp_id": otp_id, "user_id": user_id, "purpose": purpose}
 
 
+def create_password_reset_ticket(otp_id: str | UUID, user_id: str | UUID) -> str:
+    """Crée un ticket horodaté et signé cryptographiquement autorisant le changement de mot de passe."""
+    payload = _TOKEN_SEP.join([str(otp_id), str(user_id), "authorized_reset"])
+    signer = TimestampSigner(salt="otp-ticket-password-reset")
+    return signer.sign(payload)
+
+
+def validate_password_reset_ticket(ticket: str) -> dict[str, str]:
+    """Valide et déchiffre le ticket d'autorisation de réinitialisation de mot de passe."""
+    max_age = getattr(settings, "OTP_VALID_MINUTES", 10) * 60
+    signer = TimestampSigner(salt="otp-ticket-password-reset")
+
+    try:
+        payload = signer.unsign(ticket, max_age=max_age)
+    except SignatureExpired as err:
+        msg = _("Le délai accordé pour réinitialiser le mot de passe a expiré.")
+        raise OtpTokenExpiredError(msg) from err
+    except BadSignature as err:
+        msg = _("Ticket d'autorisation invalide.")
+        raise OtpTokenError(msg) from err
+
+    parts = payload.split(_TOKEN_SEP)
+    if len(parts) != 3 or parts[2] != "authorized_reset":  # noqa: PLR2004
+        msg = _("Ticket d'autorisation invalide.")
+        raise OtpTokenError(msg)
+
+    return {"otp_id": parts[0], "user_id": parts[1]}
+
+
 def verify_otp_with_lock(otp_id: str | UUID, raw_code: str) -> bool:
     """Vérifie un code OTP de manière atomique avec verrouillage pessimiste anti-concurrence."""
     from django.db import transaction

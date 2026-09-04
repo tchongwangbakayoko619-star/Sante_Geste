@@ -105,3 +105,117 @@ def test_otp_resend_view(client) -> None:
     assert response.url == reverse("users:otp-verify")
     assert "otp_signed_token" in client.session
 
+
+@pytest.mark.django_db
+def test_otp_verification_view_via_direct_token_link_without_session_user_id(
+    client,
+) -> None:
+    """Vérifie la validation OTP et l'activation du compte via le lien externe (GET ?token=) avec session vide."""
+    from apps.users.services import register_user
+
+    user, raw_code, signed_token = register_user(
+        email="external-link@santegeste.com",
+        password="ValidPassword123!",
+    )
+    assert user.is_active is False
+
+    # Le client arrive avec un navigateur neuf / session vide, uniquement le paramètre token
+    url = reverse("users:otp-verify") + f"?token={signed_token}"
+    response_get = client.get(url)
+    assert response_get.status_code == 200
+
+    # Soumission du code
+    response_post = client.post(reverse("users:otp-verify"), data={"code": raw_code})
+    assert response_post.status_code == 302
+    assert response_post.url == reverse("users:login")
+
+    user.refresh_from_db()
+    assert user.is_active is True
+    assert user.is_verified is True
+
+
+@pytest.mark.django_db
+def test_password_reset_full_view_flow(client) -> None:
+    """Vérifie le parcours complet de réinitialisation de mot de passe à travers les vues."""
+    from apps.users.services import request_password_reset
+
+    user = User.objects.create_user(
+        email="reset-views@santegeste.com",
+        password="InitialPassword123!",
+    )
+
+    # 1. Demande de réinitialisation
+    reset_user, raw_code, signed_token = request_password_reset(
+        "reset-views@santegeste.com"
+    )
+    session = client.session
+    session["reset_signed_token"] = signed_token
+    session["reset_email"] = user.email
+    session.save()
+
+    # 2. Étape 1 : Saisie et validation du code OTP
+    url_step1 = reverse("users:password-reset-verify-otp")
+    response_step1 = client.post(url_step1, data={"code": raw_code})
+    assert response_step1.status_code == 302
+    assert response_step1.url == reverse("users:password-reset-confirm")
+
+    # Vérification que l'état de session est bien positionné
+    assert client.session.get("reset_otp_verified") is True
+
+    # 3. Étape 2 : Saisie du nouveau mot de passe
+    url_step2 = reverse("users:password-reset-confirm")
+    response_step2 = client.post(
+        url_step2,
+        data={
+            "password1": "NewComplexPass2026!",
+            "password2": "NewComplexPass2026!",
+        },
+    )
+    assert response_step2.status_code == 302
+    assert response_step2.url == reverse("users:login")
+
+    # Vérification que l'utilisateur peut se connecter avec son nouveau mot de passe
+    user.refresh_from_db()
+    assert user.check_password("NewComplexPass2026!") is True
+
+    # Vérification que la session temporaire a été nettoyée sans conserver de secret
+    assert "reset_signed_token" not in client.session
+    assert "reset_auth_ticket" not in client.session
+    assert "reset_otp_code" not in client.session
+    assert "reset_otp_verified" not in client.session
+
+
+@pytest.mark.django_db
+def test_user_login_rate_limiting(client) -> None:
+    """Vérifie le blocage après 5 tentatives infructueuses (rate-limiting anti-brute-force)."""
+    User.objects.create_user(
+        email="ratelimit-target@santegeste.com",
+        password="RealStrongPassword123!",
+    )
+    url = reverse("users:login")
+
+    # 5 tentatives erronées consécutives
+    for _ in range(5):
+        response = client.post(
+            url,
+            data={"email": "ratelimit-target@santegeste.com", "password": "WrongPassword!"},
+        )
+        assert response.status_code == 200
+        # Vérifie qu'on a le message d'erreur standard anti-énumération
+        assert "Adresse email ou mot de passe incorrect." in response.content.decode()
+
+    # 6ème tentative : doit être bloquée par le rate limiter
+    response_locked = client.post(
+        url,
+        data={"email": "ratelimit-target@santegeste.com", "password": "RealStrongPassword123!"},
+    )
+    assert response_locked.status_code == 200
+    content = response_locked.content.decode()
+    assert "Trop de tentatives de connexion infructueuses." in content
+
+    # Réinitialisation après succès ou délai
+    from utils.rate_limit import reset_login_rate_limit
+    from django.test import RequestFactory
+    rf = RequestFactory().get(url)
+    reset_login_rate_limit(rf, "ratelimit-target@santegeste.com")
+

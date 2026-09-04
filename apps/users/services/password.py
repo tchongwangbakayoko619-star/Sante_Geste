@@ -37,7 +37,6 @@ def request_password_reset(email: str) -> tuple[User | None, str | None, str | N
     return user, raw_code, signed_token
 
 
-
 def verify_password_reset_otp(signed_token: str, raw_code: str) -> bool:
     """Vérifie le code OTP de réinitialisation de mot de passe sous verrouillage BDD."""
     return verify_otp_by_token(signed_token, raw_code, OTPPurposeEnum.PASSWORD_RESET)
@@ -45,14 +44,38 @@ def verify_password_reset_otp(signed_token: str, raw_code: str) -> bool:
 
 @transaction.atomic
 def confirm_password_reset(
-    signed_token: str, raw_code: str | None, new_password: str
+    signed_token: str,
+    raw_code: str | None,
+    new_password: str,
+    *,
+    reset_ticket: str | None = None,
 ) -> bool:
     """Met à jour le mot de passe de l'utilisateur après validation de l'OTP."""
-    from utils.otp import validate_otp_token
+    from django.conf import settings
+    from django.utils import timezone
+    from apps.users.models import OTP
+    from utils.otp import validate_otp_token, validate_password_reset_ticket
 
-    # 1. Validation du jeton et extraction de l'utilisateur
-    payload = validate_otp_token(signed_token, OTPPurposeEnum.PASSWORD_RESET)
-    user_id = payload["user_id"]
+    user_id = None
+    otp_id = None
+
+    if reset_ticket:
+        try:
+            ticket_payload = validate_password_reset_ticket(reset_ticket)
+            user_id = ticket_payload["user_id"]
+            otp_id = ticket_payload["otp_id"]
+        except Exception as err:
+            msg = _("Autorisation de réinitialisation invalide ou expirée.")
+            raise PasswordResetError(msg) from err
+    else:
+        # 1. Validation du jeton et extraction de l'utilisateur et de l'OTP
+        try:
+            payload = validate_otp_token(signed_token, OTPPurposeEnum.PASSWORD_RESET)
+            user_id = payload["user_id"]
+            otp_id = payload["otp_id"]
+        except Exception as err:
+            msg = _("Code de vérification invalide ou expiré.")
+            raise PasswordResetError(msg) from err
 
     try:
         user = User.objects.get(id=user_id, is_active=True)
@@ -63,26 +86,47 @@ def confirm_password_reset(
     # 2. Validation de la complexité du nouveau mot de passe
     validate_password(new_password, user=user)
 
-    # 3. Vérification atomique de l'OTP si un code brut est fourni
-    if raw_code:
-        is_valid = verify_otp_by_token(signed_token, raw_code, OTPPurposeEnum.PASSWORD_RESET)
-        if not is_valid:
+    # 3. Vérification atomique de l'OTP sous verrouillage BDD
+    try:
+        otp = OTP.objects.select_for_update().get(
+            id=otp_id, user=user, purpose=OTPPurposeEnum.PASSWORD_RESET
+        )
+    except OTP.DoesNotExist as err:
+        msg = _("Code de vérification invalide ou expiré.")
+        raise PasswordResetError(msg) from err
+
+    max_age_seconds = getattr(settings, "OTP_VALID_MINUTES", 10) * 60
+
+    if otp.is_used:
+        # L'OTP a déjà été validé à l'étape 1 (flux web 2 étapes)
+        # Vérification qu'il a été validé récemment
+        if (
+            not otp.used_at
+            or (timezone.now() - otp.used_at).total_seconds() > max_age_seconds
+        ):
             msg = _("Code de vérification invalide ou expiré.")
             raise PasswordResetError(msg)
+        if not reset_ticket:
+            if not raw_code or not otp.verify_code(raw_code):
+                msg = _("Code de vérification invalide ou expiré.")
+                raise PasswordResetError(msg)
+    else:
+        # L'OTP n'a pas encore été validé (flux direct 1 étape)
+        if not raw_code or not otp.is_valid() or not otp.verify_code(raw_code):
+            otp.increment_attempts()
+            msg = _("Code de vérification invalide ou expiré.")
+            raise PasswordResetError(msg)
+        otp.mark_as_used()
 
     # 4. Enregistrement du nouveau mot de passe haché
     user.set_password(new_password)
     user.save(update_fields=["password", "updated_at"])
 
-    # Invalidation de tous les anciens codes OTP de réinitialisation pour cet utilisateur
-    from apps.users.models import OTP
-    from django.utils import timezone
-
+    # Invalidation définitive de tous les anciens codes OTP de réinitialisation pour cet utilisateur
     OTP.objects.filter(
         user=user,
         purpose=OTPPurposeEnum.PASSWORD_RESET,
-        is_used=False,
-    ).update(is_used=True, used_at=timezone.now())
+    ).delete()
 
     from apps.users.tasks import send_password_changed_notification_task
 
@@ -91,6 +135,3 @@ def confirm_password_reset(
     )
 
     return True
-
-
-

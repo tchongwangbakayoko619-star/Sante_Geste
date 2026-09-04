@@ -87,13 +87,28 @@ class UserLoginForm(forms.Form):
         self.inactive_user: User | None = None
 
     def clean(self) -> dict[str, Any]:
-        """Même message pour email inconnu / mot de passe incorrect (anti-énumération)."""
+        """Même message pour email inconnu / mot de passe incorrect (anti-énumération) avec rate-limiting."""
         cleaned_data = super().clean()
         email, password = cleaned_data.get("email"), cleaned_data.get("password")
         if not email or not password:
             return cleaned_data
 
         email_clean = email.strip().lower()
+
+        if self.request:
+            from utils.rate_limit import check_login_rate_limit, record_failed_login
+
+            is_locked, remaining = check_login_rate_limit(self.request, email=email_clean)
+            if is_locked:
+                minutes = max(1, (remaining + 59) // 60)
+                raise ValidationError(
+                    _(
+                        "Trop de tentatives de connexion infructueuses. "
+                        "Veuillez patienter %(minutes)d minute(s) avant de réessayer."
+                    )
+                    % {"minutes": minutes}
+                )
+
         user_candidate = User.objects.filter(email__iexact=email_clean).first()
         if user_candidate and not user_candidate.is_active and user_candidate.check_password(password):
             self.inactive_user = user_candidate
@@ -101,6 +116,10 @@ class UserLoginForm(forms.Form):
 
         self.user_cache = authenticate(self.request, email=email_clean, password=password)
         if self.user_cache is None or not self.user_cache.is_active:
+            if self.request:
+                from utils.rate_limit import record_failed_login
+
+                record_failed_login(self.request, email=email_clean)
             raise ValidationError(_("Adresse email ou mot de passe incorrect."))
         return cleaned_data
 
@@ -224,7 +243,19 @@ class MedicalProfileForm(forms.ModelForm):
 class UserAdminCreationForm(BaseUserCreationForm):
     class Meta:
         model = User
-        fields = ("email", "first_name", "last_name", "telephone", "avatar")
+        fields = (
+            "email",
+            "first_name",
+            "last_name",
+            "telephone",
+            "avatar",
+            "is_proprietaire",
+            "is_personnel_medical",
+            "is_responsable_pharmacie",
+            "is_vendeur_pharmacie",
+            "is_caissier",
+            "is_agent_accueil",
+        )
 
 
 class UserAdminChangeForm(BaseUserChangeForm):

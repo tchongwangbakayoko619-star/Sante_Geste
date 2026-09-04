@@ -18,7 +18,6 @@ from apps.users.services import OtpCooldownError, register_user, verify_otp_by_t
 from utils.enums import OTPPurposeEnum
 
 
-
 class UserRegisterView(AnonymousRequiredMixin, FormView):
     """Vue d'inscription d'un nouvel utilisateur SantéGeste."""
 
@@ -47,7 +46,9 @@ class UserRegisterView(AnonymousRequiredMixin, FormView):
 
         messages.success(
             self.request,
-            _("Votre compte a été créé avec succès. Veuillez saisir le code OTP reçu pour le valider."),
+            _(
+                "Votre compte a été créé avec succès. Veuillez saisir le code OTP reçu pour le valider."
+            ),
         )
         return super().form_valid(form)
 
@@ -58,36 +59,53 @@ class UserLoginView(AnonymousRequiredMixin, RedirectToNextOrReferrerMixin, FormV
     template_name = "users/login.html"
     form_class = UserLoginForm
 
+    def get_form_kwargs(self) -> dict[str, Any]:
+        kwargs = super().get_form_kwargs()
+        kwargs["request"] = self.request
+        return kwargs
+
     def form_valid(self, form: UserLoginForm) -> HttpResponse:
+        from utils.rate_limit import reset_login_rate_limit
+
         if getattr(form, "inactive_user", None):
             user = form.inactive_user
+            reset_login_rate_limit(self.request, email=user.email)
             from apps.users.services import OtpCooldownError, request_otp
             from utils.enums import OTPPurposeEnum
 
             try:
-                otp_obj, raw_code, signed_token = request_otp(user, OTPPurposeEnum.REGISTRATION)
+                otp_obj, raw_code, signed_token = request_otp(
+                    user, OTPPurposeEnum.REGISTRATION
+                )
                 self.request.session["otp_signed_token"] = signed_token
                 self.request.session["otp_user_id"] = str(user.id)
                 messages.info(
                     self.request,
-                    _("Votre compte n'est pas encore activé. Un nouveau code de vérification OTP a été envoyé par e-mail.")
+                    _(
+                        "Votre compte n'est pas encore activé. Un nouveau code de vérification OTP a été envoyé par e-mail."
+                    ),
                 )
             except OtpCooldownError:
                 messages.warning(
                     self.request,
-                    _("Votre compte n'est pas encore activé. Veuillez saisir le code OTP déjà reçu.")
+                    _(
+                        "Votre compte n'est pas encore activé. Veuillez saisir le code OTP déjà reçu."
+                    ),
                 )
             return HttpResponseRedirect(reverse_lazy("users:otp-verify"))
 
         user = form.get_user()
         if user is not None:
+            reset_login_rate_limit(self.request, email=user.email)
             login(self.request, user)
-            messages.info(self.request, _("Bienvenue sur SantéGeste, %(name)s !") % {"name": user.full_name or user.email})
+            messages.info(
+                self.request,
+                _("Bienvenue sur SantéGeste, %(name)s !")
+                % {"name": user.full_name or user.email},
+            )
             redirect_url = self.get_redirect_url()
             return HttpResponseRedirect(redirect_url)
         return self.form_invalid(form)
-
-
 
 
 class UserLogoutView(LoginRequiredMixin, View):
@@ -110,12 +128,26 @@ class OTPVerificationView(FormView):
         token = request.GET.get("token")
         if token:
             request.session["otp_signed_token"] = token
+            from utils.otp import validate_otp_token
 
-        if "otp_signed_token" not in request.session and "otp_user_id" not in request.session:
-            messages.info(request, _("Veuillez vous connecter pour procéder à la vérification de votre compte."))
+            try:
+                payload = validate_otp_token(token, OTPPurposeEnum.REGISTRATION)
+                request.session["otp_user_id"] = payload["user_id"]
+            except Exception:
+                pass
+
+        if (
+            "otp_signed_token" not in request.session
+            and "otp_user_id" not in request.session
+        ):
+            messages.info(
+                request,
+                _(
+                    "Veuillez vous connecter pour procéder à la vérification de votre compte."
+                ),
+            )
             return HttpResponseRedirect(reverse_lazy("users:login"))
         return super().dispatch(request, *args, **kwargs)
-
 
     def form_valid(self, form: OTPVerificationForm) -> HttpResponse:
         from apps.users.services import confirm_registration_otp
@@ -132,7 +164,9 @@ class OTPVerificationView(FormView):
             self.request.session.pop("otp_user_id", None)
             messages.success(
                 self.request,
-                _("Compte vérifié et activé avec succès ! Vous pouvez maintenant vous connecter."),
+                _(
+                    "Compte vérifié et activé avec succès ! Vous pouvez maintenant vous connecter."
+                ),
             )
             return super().form_valid(form)
 
@@ -167,6 +201,3 @@ class OTPResendView(View):
             messages.warning(request, str(err))
 
         return HttpResponseRedirect(reverse_lazy("users:otp-verify"))
-
-
-

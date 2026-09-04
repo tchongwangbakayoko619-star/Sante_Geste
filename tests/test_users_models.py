@@ -46,8 +46,6 @@ def test_user_manager_custom_methods() -> None:
     assert user in User.objects.with_medical_profile()
 
 
-
-
 def test_medical_profile_defensive_validation() -> None:
     """Teste la validation défensive de MedicalProfile (User.is_personnel_medical=True)."""
     user_doctor = User.objects.create_user(
@@ -146,3 +144,33 @@ def test_verify_otp_with_lock() -> None:
 
     # Troisième essai : doit échouer car déjà utilisé
     assert verify_otp_with_lock(otp.id, raw_code) is False
+
+
+def test_admin_registration_and_configuration() -> None:
+    """Vérifie que User et OTP sont correctement enregistrés dans Django Admin avec les permissions adaptées."""
+    from django.contrib import admin
+    from django.test import RequestFactory
+
+    from apps.users.admin import OTPAdmin, UserAdmin
+    from apps.users.models import OTP, User
+
+    assert admin.site.is_registered(User)
+    assert admin.site.is_registered(OTP)
+
+    user_admin = admin.site._registry[User]
+    assert isinstance(user_admin, UserAdmin)
+    all_fields = []
+    for _, fieldset in user_admin.fieldsets:
+        all_fields.extend(fieldset.get("fields", ()))
+    assert "username" not in all_fields
+    assert "email" in all_fields
+    assert "is_personnel_medical" in all_fields
+
+    otp_admin = admin.site._registry[OTP]
+    assert isinstance(otp_admin, OTPAdmin)
+    rf = RequestFactory()
+    request = rf.get("/admin/")
+    assert otp_admin.has_add_permission(request) is False
+    assert otp_admin.has_change_permission(request) is False
+    assert otp_admin.has_delete_permission(request) is True
+

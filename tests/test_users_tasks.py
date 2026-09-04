@@ -28,7 +28,9 @@ def test_send_otp_email_task_success() -> None:
         first_name="Paul",
     )
 
-    result = send_otp_email_task.apply(args=[str(user.id), "123456", OTPPurposeEnum.REGISTRATION]).get()
+    result = send_otp_email_task.apply(
+        args=[str(user.id), "123456", OTPPurposeEnum.REGISTRATION]
+    ).get()
     assert result is True
     assert len(mail.outbox) == 1
     assert "123456" in mail.outbox[0].subject
@@ -99,6 +101,3 @@ def test_cleanup_expired_otps_task() -> None:
     deleted_count = cleanup_expired_otps_task.apply().get()
     assert deleted_count == 2
     assert OTP.objects.filter(user=user).count() == 1
-
-
-

@@ -22,7 +22,6 @@ def test_get_base_url_resolution(settings) -> None:
     assert "http://" in get_base_url()
 
 
-
 def test_send_transactional_email_plain_text() -> None:
     """Vérifie l'envoi d'un e-mail transactionnel en texte brut."""
     success = send_transactional_email(

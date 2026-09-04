@@ -60,7 +60,6 @@ def register_user(
         avatar=avatar,
     )
 
-
     # 2. Création automatique du profil médical si la personne est du personnel médical
     if is_personnel_medical:
         MedicalProfile.objects.create(
@@ -98,8 +97,6 @@ def register_user(
         lambda: send_otp_email_task.delay(str(user.id), raw_code, purpose, signed_token)
     )
 
-
-
     return user, raw_code, signed_token
 
 
@@ -117,11 +114,18 @@ def confirm_registration_otp(
     user: User | None = None
 
     if signed_token:
+        from utils.otp import validate_otp_token, verify_otp_with_lock
+
         try:
-            is_valid = verify_otp_by_token(signed_token, raw_code, purpose)
+            payload = validate_otp_token(signed_token, purpose)
+            token_user_id = payload.get("user_id")
+            otp_id = payload.get("otp_id")
+            if verify_otp_with_lock(otp_id, raw_code):
+                is_valid = True
+                if not user_id and token_user_id:
+                    user_id = token_user_id
         except (OtpTokenError, OtpTokenExpiredError, ValueError):
             is_valid = False
-
 
     if not is_valid and user_id:
         try:
@@ -137,7 +141,7 @@ def confirm_registration_otp(
             try:
                 user = User.objects.get(id=user_id)
             except User.DoesNotExist:
-                pass
+                user = None
 
         if user:
             user.is_active = True
@@ -146,11 +150,8 @@ def confirm_registration_otp(
 
             from apps.users.tasks import send_welcome_email_task
 
-            transaction.on_commit(
-                lambda: send_welcome_email_task.delay(str(user.id))
-            )
+            transaction.on_commit(lambda: send_welcome_email_task.delay(str(user.id)))
 
         return True, user
 
     return False, None
-

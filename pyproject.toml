@@ -184,6 +184,7 @@ ini_options.addopts = [
 
 # ==== Coverage ====
 [tool.coverage]
-run.include = [ "santegeste/**" ]
+run.include = [ "santegeste/**", "apps/**", "core/**", "utils/**" ]
 run.omit = [ "*/migrations/*", "*/tests/*" ]
 run.plugins = [ "django_coverage_plugin" ]
+
