@@ -274,6 +274,8 @@ santegeste/media/
 .pytest_cache/
 .ipython/
 .env
+.envs/*
+!.envs/.local/
 .env.*
 *.env
 .envs/

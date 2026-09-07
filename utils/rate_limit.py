@@ -51,6 +51,12 @@ def check_login_rate_limit(request: HttpRequest, email: str = "") -> tuple[bool,
     Returns:
         tuple[bool, int]: (est_bloqué, secondes_restantes)
     """
+    max_attempts = getattr(
+        settings, "AUTH_LOGIN_MAX_ATTEMPTS", DEFAULT_LOGIN_MAX_ATTEMPTS
+    )
+    lockout_duration = getattr(
+        settings, "AUTH_LOGIN_LOCKOUT_SECONDS", DEFAULT_LOGIN_LOCKOUT_SECONDS
+    )
     import math
     import time
 
@@ -65,21 +71,20 @@ def check_login_rate_limit(request: HttpRequest, email: str = "") -> tuple[bool,
             if blocked_until > now:
                 remaining = int(math.ceil(blocked_until - now))
                 return True, max(1, remaining)
+            if record.get("attempts", 0) >= max_attempts:
+                return True, lockout_duration
         elif isinstance(record, int):
-            max_attempts = getattr(
-                settings, "AUTH_LOGIN_MAX_ATTEMPTS", DEFAULT_LOGIN_MAX_ATTEMPTS
-            )
-            lockout_duration = getattr(
-                settings, "AUTH_LOGIN_LOCKOUT_SECONDS", DEFAULT_LOGIN_LOCKOUT_SECONDS
-            )
             if record >= max_attempts:
+                remaining: Any = cache.ttl(key) if hasattr(cache, "ttl") else None
+                if remaining is not None and remaining > 0:
+                    return True, int(remaining)
                 return True, lockout_duration
 
     return False, 0
 
 
 def record_failed_login(request: HttpRequest, email: str = "") -> int:
-    """Incrémente le compteur d'échecs avec horodatage pour une précision TTL absolue.
+    """Incrémente le compteur d'échecs de connexion pour l'IP et le couple IP/email (avec horodatage pour une précision TTL absolue).
 
     Returns:
         int: Nombre maximum d'échecs enregistrés.
