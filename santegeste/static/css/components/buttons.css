@@ -1,10 +1,10 @@
 @layer components {
   /* --------------------------------------------------------------------------
-     BUTTON ATOMS (CS² Health Design System)
+     BUTTON ATOMS (CS² Health Design System) - Touch Targets & Accessibility
      -------------------------------------------------------------------------- */
 
   .btn {
-    @apply inline-flex items-center justify-center font-semibold rounded-xl transition-all duration-150 ease-in-out cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed;
+    @apply inline-flex items-center justify-center font-semibold rounded-xl transition-all duration-150 ease-in-out cursor-pointer min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#14967F] focus-visible:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed disabled:pointer-events-none;
   }
 
   .btn-primary {
@@ -20,6 +20,6 @@
   }
 
   .btn-link {
-    @apply text-[#14967F] hover:text-[#0f7a67] hover:underline p-0 text-sm font-semibold;
+    @apply text-[#14967F] hover:text-[#0f7a67] hover:underline p-0 min-h-0 text-sm font-semibold focus-visible:ring-offset-0;
   }
 }

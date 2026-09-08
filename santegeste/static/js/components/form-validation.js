@@ -1,6 +1,6 @@
 /**
  * Validation Côté Client en Temps Réel (CS² Health Design System)
- * Gère la validation dynamique des formulaires (email, téléphone, confirmation de mot de passe, champs obligatoires).
+ * Gère la validation dynamique des formulaires et l'accessibilité ARIA (email, téléphone, confirmation de mot de passe, champs obligatoires).
  */
 document.addEventListener('DOMContentLoaded', () => {
   const forms = document.querySelectorAll('form[data-form-validate]');
@@ -81,11 +81,13 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /**
-   * Met à jour le DOM pour afficher/masquer le message d'erreur du champ.
+   * Met à jour le DOM pour afficher/masquer le message d'erreur du champ et synchroniser les attributs ARIA.
    */
   function setFieldError(field, message) {
     const parentGroup = field.closest('.form-group') || field.parentElement;
     let errorElement = parentGroup.querySelector('.form-error-text');
+    const fieldId = field.id || field.name;
+    const errorId = fieldId ? `${fieldId}-error` : null;
 
     if (message) {
       field.classList.add('input-error');
@@ -94,7 +96,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!errorElement) {
         errorElement = document.createElement('p');
         errorElement.className = 'form-error-text';
+        if (errorId) errorElement.id = errorId;
         errorElement.setAttribute('role', 'alert');
+        errorElement.setAttribute('aria-live', 'assertive');
         errorElement.innerHTML = `
           <svg class="w-3.5 h-3.5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
             <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
@@ -106,9 +110,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const span = errorElement.querySelector('span') || errorElement;
         span.textContent = message;
       }
+
+      if (errorId) {
+        field.setAttribute('aria-describedby', errorId);
+      }
     } else {
       field.classList.remove('input-error');
-      field.removeAttribute('aria-invalid');
+      field.setAttribute('aria-invalid', 'false');
+
       if (errorElement) {
         errorElement.remove();
       }

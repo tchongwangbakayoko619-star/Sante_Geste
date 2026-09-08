@@ -1,10 +1,12 @@
 {% extends "base.html" %}
+{% load i18n %}
 
-{% block title %}Server Error{% endblock title %}
+{% block title %}{% trans "Erreur serveur" %}{% endblock title %}
 {% block content %}
-  <h1>Ooops!!! 500</h1>
-  <h3>Looks like something went wrong!</h3>
+  <h1>{% trans "Oups !!! Erreur 500" %}</h1>
+  <h3>{% trans "Une erreur inattendue est survenue !" %}</h3>
   <p>
-    We track these errors automatically, but if the problem persists feel free to contact us. In the meantime, try refreshing.
+    {% trans "Nous suivons ces erreurs automatiquement. Si le problème persiste, n'hésitez pas à nous contacter." %}
   </p>
 {% endblock content %}
+

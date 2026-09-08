@@ -18,6 +18,7 @@
   {% block css %}{% endblock css %}
 </head>
 <body class="h-full font-sans antialiased text-neutral-800 selection:bg-health-500 selection:text-white no-scrollbar">
+  {% include "components/atoms/skip-link.html" %}
   {% block content %}{% endblock content %}
 
   {% block javascript %}

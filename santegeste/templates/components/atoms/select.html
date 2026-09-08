@@ -7,31 +7,35 @@
   - options : options du champ (choices)
   - required : booléen
   - has_error : booléen
+  - aria_describedby : ID des éléments décrivant le champ
   - icon_left : nom d'icône optionnelle à gauche
   - class / custom_classes : classes additionnelles
 {% endcomment %}
-<div class="relative flex items-center">
-  {% if icon_left %}
-    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-neutral-400 z-10">
-      {% include "components/atoms/icon.html" with name=icon_left size="w-5 h-5" %}
+{% with select_id=id|default:name %}
+  <div class="relative flex items-center w-full">
+    {% if icon_left %}
+      <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-neutral-400 z-10">
+        {% include "components/atoms/icon.html" with name=icon_left size="w-5 h-5" %}
+      </div>
+    {% endif %}
+
+    <select
+      name="{{ name }}"
+      id="{{ select_id }}"
+      {% if required %}required aria-required="true"{% endif %}
+      {% if aria_describedby %}aria-describedby="{{ aria_describedby }}"{% endif %}
+      aria-invalid="{% if has_error %}true{% else %}false{% endif %}"
+      class="select-base min-h-[44px] {% if icon_left %}select-with-icon{% else %}select-without-icon{% endif %} {% if has_error %}input-error{% endif %} appearance-none pr-10 {{ class|default:'' }} {{ custom_classes|default:'' }}"
+    >
+      {% for val, label in options %}
+        <option value="{{ val }}" {% if value == val or value|stringformat:"s" == val|stringformat:"s" %}selected{% endif %}>
+          {{ label }}
+        </option>
+      {% endfor %}
+    </select>
+
+    <div class="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-neutral-400">
+      {% include "components/atoms/icon.html" with name="chevron-down" size="w-4 h-4" %}
     </div>
-  {% endif %}
-
-  <select
-    name="{{ name }}"
-    id="{% if id %}{{ id }}{% else %}{{ name }}{% endif %}"
-    {% if required %}required{% endif %}
-    class="select-base {% if icon_left %}select-with-icon{% else %}select-without-icon{% endif %} {% if has_error %}input-error{% endif %} appearance-none pr-10 {{ class }} {{ custom_classes }}"
-  >
-    {% for val, label in options %}
-      <option value="{{ val }}" {% if value == val or value|stringformat:"s" == val|stringformat:"s" %}selected{% endif %}>
-        {{ label }}
-      </option>
-    {% endfor %}
-  </select>
-
-  <div class="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-neutral-400">
-    {% include "components/atoms/icon.html" with name="chevron-down" size="w-4 h-4" %}
   </div>
-</div>
-
+{% endwith %}

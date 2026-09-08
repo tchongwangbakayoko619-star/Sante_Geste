@@ -19,7 +19,7 @@
   </aside>
 
   <!-- Panneau Droit : Formulaire interactif (pleine largeur mobile, 50% desktop) -->
-  <main class="auth-content">
+  <main id="main-content" class="auth-content" tabindex="-1">
     <div class="auth-content__inner {% block container_width %}auth-content__inner--default{% endblock container_width %}">
       <!-- Alertes & Messages Flash Django -->
       {% include "components/molecules/flash-messages.html" %}

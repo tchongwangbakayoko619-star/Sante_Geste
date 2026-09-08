@@ -17,20 +17,20 @@
       <div class="relative z-10 space-y-4">
         <div class="inline-flex items-center gap-2 px-3 py-1 bg-white/15 border border-white/25 rounded-full text-xs font-semibold text-emerald-200 backdrop-blur-xs">
           <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-          <span>Espace Professionnel Connecté</span>
+          <span>{% trans "Espace Professionnel Connecté" %}</span>
         </div>
 
         <h1 class="font-title font-extrabold text-2xl sm:text-4xl text-white tracking-tight leading-tight">
-          Bienvenue sur SantéGeste, <span class="text-emerald-300">{{ request.user.full_name|default:request.user.email }}</span> !
+          {% trans "Bienvenue sur SantéGeste," %} <span class="text-emerald-300">{{ request.user.full_name|default:request.user.email }}</span> !
         </h1>
 
         <p class="text-sm sm:text-base text-emerald-100/90 max-w-2xl leading-relaxed">
-          Accédez rapidement à vos outils de gestion médicale, vos consultations et la gestion sécurisée des dossiers patients.
+          {% trans "Accédez rapidement à vos outils de gestion médicale, vos consultations et la gestion sécurisée des dossiers patients." %}
         </p>
 
         <div class="pt-2 flex flex-wrap gap-3">
           <a href="{% url 'users:profile' %}" class="btn btn-primary bg-emerald-500 hover:bg-emerald-600 text-white text-xs sm:text-sm py-2.5 px-5 shadow-md">
-            Mon profil soignant
+            {% trans "Mon profil soignant" %}
           </a>
         </div>
       </div>
@@ -43,8 +43,8 @@
         <div class="w-12 h-12 rounded-xl bg-health-50 border border-health-200 text-[#14967F] flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
           {% include "components/atoms/icon.html" with name="cross-heartbeat" size="w-6 h-6" %}
         </div>
-        <h3 class="font-title font-bold text-lg text-neutral-900 mb-1">Consultations</h3>
-        <p class="text-xs sm:text-sm text-neutral-500 leading-relaxed">Planification et suivi des RDV médicaux de votre centre de santé.</p>
+        <h3 class="font-title font-bold text-lg text-neutral-900 mb-1">{% trans "Consultations" %}</h3>
+        <p class="text-xs sm:text-sm text-neutral-500 leading-relaxed">{% trans "Planification et suivi des RDV médicaux de votre centre de santé." %}</p>
       </div>
 
       <!-- Card 2: Dossiers Patients -->
@@ -52,8 +52,8 @@
         <div class="w-12 h-12 rounded-xl bg-health-50 border border-health-200 text-[#14967F] flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
           {% include "components/atoms/icon.html" with name="briefcase" size="w-6 h-6" %}
         </div>
-        <h3 class="font-title font-bold text-lg text-neutral-900 mb-1">Dossiers Patients</h3>
-        <p class="text-xs sm:text-sm text-neutral-500 leading-relaxed">Gestion centralisée et sécurisée des données médicales.</p>
+        <h3 class="font-title font-bold text-lg text-neutral-900 mb-1">{% trans "Dossiers Patients" %}</h3>
+        <p class="text-xs sm:text-sm text-neutral-500 leading-relaxed">{% trans "Gestion centralisée et sécurisée des données médicales." %}</p>
       </div>
 
       <!-- Card 3: Sécurité & Secret Médical -->
@@ -61,8 +61,8 @@
         <div class="w-12 h-12 rounded-xl bg-health-50 border border-health-200 text-[#14967F] flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
           {% include "components/atoms/icon.html" with name="shield-check" size="w-6 h-6" %}
         </div>
-        <h3 class="font-title font-bold text-lg text-neutral-900 mb-1">Sécurité & Secret</h3>
-        <p class="text-xs sm:text-sm text-neutral-500 leading-relaxed">Authentification renforcée OTP et chiffrement des données.</p>
+        <h3 class="font-title font-bold text-lg text-neutral-900 mb-1">{% trans "Sécurité & Secret" %}</h3>
+        <p class="text-xs sm:text-sm text-neutral-500 leading-relaxed">{% trans "Authentification renforcée OTP et chiffrement des données." %}</p>
       </div>
     </div>
 
@@ -74,23 +74,23 @@
 
       <div class="relative z-10 max-w-3xl mx-auto space-y-6">
         <div class="inline-flex items-center gap-2 px-3.5 py-1.5 bg-white/15 border border-white/25 rounded-full text-xs font-semibold text-emerald-200 backdrop-blur-xs">
-          <span>✨ CS² Health • Système de soin connecté</span>
+          <span>✨ {% trans "CS² Health • Système de soin connecté" %}</span>
         </div>
 
         <h1 class="font-title font-extrabold text-3xl sm:text-5xl text-white tracking-tight leading-tight">
-          La gestion de votre centre de santé, simplifiée et sécurisée.
+          {% trans "La gestion de votre centre de santé, simplifiée et sécurisée." %}
         </h1>
 
         <p class="text-base sm:text-lg text-emerald-100/90 leading-relaxed">
-          Rejoignez l'écosystème SantéGeste pour accompagner vos équipes médicales et offrir le meilleur soin à vos patients.
+          {% trans "Rejoignez l'écosystème SantéGeste pour accompagner vos équipes médicales et offrir le meilleur soin à vos patients." %}
         </p>
 
         <div class="pt-4 flex items-center justify-center gap-4">
           <a href="{% url 'users:login' %}" class="btn btn-primary text-sm py-3 px-6 shadow-lg">
-            Se connecter à mon espace
+            {% trans "Se connecter à mon espace" %}
           </a>
           <a href="{% url 'users:register' %}" class="btn btn-outline bg-white/10 hover:bg-white/20 border-white/30 text-white text-sm py-3 px-6">
-            Créer un compte soignant
+            {% trans "Créer un compte soignant" %}
           </a>
         </div>
       </div>
@@ -99,3 +99,4 @@
 
 </div>
 {% endblock content_inner %}
+

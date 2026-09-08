@@ -194,3 +194,22 @@ Les styles de composants sont définis dans `santegeste/static/css/components/` 
 * `forms.css` : Champs de saisie (`.input-base`, `.input-with-icon`, `.input-error`, `.form-group`, `.form-error-text`).
 * `alerts.css` : Alertes (`.flash-messages-container`, `.alert-base`, `.alert-error`, `.alert-success`).
 * `badges.css` : Badges (`.badge-base`, `.badge-secure`, `.brand-lockup-logo`).
+* `skeletons.css` : Placeholders de chargement animé (`.skeleton-base`, `animation: skeleton-shimmer`).
+
+---
+
+## 7. Directives d'Accessibilité (a11y) & Standards UX CS² Health
+
+1. **Lien d'évitement (`skip-link.html`)** :
+   Présent au sommet de toutes les pages dans `base.html` pour permettre la navigation rapide vers `<main id="main-content">`.
+2. **Zones tactiles (Touch Targets)** :
+   Hauteur minimale garantie de `44px` (`min-h-[44px]`) sur tous les boutons et contrôles de formulaire pour l'ergonomie mobile.
+3. **Erreurs et Attributs ARIA** :
+   * Les champs en erreur reçoivent dynamiquement `aria-invalid="true"`.
+   * Les messages d'erreur sont liés au champ via `aria-describedby="[id]-error"`.
+   * Les erreurs dynamiques sont annoncées aux lecteurs d'écran via `role="alert"` et `aria-live="assertive"`.
+4. **Chargement et verrous (`aria-busy`)** :
+   * Pendant la soumission d'un formulaire, l'attribut `aria-busy="true"` est appliqué sur le formulaire et le bouton submit.
+5. **Rings de Focus Haute Visibilité** :
+   * Style standardise au clavier : `focus-visible:ring-2 focus-visible:ring-health-500 focus-visible:ring-offset-2`.
+

@@ -7,6 +7,7 @@
 {#   - dismissible: booléen (affiche un bouton de fermeture si True) #}
 {#   - auto_dismiss: millisecondes avant disparition automatique (ex: 5000) #}
 {#   - class / custom_classes: classes CSS additionnelles #}
+{% load i18n %}
 {% firstof variant type "info" as alert_variant %}
 
 <div
@@ -51,9 +52,9 @@
   {% if dismissible %}
     <button
       type="button"
-      class="shrink-0 -mr-1 p-1 rounded-lg opacity-70 hover:opacity-100 transition-opacity cursor-pointer focus:outline-none focus:ring-1 focus:ring-current"
+      class="shrink-0 -mr-1 p-2 min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg opacity-75 hover:opacity-100 transition-opacity cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-current"
       data-alert-close
-      aria-label="Fermer cette notification"
+      aria-label="{% translate 'Fermer cette notification' %}"
     >
       {% include "components/atoms/icon.html" with name="x-mark" size="w-4 h-4" %}
     </button>

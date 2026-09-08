@@ -1,13 +1,15 @@
 {% extends "base.html" %}
+{% load i18n %}
 
-{% block title %}Page not found{% endblock title %}
+{% block title %}{% trans "Page non trouvée" %}{% endblock title %}
 {% block content %}
-  <h1>Page not found</h1>
+  <h1>{% trans "Page non trouvée" %}</h1>
   <p>
     {% if exception %}
       {{ exception }}
     {% else %}
-      This is not the page you were looking for.
+      {% trans "Cette page n'existe pas ou a été déplacée." %}
     {% endif %}
   </p>
 {% endblock content %}
+

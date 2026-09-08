@@ -11,38 +11,46 @@
   - pattern : motif regex HTML5
   - inputmode : 'numeric', 'tel', 'email', etc.
   - has_error : booléen (état de validation)
+  - aria_describedby : ID des éléments décrivant le champ (aide/erreur)
+  - aria_invalid : booléen pour l'accessibilité
   - icon_left : nom d'icône optionnelle à gauche (ex: 'mail', 'lock')
   - class / custom_classes : classes additionnelles pour l'input
 {% endcomment %}
-{% if icon_left %}
-  <div class="relative flex items-center">
-    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-neutral-400">
-      {% include "components/atoms/icon.html" with name=icon_left size="w-5 h-5" %}
+{% with input_id=id|default:name %}
+  {% if icon_left %}
+    <div class="relative flex items-center w-full">
+      <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-neutral-400">
+        {% include "components/atoms/icon.html" with name=icon_left size="w-5 h-5" %}
+      </div>
+      <input
+        type="{{ type|default:'text' }}"
+        name="{{ name }}"
+        id="{{ input_id }}"
+        {% if value %}value="{{ value }}"{% endif %}
+        placeholder="{{ placeholder|default:'' }}"
+        {% if required %}required aria-required="true"{% endif %}
+        {% if autocomplete %}autocomplete="{{ autocomplete }}"{% endif %}
+        {% if pattern %}pattern="{{ pattern }}"{% endif %}
+        {% if inputmode %}inputmode="{{ inputmode }}"{% endif %}
+        {% if aria_describedby %}aria-describedby="{{ aria_describedby }}"{% endif %}
+        aria-invalid="{% if has_error or aria_invalid %}true{% else %}false{% endif %}"
+        class="input-base input-with-icon min-h-[44px] {% if has_error or aria_invalid %}input-error{% endif %} {{ class|default:'' }} {{ custom_classes|default:'' }}"
+      >
     </div>
+  {% else %}
     <input
       type="{{ type|default:'text' }}"
       name="{{ name }}"
-      id="{% if id %}{{ id }}{% else %}{{ name }}{% endif %}"
+      id="{{ input_id }}"
       {% if value %}value="{{ value }}"{% endif %}
       placeholder="{{ placeholder|default:'' }}"
-      {% if required %}required{% endif %}
+      {% if required %}required aria-required="true"{% endif %}
       {% if autocomplete %}autocomplete="{{ autocomplete }}"{% endif %}
       {% if pattern %}pattern="{{ pattern }}"{% endif %}
       {% if inputmode %}inputmode="{{ inputmode }}"{% endif %}
-      class="input-base input-with-icon {% if has_error %}input-error{% endif %} {{ class|default:'' }} {{ custom_classes|default:'' }}"
+      {% if aria_describedby %}aria-describedby="{{ aria_describedby }}"{% endif %}
+      aria-invalid="{% if has_error or aria_invalid %}true{% else %}false{% endif %}"
+      class="input-base input-without-icon min-h-[44px] {% if has_error or aria_invalid %}input-error{% endif %} {{ class|default:'' }} {{ custom_classes|default:'' }}"
     >
-  </div>
-{% else %}
-  <input
-    type="{{ type|default:'text' }}"
-    name="{{ name }}"
-    id="{% if id %}{{ id }}{% else %}{{ name }}{% endif %}"
-    {% if value %}value="{{ value }}"{% endif %}
-    placeholder="{{ placeholder|default:'' }}"
-    {% if required %}required{% endif %}
-    {% if autocomplete %}autocomplete="{{ autocomplete }}"{% endif %}
-    {% if pattern %}pattern="{{ pattern }}"{% endif %}
-    {% if inputmode %}inputmode="{{ inputmode }}"{% endif %}
-    class="input-base input-without-icon {% if has_error %}input-error{% endif %} {{ class|default:'' }} {{ custom_classes|default:'' }}"
-  >
-{% endif %}
+  {% endif %}
+{% endwith %}

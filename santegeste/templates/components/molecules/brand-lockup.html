@@ -1,5 +1,6 @@
 {# Molecule: Brand Lockup (Logo Squircle + CS² Health Title) #}
 {# Props: class, custom_classes #}
+{% load i18n %}
 <div class="flex items-center justify-center gap-3.5 {{ class }} {{ custom_classes }}">
   <!-- Squircle Icon -->
   <div class="brand-lockup-logo">
@@ -12,7 +13,8 @@
       CS<sup class="text-sm font-bold text-neutral-900 ml-0.5">2</sup>
     </div>
     <span class="brand-lockup-subtitle">
-      Health
+      {% trans "Health" %}
     </span>
   </div>
 </div>
+

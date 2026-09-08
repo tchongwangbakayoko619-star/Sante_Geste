@@ -1,16 +1,17 @@
 {# Organism: Auth Hero (Left Panel CS² Health) #}
 {# Props: logo_url, class, custom_classes #}
+{% load i18n %}
 <div class="h-full flex flex-col justify-between {{ class }} {{ custom_classes }}">
 
   <!-- Top Brand Heading -->
   <header class="z-10">
-    <a href="{{ logo_url|default:'/' }}" class="inline-flex flex-col group focus:outline-none focus:ring-2 focus:ring-white/40 rounded-lg" aria-label="Accueil CS² Health">
+    <a href="{{ logo_url|default:'/' }}" class="inline-flex flex-col group focus:outline-none focus:ring-2 focus:ring-white/40 rounded-lg" aria-label="{% trans 'Accueil CS² Health' %}">
       <div class="font-title font-extrabold text-2xl sm:text-3xl text-white tracking-tight flex items-center">
         CS<sup class="text-sm sm:text-base font-bold text-white ml-0.5">2</sup>
         <span class="ml-1.5 font-bold">Health</span>
       </div>
       <span class="text-[11px] sm:text-xs font-bold text-white/90 tracking-[0.2em] uppercase mt-0.5">
-        Système de soin connecté
+        {% trans "Système de soin connecté" %}
       </span>
     </a>
   </header>
@@ -76,17 +77,17 @@
     <div class="auth-hero-pill">
       <span class="w-2 h-2 rounded-full bg-white animate-ping"></span>
       <span class="w-2 h-2 rounded-full bg-white -ml-3"></span>
-      <span>✨ À VOS CÔTÉS CHAQUE JOUR POUR VOTRE CENTRE DE SANTÉ</span>
+      <span>✨ {% trans "À VOS CÔTÉS CHAQUE JOUR POUR VOTRE CENTRE DE SANTÉ" %}</span>
     </div>
 
     <!-- Main Catchy Title -->
     <h1 class="auth-hero-title">
-      Prendre soin de vos patients, en toute simplicité.
+      {% trans "Prendre soin de vos patients, en toute simplicité." %}
     </h1>
 
     <!-- Subtitle Paragraph -->
     <p class="auth-hero-subtitle">
-      Retrouvez vos consultations, vos dossiers patients et l'ensemble de votre équipe dans un espace fluide et attentionné.
+      {% trans "Retrouvez vos consultations, vos dossiers patients et l'ensemble de votre équipe dans un espace fluide et attentionné." %}
     </p>
   </footer>
 

@@ -1,12 +1,15 @@
 {# Atom: Checkbox #}
-{# Props: id, name, checked, required, disabled, value, class, custom_classes #}
-<input
-  type="checkbox"
-  id="{% if id %}{{ id }}{% else %}{{ name }}{% endif %}"
-  name="{{ name }}"
-  {% if value %}value="{{ value }}"{% endif %}
-  {% if checked %}checked{% endif %}
-  {% if required %}required{% endif %}
-  {% if disabled %}disabled{% endif %}
-  class="checkbox-custom {{ class }} {{ custom_classes }}"
-/>
+{# Props: id, name, checked, required, disabled, value, aria_describedby, class, custom_classes #}
+{% with cb_id=id|default:name %}
+  <input
+    type="checkbox"
+    id="{{ cb_id }}"
+    name="{{ name }}"
+    {% if value %}value="{{ value }}"{% endif %}
+    {% if checked %}checked{% endif %}
+    {% if required %}required aria-required="true"{% endif %}
+    {% if disabled %}disabled aria-disabled="true"{% endif %}
+    {% if aria_describedby %}aria-describedby="{{ aria_describedby }}"{% endif %}
+    class="checkbox-custom min-h-[20px] min-w-[20px] cursor-pointer focus-visible:ring-2 focus-visible:ring-[#14967F] focus-visible:ring-offset-2 {{ class|default:'' }} {{ custom_classes|default:'' }}"
+  />
+{% endwith %}

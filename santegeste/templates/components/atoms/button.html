@@ -33,7 +33,8 @@
   {% else %}
     <button
       type="{{ type|default:'submit' }}"
-      {% if disabled or loading %}disabled{% endif %}
+      {% if disabled or loading %}disabled aria-disabled="true"{% endif %}
+      {% if loading %}aria-busy="true"{% else %}aria-busy="false"{% endif %}
       class="btn {% if full_width %}w-full{% endif %} {% if btn_variant == 'primary' %}btn-primary{% elif btn_variant == 'outline' %}btn-outline{% elif btn_variant == 'link' %}btn-link{% else %}btn-secondary{% endif %} {% if loading %}btn-loading{% endif %} {{ class|default:'' }} {{ custom_classes|default:'' }}"
     >
       <!-- Spinner SVG de chargement animé -->

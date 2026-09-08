@@ -4,6 +4,9 @@
 {% block title %}{% translate "Mon Profil" %} - CS² Health{% endblock title %}
 
 {% block content_inner %}
+{% trans "Espace Sécurisé" as secure_badge_text %}
+{% trans "Non renseigné" as default_empty_value %}
+
 <div class="max-w-3xl mx-auto space-y-6">
   <div class="bg-white border border-neutral-200/80 rounded-3xl p-6 sm:p-10 shadow-sm space-y-6">
 
@@ -25,35 +28,35 @@
         </div>
       </div>
 
-      {% include "components/atoms/badge.html" with variant="secure" text="Espace Sécurisé" icon_name="lock" %}
+      {% include "components/atoms/badge.html" with variant="secure" text=secure_badge_text icon_name="lock" %}
     </div>
 
     <!-- Personal Info Details Grid -->
     <div class="space-y-4">
       <div class="flex items-center justify-between">
-        <h3 class="font-title font-bold text-base text-neutral-900">Informations personnelles</h3>
+        <h3 class="font-title font-bold text-base text-neutral-900">{% trans "Informations personnelles" %}</h3>
         <a href="{% url 'users:profile-edit' %}" class="btn btn-outline text-xs py-1.5 px-3">
-          Modifier
+          {% trans "Modifier" %}
         </a>
       </div>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs sm:text-sm">
         <div class="p-4 bg-neutral-50 rounded-2xl border border-neutral-200/60">
-          <span class="text-neutral-400 block text-[11px] font-semibold uppercase tracking-wider mb-0.5">Prénom</span>
-          <span class="font-semibold text-neutral-800">{{ user.first_name|default:"Non renseigné" }}</span>
+          <span class="text-neutral-400 block text-[11px] font-semibold uppercase tracking-wider mb-0.5">{% trans "Prénom" %}</span>
+          <span class="font-semibold text-neutral-800">{{ user.first_name|default:default_empty_value }}</span>
         </div>
         <div class="p-4 bg-neutral-50 rounded-2xl border border-neutral-200/60">
-          <span class="text-neutral-400 block text-[11px] font-semibold uppercase tracking-wider mb-0.5">Nom</span>
-          <span class="font-semibold text-neutral-800">{{ user.last_name|default:"Non renseigné" }}</span>
+          <span class="text-neutral-400 block text-[11px] font-semibold uppercase tracking-wider mb-0.5">{% trans "Nom" %}</span>
+          <span class="font-semibold text-neutral-800">{{ user.last_name|default:default_empty_value }}</span>
         </div>
         <div class="p-4 bg-neutral-50 rounded-2xl border border-neutral-200/60">
-          <span class="text-neutral-400 block text-[11px] font-semibold uppercase tracking-wider mb-0.5">Téléphone</span>
-          <span class="font-semibold text-neutral-800">{{ user.telephone|default:"Non renseigné" }}</span>
+          <span class="text-neutral-400 block text-[11px] font-semibold uppercase tracking-wider mb-0.5">{% trans "Téléphone" %}</span>
+          <span class="font-semibold text-neutral-800">{{ user.telephone|default:default_empty_value }}</span>
         </div>
         <div class="p-4 bg-neutral-50 rounded-2xl border border-neutral-200/60">
-          <span class="text-neutral-400 block text-[11px] font-semibold uppercase tracking-wider mb-0.5">Statut du compte</span>
+          <span class="text-neutral-400 block text-[11px] font-semibold uppercase tracking-wider mb-0.5">{% trans "Statut du compte" %}</span>
           <span class="font-semibold text-emerald-600 flex items-center gap-1.5">
-            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Actif
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> {% trans "Actif" %}
           </span>
         </div>
       </div>
@@ -63,19 +66,19 @@
     {% if medical_profile %}
       <div class="pt-4 border-t border-neutral-100 space-y-4">
         <div class="flex items-center justify-between">
-          <h3 class="font-title font-bold text-base text-neutral-900">Profil Médical</h3>
+          <h3 class="font-title font-bold text-base text-neutral-900">{% trans "Profil Médical" %}</h3>
           <a href="{% url 'users:medical-profile-edit' %}" class="btn btn-outline text-xs py-1.5 px-3">
-            Modifier
+            {% trans "Modifier" %}
           </a>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs sm:text-sm">
           <div class="p-4 bg-health-50/60 rounded-2xl border border-health-200/60">
-            <span class="text-neutral-500 block text-[11px] font-semibold uppercase tracking-wider mb-0.5">Spécialité</span>
+            <span class="text-neutral-500 block text-[11px] font-semibold uppercase tracking-wider mb-0.5">{% trans "Spécialité" %}</span>
             <span class="font-bold text-[#14967F]">{{ medical_profile.get_specialite_display|default:medical_profile.specialite }}</span>
           </div>
           <div class="p-4 bg-health-50/60 rounded-2xl border border-health-200/60">
-            <span class="text-neutral-500 block text-[11px] font-semibold uppercase tracking-wider mb-0.5">N° d'Ordre</span>
-            <span class="font-bold text-[#14967F]">{{ medical_profile.numero_ordre|default:"Non renseigné" }}</span>
+            <span class="text-neutral-500 block text-[11px] font-semibold uppercase tracking-wider mb-0.5">{% trans "N° d'Ordre" %}</span>
+            <span class="font-bold text-[#14967F]">{{ medical_profile.numero_ordre|default:default_empty_value }}</span>
           </div>
         </div>
       </div>
@@ -84,3 +87,4 @@
   </div>
 </div>
 {% endblock content_inner %}
+
