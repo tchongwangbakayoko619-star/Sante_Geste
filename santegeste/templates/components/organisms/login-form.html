@@ -1,6 +1,17 @@
-{# Organism: Login Form (Right Panel CS² Health) #}
-{# Props: form, action_url, forgot_password_url, class, custom_classes #}
-<div class="auth-card {{ class }} {{ custom_classes }}">
+{# Organism: Login Form (CS² Health Design System) #}
+{# Props: #}
+{#   - form : objet formulaire Django #}
+{#   - action_url : URL de soumission du formulaire (défaut: '') #}
+{#   - forgot_password_url : URL de réinitialisation de mot de passe (optionnel) #}
+{#   - register_url : URL de création de compte (optionnel) #}
+{#   - title : titre principal (défaut: 'Ravi de vous revoir !') #}
+{#   - subtitle : sous-titre explication #}
+{#   - submit_text : libellé du bouton (défaut: 'Se connecter à mon espace') #}
+{#   - show_remember_me : booléen (défaut: True) #}
+{#   - show_security_badge : booléen (défaut: True) #}
+{#   - show_register_link : booléen (défaut: True) #}
+{#   - class / custom_classes : classes CSS additionnelles #}
+<div class="auth-card {{ class|default:'' }} {{ custom_classes|default:'' }}">
 
   <!-- Top Brand Lockup -->
   <div class="mb-6 flex justify-center">
@@ -10,15 +21,15 @@
   <!-- Form Greeting Header -->
   <div class="auth-header">
     <h2 class="auth-title">
-      Ravi de vous revoir !
+      {{ title|default:"Ravi de vous revoir !" }}
     </h2>
     <p class="auth-subtitle">
-      Bienvenue sur votre espace CS<sup class="text-[10px]">2</sup> Health. Connectez-vous pour retrouver vos outils médicaux.
+      {{ subtitle|default:"Bienvenue sur votre espace CS² Health. Connectez-vous pour retrouver vos outils médicaux." }}
     </p>
   </div>
 
-  <!-- Interactive Form -->
-  <form method="post" action="{{ action_url|default:'' }}" class="space-y-5" novalidate>
+  <!-- Interactive Form with JS Validation & Submit State -->
+  <form method="post" action="{{ action_url|default:'' }}" class="space-y-5" data-form-validate data-form-loading novalidate>
     {% csrf_token %}
 
     <!-- Global Non-field Errors -->
@@ -34,25 +45,43 @@
     {% include "components/molecules/form-field.html" with id="email" name="email" type="email" label="Adresse email ou identifiant *" placeholder="dr.valois@cs2-health.org" value=form.email.value required=True autocomplete="email" icon_left="mail" has_error=form.email.errors error_message=form.email.errors.0 %}
 
     <!-- Field 2: Password with Forgot Link -->
-    {% include "components/molecules/password-field.html" with id="password" name="password" label="Mot de passe *" placeholder="••••••••" required=True autocomplete="current-password" forgot_password_url=forgot_password_url|default:"/users/forgot-password/" has_error=form.password.errors error_message=form.password.errors.0 %}
+    {% include "components/molecules/password-field.html" with id="password" name="password" label="Mot de passe *" placeholder="••••••••" required=True autocomplete="current-password" forgot_password_url=forgot_password_url has_error=form.password.errors error_message=form.password.errors.0 %}
 
     <!-- Controls Row: Remember Me & Security Badge -->
     <div class="flex items-center justify-between pt-1">
-      <label class="flex items-center gap-2 cursor-pointer select-none group">
-        {% include "components/atoms/checkbox.html" with id="remember_me" name="remember_me" %}
-        <span class="text-xs sm:text-sm text-neutral-600 group-hover:text-neutral-900 transition-colors">
-          Rester connecté
-        </span>
-      </label>
+      {% if show_remember_me|default:True %}
+        <label class="flex items-center gap-2 cursor-pointer select-none group">
+          {% include "components/atoms/checkbox.html" with id="remember_me" name="remember_me" %}
+          <span class="text-xs sm:text-sm text-neutral-600 group-hover:text-neutral-900 transition-colors">
+            Rester connecté
+          </span>
+        </label>
+      {% else %}
+        <div></div>
+      {% endif %}
 
-      {% include "components/atoms/badge.html" with variant="secure" text="Espace Sécurisé" icon_name="lock" %}
+      {% if show_security_badge|default:True %}
+        {% include "components/atoms/badge.html" with variant="secure" text="Espace Sécurisé" icon_name="lock" %}
+      {% endif %}
     </div>
 
     <!-- Submit CTA Button -->
     <div class="pt-2">
-      {% include "components/atoms/button.html" with text="Se connecter à mon espace" type="submit" full_width=True icon_left="login" variant="primary" %}
+      {% include "components/atoms/button.html" with text=submit_text|default:"Se connecter à mon espace" type="submit" full_width=True icon_left="login" variant="primary" %}
     </div>
   </form>
+
+  <!-- Register Link Footer -->
+  {% if show_register_link|default:True and register_url %}
+    <div class="mt-6 text-center pt-4 border-t border-neutral-100">
+      <p class="text-xs sm:text-sm text-neutral-600">
+        Pas encore de compte ?
+        <a href="{{ register_url }}" class="auth-link ml-1">
+          Créer un compte soignant
+        </a>
+      </p>
+    </div>
+  {% endif %}
 
   <!-- Bottom Brand Footnote -->
   <footer class="auth-footer">

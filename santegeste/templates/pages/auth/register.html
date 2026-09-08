@@ -10,6 +10,6 @@
 {% endblock auth_hero %}
 
 {% block auth_content %}
-  {% include "components/organisms/register-form.html" with form=form login_url="/users/login/" %}
+  {% url 'users:login' as login_url %}
+  {% include "components/organisms/register-form.html" with form=form login_url=login_url %}
 {% endblock auth_content %}
-

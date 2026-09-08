@@ -8,6 +8,7 @@
 {% endblock auth_hero %}
 
 {% block auth_content %}
-  {% include "components/organisms/otp-form.html" with form=form resend_url="/users/resend-otp/" back_url="/users/register/" back_text="Retour à l'inscription" title="Validation de votre compte" subtitle="Saisissez le code OTP à 6 chiffres reçu par e-mail pour activer votre compte professionnel." %}
+  {% url 'users:resend-otp' as resend_url %}
+  {% url 'users:register' as back_url %}
+  {% include "components/organisms/otp-form.html" with form=form resend_url=resend_url back_url=back_url back_text="Retour à l'inscription" title="Validation de votre compte" subtitle="Saisissez le code OTP à 6 chiffres reçu par e-mail pour activer votre compte professionnel." %}
 {% endblock auth_content %}
-

@@ -1,6 +1,15 @@
 {# Organism: Register Form (CS² Health Professional Account) #}
-{# Props: form, action_url, login_url, class, custom_classes #}
-<div class="auth-card-wide {{ class }} {{ custom_classes }}">
+{# Props: #}
+{#   - form : objet formulaire Django #}
+{#   - action_url : URL de soumission du formulaire (défaut: '') #}
+{#   - login_url : URL de la page de connexion (optionnel) #}
+{#   - title : titre principal (défaut: 'Créer votre compte soignant') #}
+{#   - subtitle : sous-titre explication #}
+{#   - submit_text : libellé du bouton (défaut: 'Créer mon compte professionnel') #}
+{#   - show_security_badge : booléen (défaut: True) #}
+{#   - show_login_link : booléen (défaut: True) #}
+{#   - class / custom_classes : classes CSS additionnelles #}
+<div class="auth-card-wide {{ class|default:'' }} {{ custom_classes|default:'' }}">
 
   <!-- Top Brand Lockup -->
   <div class="mb-5 flex justify-center">
@@ -10,15 +19,15 @@
   <!-- Form Greeting Header -->
   <div class="auth-header">
     <h2 class="auth-title">
-      Créer votre compte soignant
+      {{ title|default:"Créer votre compte soignant" }}
     </h2>
     <p class="auth-subtitle">
-      Rejoignez l'écosystème CS<sup class="text-[10px]">2</sup> Health pour gérer vos consultations et vos dossiers patients en toute fluidité.
+      {{ subtitle|default:"Rejoignez l'écosystème CS² Health pour gérer vos consultations et vos dossiers patients en toute fluidité." }}
     </p>
   </div>
 
-  <!-- Form Body -->
-  <form method="post" action="{{ action_url|default:'' }}" class="space-y-4" novalidate>
+  <!-- Form Body with JS Validation & Submit Loading -->
+  <form method="post" action="{{ action_url|default:'' }}" class="space-y-4" data-form-validate data-form-loading novalidate>
     {% csrf_token %}
 
     <!-- Global Non-field Errors -->
@@ -62,24 +71,28 @@
         {% include "components/atoms/icon.html" with name="shield-check" size="w-4 h-4 text-emerald-600" %}
         <span>Chiffrement et secret médical garantis</span>
       </div>
-      {% include "components/atoms/badge.html" with variant="secure" text="Espace Sécurisé" icon_name="lock" %}
+      {% if show_security_badge|default:True %}
+        {% include "components/atoms/badge.html" with variant="secure" text="Espace Sécurisé" icon_name="lock" %}
+      {% endif %}
     </div>
 
     <!-- Submit CTA Button -->
     <div class="pt-2">
-      {% include "components/atoms/button.html" with text="Créer mon compte professionnel" type="submit" full_width=True icon_left="login" variant="primary" %}
+      {% include "components/atoms/button.html" with text=submit_text|default:"Créer mon compte professionnel" type="submit" full_width=True icon_left="login" variant="primary" %}
     </div>
   </form>
 
   <!-- Footer Link to Login -->
-  <div class="mt-8 text-center pt-4 border-t border-neutral-100">
-    <p class="text-xs sm:text-sm text-neutral-600">
-      Vous avez déjà un compte ?
-      <a href="{{ login_url|default:'/users/login/' }}" class="auth-link ml-1">
-        Connectez-vous ici
-      </a>
-    </p>
-  </div>
+  {% if show_login_link|default:True and login_url %}
+    <div class="mt-8 text-center pt-4 border-t border-neutral-100">
+      <p class="text-xs sm:text-sm text-neutral-600">
+        Vous avez déjà un compte ?
+        <a href="{{ login_url }}" class="auth-link ml-1">
+          Connectez-vous ici
+        </a>
+      </p>
+    </div>
+  {% endif %}
 
   <!-- Bottom Brand Footnote -->
   <footer class="auth-footer">
