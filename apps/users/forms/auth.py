@@ -13,7 +13,7 @@ from django.utils.translation import gettext_lazy as _
 from apps.users.forms.mixins import PasswordConfirmationMixin
 from apps.users.models import MedicalProfile
 from utils.constants.otp import OTP_CODE_LENGTH
-from utils.phone import validate_phone_number
+from utils.phone import normalize_phone_number, validate_phone_number
 
 
 User = get_user_model()
@@ -29,7 +29,21 @@ def _password_field(label: str, autocomplete: str) -> forms.CharField:
 
 # --- Authentification --------------------------------------------------
 
+from utils.enums import UserRoleEnum
+
+
 class UserRegisterForm(PasswordConfirmationMixin, forms.ModelForm):
+    ROLE_CHOICES = [("", _("Sélectionnez votre rôle *"))] + list(UserRoleEnum.choices)
+
+    role = forms.ChoiceField(
+        label=_("Rôle professionnel"),
+        choices=ROLE_CHOICES,
+        required=True,
+        error_messages={
+            "required": _("Le choix d'un rôle est obligatoire."),
+            "invalid_choice": _("Veuillez sélectionner un rôle valide."),
+        },
+    )
     password1 = _password_field(_("Mot de passe"), "new-password")
     password2 = _password_field(_("Confirmation du mot de passe"), "new-password")
     telephone = forms.CharField(max_length=20, required=False, validators=[validate_phone_number])
@@ -41,12 +55,11 @@ class UserRegisterForm(PasswordConfirmationMixin, forms.ModelForm):
             "first_name",
             "last_name",
             "telephone",
+            "role",
             "avatar",
             "password1",
             "password2",
         )
-
-
 
     def clean_email(self) -> str:
         email = self.cleaned_data["email"].strip().lower()
@@ -60,6 +73,19 @@ class UserRegisterForm(PasswordConfirmationMixin, forms.ModelForm):
     def clean_last_name(self) -> str:
         return self.cleaned_data.get("last_name", "").strip()
 
+    def clean_telephone(self) -> str:
+        telephone = self.cleaned_data.get("telephone", "").strip()
+        if not telephone:
+            return ""
+        return normalize_phone_number(telephone)
+
+    def clean_role(self) -> str:
+        role = self.cleaned_data.get("role", "").strip()
+        if not role:
+            raise ValidationError(_("Le choix d'un rôle est obligatoire."))
+        if role not in UserRoleEnum.values:
+            raise ValidationError(_("Rôle sélectionné invalide."))
+        return role
 
     def clean(self) -> dict[str, Any]:
         cleaned_data = super().clean()
@@ -71,8 +97,20 @@ class UserRegisterForm(PasswordConfirmationMixin, forms.ModelForm):
         user.email = self.cleaned_data["email"]
         user.set_password(self.cleaned_data["password1"])
         user.is_verified = False
+
+        # Attribution du rôle obligatoire
+        role = self.cleaned_data["role"]
+        user.is_proprietaire = (role == UserRoleEnum.PROPRIETAIRE)
+        user.is_personnel_medical = (role == UserRoleEnum.PERSONNEL_MEDICAL)
+        user.is_responsable_pharmacie = (role == UserRoleEnum.RESPONSABLE_PHARMACIE)
+        user.is_vendeur_pharmacie = (role == UserRoleEnum.VENDEUR_PHARMACIE)
+        user.is_caissier = (role == UserRoleEnum.CAISSIER)
+        user.is_agent_accueil = (role == UserRoleEnum.AGENT_ACCUEIL)
+
         if commit:
             user.save()
+            if user.is_personnel_medical:
+                MedicalProfile.objects.get_or_create(user=user)
         return user
 
 
@@ -229,9 +267,15 @@ class UserProfileUpdateForm(forms.ModelForm):
         widgets = {
             "first_name": forms.TextInput(attrs={"placeholder": _("Prénom")}),
             "last_name": forms.TextInput(attrs={"placeholder": _("Nom")}),
-            "telephone": forms.TextInput(attrs={"placeholder": "+237600000000"}),
+            "telephone": forms.TextInput(attrs={"placeholder": "+237 6XX XX XX XX"}),
             "avatar": forms.FileInput(attrs={"accept": "image/*"}),
         }
+
+    def clean_telephone(self) -> str:
+        telephone = self.cleaned_data.get("telephone", "").strip()
+        if not telephone:
+            return ""
+        return normalize_phone_number(telephone)
 
 
 class MedicalProfileForm(forms.ModelForm):

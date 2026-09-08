@@ -1,0 +1,9 @@
+{# Molecule: Flash Messages Container (CS² Health Design System) #}
+{# Positionne les notifications en haut à droite de l'écran (fixed top-right) #}
+{% if messages %}
+  <div class="flash-messages-container fixed top-5 right-5 z-50 flex flex-col gap-3 max-w-sm sm:max-w-md w-[calc(100%-2.5rem)] pointer-events-none" role="region" aria-label="Notifications système">
+    {% for message in messages %}
+      {% include "components/molecules/alert.html" with variant=message.tags message=message dismissible=True auto_dismiss=5000 class="pointer-events-auto" %}
+    {% endfor %}
+  </div>
+{% endif %}

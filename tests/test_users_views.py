@@ -13,7 +13,7 @@ def test_user_register_view_get(client) -> None:
     url = reverse("users:register")
     response = client.get(url)
     assert response.status_code == 200
-    assert "users/register.html" in [t.name for t in response.templates]
+    assert "pages/auth/register.html" in [t.name for t in response.templates]
 
 
 @pytest.mark.django_db
@@ -22,7 +22,7 @@ def test_user_login_view_get(client) -> None:
     url = reverse("users:login")
     response = client.get(url)
     assert response.status_code == 200
-    assert "users/login.html" in [t.name for t in response.templates]
+    assert "pages/auth/login.html" in [t.name for t in response.templates]
 
 
 @pytest.mark.django_db
@@ -132,6 +132,28 @@ def test_otp_verification_view_via_direct_token_link_without_session_user_id(
     user.refresh_from_db()
     assert user.is_active is True
     assert user.is_verified is True
+
+
+@pytest.mark.django_db
+def test_forgot_password_view_post(client) -> None:
+    """Vérifie la soumission du formulaire de mot de passe oublié sans erreur de typage ou callable."""
+    user = User.objects.create_user(
+        email="forgot-test@santegeste.com",
+        password="SomePassword123!",
+    )
+    url = reverse("users:forgot-password")
+
+    # 1. Email existant
+    response = client.post(url, data={"email": "forgot-test@santegeste.com"})
+    assert response.status_code == 302
+    assert response.url == reverse("users:password-reset-verify-otp")
+    assert client.session.get("reset_email") == "forgot-test@santegeste.com"
+    assert client.session.get("reset_signed_token")
+
+    # 2. Email non existant (anti-énumération)
+    response_nonexistent = client.post(url, data={"email": "unknown@santegeste.com"})
+    assert response_nonexistent.status_code == 302
+    assert response_nonexistent.url == reverse("users:password-reset-verify-otp")
 
 
 @pytest.mark.django_db

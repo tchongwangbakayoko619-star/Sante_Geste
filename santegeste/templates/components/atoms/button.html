@@ -1,0 +1,51 @@
+{% comment %}
+  Atom : Button
+  Paramètres :
+  - text : texte du bouton
+  - type : 'submit', 'button', 'a' (défaut: 'submit')
+  - href : URL si type='a'
+  - variant : 'primary' (vert profond CS² Health), 'secondary', 'outline', 'link'
+  - full_width : booléen (défaut: False)
+  - icon_left : icône à gauche (ex: 'login')
+  - icon_right : icône à droite
+  - disabled : booléen
+  - class / custom_classes : classes additionnelles
+{% endcomment %}
+{% with btn_variant=variant|default:"primary" %}
+  {% if type == "a" %}
+    <a
+      href="{{ href|default:'#' }}"
+      class="btn {% if full_width %}w-full{% endif %} {% if btn_variant == 'primary' %}btn-primary{% elif btn_variant == 'outline' %}btn-outline{% elif btn_variant == 'link' %}btn-link{% else %}btn-secondary{% endif %} {{ class }} {{ custom_classes }}"
+    >
+      {% if icon_left %}
+        <span class="mr-2 flex items-center justify-center">
+          {% include "components/atoms/icon.html" with name=icon_left size="w-5 h-5" %}
+        </span>
+      {% endif %}
+      <span>{{ text }}</span>
+      {% if icon_right %}
+        <span class="ml-2 flex items-center justify-center">
+          {% include "components/atoms/icon.html" with name=icon_right size="w-4 h-4" %}
+        </span>
+      {% endif %}
+    </a>
+  {% else %}
+    <button
+      type="{{ type|default:'submit' }}"
+      {% if disabled %}disabled{% endif %}
+      class="btn {% if full_width %}w-full{% endif %} {% if btn_variant == 'primary' %}btn-primary{% elif btn_variant == 'outline' %}btn-outline{% elif btn_variant == 'link' %}btn-link{% else %}btn-secondary{% endif %} {{ class }} {{ custom_classes }}"
+    >
+      {% if icon_left %}
+        <span class="mr-2.5 flex items-center justify-center">
+          {% include "components/atoms/icon.html" with name=icon_left size="w-5 h-5" %}
+        </span>
+      {% endif %}
+      <span>{{ text }}</span>
+      {% if icon_right %}
+        <span class="ml-2 flex items-center justify-center">
+          {% include "components/atoms/icon.html" with name=icon_right size="w-4 h-4" %}
+        </span>
+      {% endif %}
+    </button>
+  {% endif %}
+{% endwith %}

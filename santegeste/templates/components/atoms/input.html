@@ -1,0 +1,48 @@
+{% comment %}
+  Atom : Input
+  Paramètres :
+  - type : 'text', 'email', 'password', etc. (défaut: 'text')
+  - name : nom du champ
+  - id : identifiant unique
+  - value : valeur initiale
+  - placeholder : texte indicatif
+  - required : booléen
+  - autocomplete : attribut HTML
+  - pattern : motif regex HTML5
+  - inputmode : 'numeric', 'tel', 'email', etc.
+  - has_error : booléen (état de validation)
+  - icon_left : nom d'icône optionnelle à gauche (ex: 'mail', 'lock')
+  - class / custom_classes : classes additionnelles pour l'input
+{% endcomment %}
+{% if icon_left %}
+  <div class="relative flex items-center">
+    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-neutral-400">
+      {% include "components/atoms/icon.html" with name=icon_left size="w-5 h-5" %}
+    </div>
+    <input
+      type="{{ type|default:'text' }}"
+      name="{{ name }}"
+      id="{% if id %}{{ id }}{% else %}{{ name }}{% endif %}"
+      {% if value %}value="{{ value }}"{% endif %}
+      placeholder="{{ placeholder|default:'' }}"
+      {% if required %}required{% endif %}
+      {% if autocomplete %}autocomplete="{{ autocomplete }}"{% endif %}
+      {% if pattern %}pattern="{{ pattern }}"{% endif %}
+      {% if inputmode %}inputmode="{{ inputmode }}"{% endif %}
+      class="input-base input-with-icon {% if has_error %}input-error{% endif %} {{ class|default:'' }} {{ custom_classes|default:'' }}"
+    >
+  </div>
+{% else %}
+  <input
+    type="{{ type|default:'text' }}"
+    name="{{ name }}"
+    id="{% if id %}{{ id }}{% else %}{{ name }}{% endif %}"
+    {% if value %}value="{{ value }}"{% endif %}
+    placeholder="{{ placeholder|default:'' }}"
+    {% if required %}required{% endif %}
+    {% if autocomplete %}autocomplete="{{ autocomplete }}"{% endif %}
+    {% if pattern %}pattern="{{ pattern }}"{% endif %}
+    {% if inputmode %}inputmode="{{ inputmode }}"{% endif %}
+    class="input-base input-without-icon {% if has_error %}input-error{% endif %} {{ class|default:'' }} {{ custom_classes|default:'' }}"
+  >
+{% endif %}

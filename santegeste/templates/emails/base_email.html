@@ -1,90 +1,184 @@
-<!DOCTYPE html>
-<html lang="fr">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{% block title %}SantéGeste{% endblock %}</title>
-  <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-      background-color: #f8f9fa;
-      margin: 0;
-      padding: 0;
-      color: #212529;
-    }
-    .email-container {
-      max-width: 600px;
-      margin: 30px auto;
-      background: #ffffff;
-      border-radius: 8px;
-      overflow: hidden;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    }
-    .email-header {
-      background-color: #0d6efd;
-      color: #ffffff;
-      padding: 24px;
-      text-align: center;
-    }
-    .email-header h1 {
-      margin: 0;
-      font-size: 24px;
-      font-weight: 700;
-    }
-    .email-body {
-      padding: 32px 24px;
-      line-height: 1.6;
-    }
-    .otp-code {
-      display: inline-block;
-      font-size: 32px;
-      font-weight: 800;
-      letter-spacing: 6px;
-      color: #0d6efd;
-      background-color: #e7f1ff;
-      padding: 12px 28px;
-      border-radius: 6px;
-      margin: 20px 0;
-    }
-    .btn-action {
-      display: inline-block;
-      background-color: #0d6efd;
-      color: #ffffff !important;
-      text-decoration: none;
-      padding: 12px 24px;
-      font-weight: 600;
-      border-radius: 6px;
-      margin: 20px 0;
-    }
-    .email-footer {
-      background-color: #f1f3f5;
-      color: #6c757d;
-      padding: 16px 24px;
-      text-align: center;
-      font-size: 13px;
-    }
-    .alert-warning {
-      background-color: #fff3cd;
-      color: #664d03;
-      padding: 12px 16px;
-      border-radius: 6px;
-      border: 1px solid #ffecb5;
-      margin-top: 16px;
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="light" />
+  <meta name="supported-color-schemes" content="light" />
+  <title>{% block title %}SantéGeste — CS² Health{% endblock title %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <style type="text/css">
+    /* Reset & Client-Specific Styles */
+    /* Design Tokens SantéGeste / CS² Health */
+    /* Health: 950=#042620, 900=#064036, 800=#0c5c4e, 700=#0e6e5e, 500=#14b8a6, 400=#2dd4bf, 100=#ccfbf1, 50=#f0fdfa */
+    /* Health Btn: #0f6e5e / Hover: #0b5549 */
+    /* Neutrals: 900=#0f172a, 700=#334155, 500=#64748b, 200=#e2e8f0, 50=#f8fafc */
+    
+    body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+    table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+    img { -ms-interpolation-mode: bicubic; border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; }
+    table { border-collapse: collapse !important; }
+    body { height: 100% !important; margin: 0 !important; padding: 0 !important; width: 100% !important; background-color: #f1f5f4; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+    body { height: 100% !important; margin: 0 !important; padding: 0 !important; width: 100% !important; background-color: #f0fdfa; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+    
+    /* Responsive Queries */
+    .font-title { font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important; }
+
+    @media screen and (max-width: 600px) {
+      .email-container { width: 100% !important; margin: 0 !important; border-radius: 0 !important; }
+      .content-padding { padding: 24px 20px !important; }
+      .content-padding { padding: 24px 18px !important; }
+      .otp-code { font-size: 28px !important; letter-spacing: 6px !important; }
+      .header-padding { padding: 24px 20px !important; }
+      .header-padding { padding: 24px 18px !important; }
     }
   </style>
 </head>
-<body>
-  <div class="email-container">
-    <div class="email-header">
-      <h1>SantéGeste</h1>
-    </div>
-    <div class="email-body">
-      {% block content %}{% endblock %}
-    </div>
-    <div class="email-footer">
-      <p>&copy; {% now "Y" %} SantéGeste. Tous droits réservés.</p>
-      <p>Ceci est un message automatique, merci de ne pas y répondre directement.</p>
-    </div>
-  </div>
+<body style="margin: 0; padding: 0; background-color: #f1f5f4; -webkit-font-smoothing: antialiased;">
+  <!-- Background Table wrapper -->
+  <table border="0" cellpadding="0" cellspacing="0" width="100%" style="table-layout: fixed; background-color: #f1f5f4;">
+<body style="margin: 0; padding: 0; background-color: #f0fdfa; -webkit-font-smoothing: antialiased;">
+  <!-- Background Table: health-50 (#f0fdfa) -->
+  <table border="0" cellpadding="0" cellspacing="0" width="100%" style="table-layout: fixed; background-color: #f0fdfa;">
+    <tr>
+      <td align="center" style="padding: 30px 15px 40px 15px;">
+      <td align="center" style="padding: 28px 12px 40px 12px;">
+        
+        <!-- Main Email Container (max 600px) -->
+        <!-- Main Email Card (max 600px) -->
+        <!--[if (gte mso 9)|(IE)]>
+        <table align="center" border="0" cellspacing="0" cellpadding="0" width="600">
+        <tr>
+        <td align="center" valign="top" width="600">
+        <![endif]-->
+        <table border="0" cellpadding="0" cellspacing="0" width="100%" class="email-container" style="max-width: 600px; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(4, 31, 26, 0.08); border: 1px solid #e2ebe8;">
+        <table border="0" cellpadding="0" cellspacing="0" width="100%" class="email-container" style="max-width: 600px; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px -5px rgba(4, 38, 32, 0.1), 0 8px 10px -6px rgba(4, 38, 32, 0.05); border: 1px solid #ccfbf1;">
+          
+          <!-- BRAND HEADER: CS² Health Theme -->
+          <!-- BRAND HEADER: Exact CS² Health Dark Theme (#042620) -->
+          <tr>
+            <td align="center" class="header-padding" style="background: linear-gradient(135deg, #041f1a 0%, #083830 50%, #041f1a 100%); padding: 32px 30px; text-align: center; border-bottom: 3px solid #0f6e5e;">
+            <td align="center" class="header-padding" style="background-color: #042620; padding: 32px 28px 28px 28px; text-align: center; border-bottom: 3px solid #0f6e5e;">
+              <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                <tr>
+                  <td align="center">
+                    <!-- Brand Lockup -->
+                    <!-- Brand Lockup Table -->
+                    <table border="0" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <!-- Logo Mark Squircle -->
+                        <!-- Logo Squircle with CS² Cross & Heartbeat SVG -->
+                        <td valign="middle" style="padding-right: 14px;">
+                          <div style="width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(135deg, #0f6e5e 0%, #1dd1a1 100%); text-align: center; line-height: 44px; display: inline-block; box-shadow: 0 4px 12px rgba(29, 209, 161, 0.35);">
+                            <!-- Clean inline Medical Cross -->
+                            <span style="color: #ffffff; font-size: 22px; font-weight: 900; line-height: 44px; display: block;">✚</span>
+                          <div style="width: 48px; height: 48px; border-radius: 14px; background: linear-gradient(135deg, #2dd4bf 0%, #0f6e5e 50%, #064036 100%); text-align: center; display: inline-block; box-shadow: 0 4px 14px rgba(45, 212, 191, 0.35); overflow: hidden;">
+                            <svg width="48" height="48" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: block;">
+                              <path d="M35 15C35 9.477 39.477 5 45 5H55C60.523 5 65 9.477 65 15V35H85C90.523 35 95 39.477 95 45V55C95 60.523 90.523 65 85 65H65V85C65 90.523 60.523 95 55 95H45C39.477 95 35 90.523 35 85V65H15C9.477 65 5 60.523 5 55V45C5 39.477 9.477 35 15 35H35V15Z" fill="#ffffff" />
+                              <path d="M12 50H36L44 32L54 68L64 42L70 50H88" stroke="#042620" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                          </div>
+                        </td>
+                        <!-- Logo Typography -->
+                        <td valign="middle" align="left">
+                          <span style="display: block; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 22px; font-weight: 800; color: #ffffff; letter-spacing: -0.5px; line-height: 1.2;">
+                            CS² <span style="color: #1dd1a1;">Health</span>
+                          <span class="font-title" style="display: block; font-size: 24px; font-weight: 800; color: #ffffff; letter-spacing: -0.5px; line-height: 1.1;">
+                            CS<sup style="font-size: 14px; font-weight: 700; color: #ffffff; margin-left: 2px;">2</sup>
+                            <span style="color: #2dd4bf; margin-left: 4px;">Health</span>
+                          </span>
+                          <span style="display: block; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; font-weight: 600; color: #82b5aa; letter-spacing: 1.5px; text-transform: uppercase;">
+                            SantéGeste Platform
+                          <span style="display: block; font-size: 10px; font-weight: 700; color: #5eead4; letter-spacing: 2px; text-transform: uppercase; margin-top: 3px;">
+                            Système de soin connecté
+                          </span>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                <!-- Security Micro-Badge in Header -->
+                <!-- Security Micro-Badge (matching pill-highlight) -->
+                <tr>
+                  <td align="center" style="padding-top: 14px;">
+                    <span style="display: inline-block; background-color: rgba(29, 209, 161, 0.12); border: 1px solid rgba(29, 209, 161, 0.3); border-radius: 9999px; padding: 4px 12px; font-size: 11px; font-weight: 600; color: #a3e9d8; letter-spacing: 0.3px;">
+                      🔒 Communication Sécurisée • HDS & RGPD
+                  <td align="center" style="padding-top: 16px;">
+                    <span style="display: inline-block; background-color: rgba(6, 64, 54, 0.7); border: 1px solid rgba(45, 212, 191, 0.35); border-radius: 9999px; padding: 4px 14px; font-size: 11px; font-weight: 600; color: #5eead4; letter-spacing: 0.5px;">
+                      🔒 Espace Sécurisé • Certifié HDS & RGPD
+                    </span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- EMAIL BODY CONTENT -->
+          <tr>
+            <td class="content-padding" style="padding: 36px 36px 28px 36px; background-color: #ffffff; color: #1e293b; font-size: 15px; line-height: 1.65;">
+            <td class="content-padding" style="padding: 36px 36px 28px 36px; background-color: #ffffff; color: #0f172a; font-size: 15px; line-height: 1.65;">
+              {% block content %}
+              {% endblock content %}
+            </td>
+          </tr>
+
+          <!-- MEDICAL REASSURANCE BANNER -->
+          <!-- MEDICAL REASSURANCE BANNER (health-50 / health-100) -->
+          <tr>
+            <td style="padding: 0 36px 24px 36px;">
+              <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f7faf9; border-radius: 10px; border: 1px solid #e3edea;">
+              <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f0fdfa; border-radius: 12px; border: 1px solid #ccfbf1;">
+                <tr>
+                  <td style="padding: 16px 20px;">
+                    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                      <tr>
+                        <td width="30" valign="top" style="font-size: 18px; line-height: 1;">🛡️</td>
+                        <td style="font-size: 12px; color: #475569; line-height: 1.5;">
+                          <strong style="color: #0b493f;">Protection des données de santé :</strong> Vos données et échanges sont chiffrés de bout en bout selon les normes de sécurité médicale en vigueur.
+                        <td width="32" valign="top" style="font-size: 20px; line-height: 1;">🛡️</td>
+                        <td style="font-size: 12px; color: #064036; line-height: 1.55;">
+                          <strong style="color: #042620;">Chiffrement Médical de Bout en Bout :</strong> Vos échanges et données patients sont protégés conformément aux référentiels de sécurité des Données de Santé.
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- FOOTER -->
+          <!-- FOOTER: neutral-50 (#f8fafc) & neutral-500 (#64748b) -->
+          <tr>
+            <td style="background-color: #f8fafc; padding: 28px 36px; border-top: 1px solid #edf2f0; text-align: center; color: #64748b; font-size: 12px; line-height: 1.6;">
+              <p style="margin: 0 0 8px 0; font-weight: 600; color: #334155;">
+            <td style="background-color: #f8fafc; padding: 26px 36px; border-top: 1px solid #e2e8f0; text-align: center; color: #64748b; font-size: 12px; line-height: 1.6;">
+              <p style="margin: 0 0 6px 0; font-weight: 700; color: #0f172a;">
+                &copy; {% now "Y" %} SantéGeste • CS² Health. Tous droits réservés.
+              </p>
+              <p style="margin: 0 0 10px 0;">
+              <p style="margin: 0 0 8px 0; color: #64748b;">
+                Ceci est une notification automatique générée par le système SantéGeste. Merci de ne pas répondre directement à cet e-mail.
+              </p>
+              <p style="margin: 0; font-size: 11px; color: #94a3b8;">
+                Pour toute assistance technique, contactez l'administrateur de votre établissement de santé.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+        <!--[if (gte mso 9)|(IE)]>
+        </td>
+        </tr>
+        </table>
+        <![endif]-->
+
+      </td>
+    </tr>
+  </table>
 </body>
 </html>
+
+

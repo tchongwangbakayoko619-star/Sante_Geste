@@ -1,0 +1,15 @@
+{# Atom: Badge (CS² Health Design System) #}
+{# Props: text, variant (secure|pill-highlight|success|neutral), icon_name, class, custom_classes #}
+{% with badge_variant=variant|default:"secure" %}
+<div
+  class="badge-base {% if badge_variant == 'secure' %}badge-secure{% elif badge_variant == 'pill-highlight' %}badge-pill-highlight{% elif badge_variant == 'neutral' %}badge-neutral{% else %}badge-success{% endif %} {{ class|default:'' }} {{ custom_classes|default:'' }}"
+>
+  {% if badge_variant == "secure" %}
+    <span class="w-1.5 h-1.5 rounded-full bg-[#14967F] animate-pulse shrink-0"></span>
+  {% endif %}
+  {% if icon_name %}
+    {% include "components/atoms/icon.html" with name=icon_name size="w-3.5 h-3.5 shrink-0" %}
+  {% endif %}
+  <span class="tracking-tight">{{ text }}</span>
+</div>
+{% endwith %}

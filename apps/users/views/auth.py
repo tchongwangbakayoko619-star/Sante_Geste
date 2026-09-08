@@ -21,7 +21,7 @@ from utils.enums import OTPPurposeEnum
 class UserRegisterView(AnonymousRequiredMixin, FormView):
     """Vue d'inscription d'un nouvel utilisateur SantéGeste."""
 
-    template_name = "users/register.html"
+    template_name = "pages/auth/register.html"
     form_class = UserRegisterForm
     success_url = reverse_lazy("users:otp-verify")
 
@@ -34,6 +34,7 @@ class UserRegisterView(AnonymousRequiredMixin, FormView):
                 first_name=cleaned_data.get("first_name", ""),
                 last_name=cleaned_data.get("last_name", ""),
                 telephone=cleaned_data.get("telephone", ""),
+                role=cleaned_data.get("role", ""),
                 avatar=cleaned_data.get("avatar"),
             )
         except OtpCooldownError as err:
@@ -56,7 +57,7 @@ class UserRegisterView(AnonymousRequiredMixin, FormView):
 class UserLoginView(AnonymousRequiredMixin, RedirectToNextOrReferrerMixin, FormView):
     """Vue de connexion utilisateur avec redirection intelligente."""
 
-    template_name = "users/login.html"
+    template_name = "pages/auth/login.html"
     form_class = UserLoginForm
 
     def get_form_kwargs(self) -> dict[str, Any]:
@@ -109,18 +110,21 @@ class UserLoginView(AnonymousRequiredMixin, RedirectToNextOrReferrerMixin, FormV
 
 
 class UserLogoutView(LoginRequiredMixin, View):
-    """Vue de déconnexion sécurisée (POST uniquement)."""
+    """Vue de déconnexion (supporte POST et GET)."""
 
     def post(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         logout(request)
         messages.info(request, _("Vous avez été déconnecté avec succès."))
         return HttpResponseRedirect(reverse_lazy("home"))
 
+    def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+        return self.post(request, *args, **kwargs)
+
 
 class OTPVerificationView(FormView):
     """Vue de validation du code OTP soumis par l'utilisateur."""
 
-    template_name = "users/otp_verify.html"
+    template_name = "pages/auth/otp_verify.html"
     form_class = OTPVerificationForm
     success_url = reverse_lazy("users:login")
 

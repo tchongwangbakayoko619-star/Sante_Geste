@@ -1,0 +1,111 @@
+@layer components {
+  /* --------------------------------------------------------------------------
+     AUTH LAYOUT & PANELS (CS² Health Design System)
+     -------------------------------------------------------------------------- */
+
+  /* Global Auth Container */
+  .auth-layout {
+    @apply min-h-screen flex flex-col lg:flex-row w-full bg-white;
+  }
+
+  /* Left Hero Panel (Desktop 50%, hidden on mobile) */
+  .auth-hero {
+    @apply hidden lg:flex lg:w-1/2 bg-health-950 text-white relative overflow-hidden flex-col justify-between p-8 sm:p-12 lg:p-16 min-h-screen;
+  }
+
+  .auth-hero__content {
+    @apply relative z-10 flex flex-col h-full justify-between;
+  }
+
+  /* Right Content / Form Panel (Mobile 100%, Desktop 50%) */
+  .auth-content {
+    @apply w-full lg:w-1/2 flex items-center justify-center p-4 sm:p-8 lg:p-12 xl:p-16 relative bg-white overflow-y-auto no-scrollbar min-h-screen;
+  }
+
+  .auth-content__inner {
+    @apply relative z-10 w-full py-6 sm:py-8;
+  }
+
+  .auth-content__inner--default {
+    @apply max-w-md;
+  }
+
+  .auth-content__inner--wide {
+    @apply max-w-xl;
+  }
+
+  /* Ambient Glow Effects & Decorative Elements */
+  .auth-glow {
+    @apply absolute rounded-full blur-3xl pointer-events-none;
+  }
+
+  .auth-glow--top {
+    @apply -top-32 -left-32 w-96 h-96 bg-emerald-300/30;
+  }
+
+  .auth-glow--bottom {
+    @apply bottom-10 right-0 w-80 h-80 bg-emerald-600/30;
+  }
+
+  /* Subtle Dotted Background Pattern */
+  .auth-pattern {
+    @apply absolute inset-0 bg-[radial-gradient(rgba(255,255,255,0.12)_1px,transparent_1px)] [background-size:24px_24px] pointer-events-none;
+  }
+
+  /* Auth Card Containers */
+  .auth-card {
+    @apply w-full max-w-md mx-auto flex flex-col justify-center;
+  }
+
+  .auth-card-wide {
+    @apply w-full max-w-xl mx-auto flex flex-col justify-center;
+  }
+
+  /* Auth Headers & Titles */
+  .auth-header {
+    @apply text-center mb-8;
+  }
+
+  .auth-title {
+    @apply font-title font-extrabold text-2xl sm:text-3xl text-neutral-900 tracking-tight;
+  }
+
+  .auth-subtitle {
+    @apply text-xs sm:text-sm text-neutral-500 mt-2 max-w-xs sm:max-w-sm mx-auto leading-relaxed;
+  }
+
+  /* Auth Footers & Links */
+  .auth-footer {
+    @apply mt-10 text-center;
+  }
+
+  .auth-footer-text {
+    @apply text-[11px] sm:text-xs text-neutral-400 tracking-wide;
+  }
+
+  .auth-link {
+    @apply font-bold text-[#14967F] hover:text-[#0f7a67] underline hover:no-underline transition-colors;
+  }
+
+  /* OTP Organism Elements */
+  .otp-icon-box {
+    @apply w-12 h-12 rounded-2xl bg-[#14967F]/10 border border-[#14967F]/30 text-[#14967F] mx-auto mb-4 flex items-center justify-center shadow-2xs;
+  }
+
+  .otp-input-field {
+    @apply w-full text-center py-4 px-4 text-2xl sm:text-3xl font-mono font-bold tracking-[0.35em] text-neutral-900 bg-neutral-50/70 border border-neutral-200 rounded-2xl placeholder:text-neutral-300 focus:outline-none focus:border-[#14967F] focus:ring-2 focus:ring-[#14967F]/20 transition-all shadow-xs;
+  }
+
+  /* Auth Hero Organism Elements */
+  .auth-hero-pill {
+    @apply inline-flex items-center gap-2 px-3 py-1 bg-white/15 border border-white/30 text-white text-[11px] sm:text-xs font-semibold rounded-full backdrop-blur-xs tracking-wider;
+  }
+
+  .auth-hero-title {
+    @apply font-title font-extrabold text-3xl sm:text-4xl lg:text-5xl text-white tracking-tight leading-tight mt-4;
+  }
+
+  .auth-hero-subtitle {
+    @apply text-sm sm:text-base text-white/90 mt-3 leading-relaxed;
+  }
+}

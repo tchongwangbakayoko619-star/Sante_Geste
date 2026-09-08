@@ -1,0 +1,37 @@
+@layer components {
+  /* --------------------------------------------------------------------------
+     ALERTS & FLASH MESSAGES SYSTEM (CS² Health Design System)
+     -------------------------------------------------------------------------- */
+
+  .flash-messages-container {
+    @apply fixed top-5 right-5 z-50 flex flex-col gap-3 max-w-sm sm:max-w-md w-[calc(100%-2.5rem)] pointer-events-none;
+  }
+
+  .alert-base,
+  .flash-alert {
+    @apply pointer-events-auto flex items-center gap-3 border-l-4 px-5 py-4 text-sm font-medium rounded-r-xl shadow-lg relative overflow-hidden transition-all duration-300 ease-out;
+  }
+
+  .alert-warning,
+  .flash-alert-warning {
+    @apply bg-amber-950 border-yellow-400 text-yellow-200;
+  }
+
+  .alert-error,
+  .alert-danger,
+  .flash-alert-error,
+  .flash-alert-danger,
+  .auth-alert-error {
+    @apply bg-red-950 border-red-500 text-red-200;
+  }
+
+  .alert-success,
+  .flash-alert-success {
+    @apply bg-emerald-950 border-emerald-400 text-emerald-200;
+  }
+
+  .alert-info,
+  .flash-alert-info {
+    @apply bg-slate-900 border-blue-500 text-blue-200;
+  }
+}

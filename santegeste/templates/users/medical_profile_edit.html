@@ -1,23 +1,40 @@
 {% extends "base.html" %}
-{% load i18n %}
+{% load static i18n %}
 
-{% block title %}{% translate "Profil Médical" %} - SantéGeste{% endblock title %}
+{% block title %}{% translate "Modifier le profil médical" %} - CS² Health{% endblock title %}
 
-{% block content %}
-<div class="container py-5">
-  <div class="row justify-content-center">
-    <div class="col-md-8">
-      <div class="card shadow-sm border-0 rounded-3">
-        <div class="card-body p-4">
-          <h2 class="card-title mb-4">{% translate "Modifier le profil médical" %}</h2>
-          <form method="post">
-            {% csrf_token %}
-            {{ form.as_p }}
-            <button type="submit" class="btn btn-primary">{% translate "Enregistrer" %}</button>
-          </form>
-        </div>
-      </div>
+{% block content_inner %}
+<div class="max-w-xl mx-auto space-y-6">
+  <div class="bg-white border border-neutral-200/80 rounded-3xl p-6 sm:p-10 shadow-sm space-y-6">
+
+    <div class="flex items-center justify-between pb-4 border-b border-neutral-100">
+      <h1 class="font-title font-extrabold text-xl sm:text-2xl text-neutral-900">
+        Modifier le profil médical
+      </h1>
+      <a href="{% url 'users:profile' %}" class="text-xs font-semibold text-neutral-500 hover:text-neutral-800 transition-colors">
+        Annuler
+      </a>
     </div>
+
+    <form method="post" class="space-y-4" novalidate>
+      {% csrf_token %}
+
+      {% if form.non_field_errors %}
+        <div class="space-y-2 mb-4">
+          {% for error in form.non_field_errors %}
+            {% include "components/molecules/alert.html" with variant="error" message=error %}
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      {% include "components/molecules/select-field.html" with id="specialite" name="specialite" label="Spécialité *" value=form.specialite.value options=form.specialite.field.choices required=True icon_left="briefcase" has_error=form.specialite.errors error_message=form.specialite.errors.0 %}
+      {% include "components/molecules/form-field.html" with id="numero_ordre" name="numero_ordre" label="Numéro d'Ordre" value=form.numero_ordre.value icon_left="shield-check" has_error=form.numero_ordre.errors error_message=form.numero_ordre.errors.0 %}
+
+      <div class="pt-4">
+        {% include "components/atoms/button.html" with text="Enregistrer le profil médical" type="submit" full_width=True variant="primary" %}
+      </div>
+    </form>
+
   </div>
 </div>
-{% endblock content %}
+{% endblock content_inner %}

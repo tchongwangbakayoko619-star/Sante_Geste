@@ -1,17 +1,34 @@
-{% extends "emails/base_email.html" %}
+{% extends "base/base_email.html" %}
 
-{% block title %}Alerte de sécurité - SantéGeste{% endblock %}
+{% block title %}Alerte de sécurité - CS² Health{% endblock %}
 
 {% block content %}
-<h2>Alerte de sécurité</h2>
-<p>Bonjour <strong>{{ user_name }}</strong>,</p>
-<p>Nous vous informons qu'une opération sensible a été effectuée sur votre compte SantéGeste :</p>
+<div style="text-align: center; margin-bottom: 20px;">
+  <span class="badge-pill" style="display: inline-block; background-color: #fef2f2; color: #b91c1c; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.75px; padding: 4px 14px; border-radius: 20px; border: 1px solid #fecaca;">
+    Alerte de sécurité
+  </span>
+</div>
 
-<p style="padding: 12px; background-color: #f8f9fa; border-left: 4px solid #0d6efd;">
-  <strong>Opération :</strong> {{ action_label }}
+<h2 style="font-size: 22px; font-weight: 800; color: #0f172a; text-align: center; margin: 0 0 16px 0; letter-spacing: -0.5px;">
+  Activité sur votre compte
+</h2>
+
+<p style="margin: 0 0 14px 0; color: #334155; font-size: 15px;">
+  Bonjour <strong>{{ user_name }}</strong>,
 </p>
 
-<div class="alert-warning">
-  <p style="margin:0;"><strong>Attention :</strong> Si vous n'avez pas effectué cette action, veuillez modifier immédiatement votre mot de passe et contacter le support.</p>
+<p style="margin: 0 0 20px 0; color: #475569; font-size: 15px; line-height: 1.6;">
+  Nous vous informons qu'une opération sensible a été effectuée sur votre compte professionnel <strong>CS<sup>2</sup> Health</strong> :
+</p>
+
+<div style="padding: 16px 18px; background-color: #f8fafc; border-radius: 10px; border-left: 4px solid #14967F; border: 1px solid #e2e8f0; margin: 20px 0;">
+  <span style="font-size: 11px; color: #64748b; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">Opération effectuée</span>
+  <div style="font-size: 16px; font-weight: 700; color: #0f172a; margin-top: 4px;">{{ action_label }}</div>
+</div>
+
+<div class="alert-security" style="background-color: #fffbeb; border: 1px solid #fde68a; border-left: 4px solid #d97706; padding: 14px 16px; border-radius: 8px; color: #92400e; font-size: 13px; line-height: 1.5; margin-top: 24px;">
+  <p style="margin: 0;">
+    <strong>Attention :</strong> Si vous n'avez pas effectué cette action, veuillez modifier immédiatement votre mot de passe et contacter l'administrateur ou le support technique.
+  </p>
 </div>
 {% endblock %}

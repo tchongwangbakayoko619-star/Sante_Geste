@@ -33,6 +33,7 @@ class ForgotPasswordView(AnonymousRequiredMixin, FormView):
     """Vue de demande d'oubli de mot de passe (anti-énumération)."""
 
     template_name = "users/forgot_password.html"
+    template_name = "pages/auth/forgot_password.html"
     form_class = ForgotPasswordForm
     success_url = reverse_lazy("users:password-reset-verify-otp")
 
@@ -40,13 +41,13 @@ class ForgotPasswordView(AnonymousRequiredMixin, FormView):
         email = form.cleaned_data["email"]
 
         try:
-            _, _, signed_token = request_password_reset(email)
+            _user, _raw_code, signed_token = request_password_reset(email)
 
             if signed_token:
                 self.request.session["reset_signed_token"] = signed_token
                 self.request.session["reset_email"] = email
 
-            messages.info(
+            messages.success(
                 self.request,
                 _(
                     "Si un compte actif correspond à cet email, un code de réinitialisation vous a été envoyé par e-mail."
@@ -63,6 +64,7 @@ class PasswordResetOTPVerifyView(AnonymousRequiredMixin, FormView):
     """Étape 1 : Saisie et validation du code OTP pour la réinitialisation de mot de passe."""
 
     template_name = "users/password_reset_otp_verify.html"
+    template_name = "pages/auth/password_reset_otp_verify.html"
     form_class = OTPVerificationForm
     success_url = reverse_lazy("users:password-reset-confirm")
 
@@ -152,6 +154,7 @@ class PasswordResetConfirmView(AnonymousRequiredMixin, FormView):
     """Étape 2 : Saisie du nouveau mot de passe uniquement après validation de l'OTP."""
 
     template_name = "users/password_reset_confirm.html"
+    template_name = "pages/auth/password_reset_confirm.html"
     form_class = SetNewPasswordForm
     fallback_url = "users:login"
     success_url = reverse_lazy("users:login")

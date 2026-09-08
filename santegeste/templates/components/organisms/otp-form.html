@@ -1,0 +1,91 @@
+{# Organism: OTP Verification Form (CS² Health) #}
+{# Props: form, action_url, resend_url, back_url, back_text, title, subtitle, class, custom_classes #}
+<div class="auth-card {{ class }} {{ custom_classes }}">
+
+  <!-- Top Brand Lockup -->
+  <div class="mb-6 flex justify-center">
+    {% include "components/molecules/brand-lockup.html" %}
+  </div>
+
+  <!-- Header -->
+  <div class="auth-header">
+    <div class="otp-icon-box">
+      {% include "components/atoms/icon.html" with name="key" size="w-6 h-6" %}
+    </div>
+    <h2 class="auth-title">
+      {{ title|default:"Code de vérification" }}
+    </h2>
+    <p class="auth-subtitle">
+      {{ subtitle|default:"Saisissez le code de sécurité à 6 chiffres reçu par e-mail pour valider votre identité médicale." }}
+    </p>
+  </div>
+
+  <!-- Form Body -->
+  <form method="post" action="{{ action_url|default:'' }}" class="space-y-6" novalidate>
+    {% csrf_token %}
+
+    <!-- Global Errors -->
+    {% if form.non_field_errors %}
+      <div class="space-y-2 mb-4" role="region" aria-label="Erreurs de validation">
+        {% for error in form.non_field_errors %}
+          {% include "components/molecules/alert.html" with variant="error" message=error %}
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <!-- 6-digit Big OTP Input -->
+    <div class="flex flex-col items-center gap-2">
+      <label for="code" class="text-xs font-bold text-neutral-700 uppercase tracking-wider">
+        Code OTP à 6 chiffres
+      </label>
+      <input
+        type="text"
+        name="code"
+        id="code"
+        maxlength="6"
+        pattern="\d*"
+        inputmode="numeric"
+        placeholder="••••••"
+        autofocus
+        required
+        class="otp-input-field {% if form.code.errors %}input-error{% endif %}"
+      />
+      {% if form.code.errors %}
+        <p class="text-xs text-red-600 font-medium text-center mt-1" role="alert">{{ form.code.errors.0 }}</p>
+      {% endif %}
+    </div>
+
+    <!-- Submit CTA Button -->
+    <div>
+      {% include "components/atoms/button.html" with text="Valider le code de sécurité" type="submit" full_width=True icon_left="shield-check" variant="primary" %}
+    </div>
+  </form>
+
+  <!-- Resend Code Section -->
+  {% if resend_url %}
+    <div class="mt-6 pt-5 border-t border-neutral-100 text-center">
+      <form method="post" action="{{ resend_url }}">
+        {% csrf_token %}
+        <button type="submit" class="text-xs sm:text-sm font-semibold text-[#14967F] hover:text-[#0f7a67] hover:underline transition-colors cursor-pointer">
+          Renvoyer un nouveau code OTP
+        </button>
+      </form>
+    </div>
+  {% endif %}
+
+  <!-- Back Link -->
+  <div class="mt-4 text-center">
+    <a href="{{ back_url|default:'/users/login/' }}" class="inline-flex items-center gap-1.5 text-xs font-semibold text-neutral-500 hover:text-neutral-800 transition-colors">
+      {% include "components/atoms/icon.html" with name="arrow-left" size="w-3.5 h-3.5" %}
+      <span>{{ back_text|default:"Retour à la connexion" }}</span>
+    </a>
+  </div>
+
+  <!-- Bottom Brand Footnote -->
+  <footer class="auth-footer">
+    <p class="auth-footer-text">
+      CS<sup class="text-[9px]">2</sup> Health • Sécurité & Secret médical garantis
+    </p>
+  </footer>
+
+</div>

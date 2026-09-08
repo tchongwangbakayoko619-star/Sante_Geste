@@ -1,0 +1,14 @@
+{% extends "layouts/auth.html" %}
+{% load i18n %}
+
+{% block title %}{% translate "Connexion" %} - CS² Health{% endblock title %}
+
+{% block auth_hero %}
+  {% include "components/organisms/auth-hero.html" with logo_url="/" %}
+{% endblock auth_hero %}
+
+{% block auth_content %}
+  {% url 'users:forgot-password' as forgot_url %}
+  {% include "components/organisms/login-form.html" with form=form forgot_password_url=forgot_url %}
+{% endblock auth_content %}
+

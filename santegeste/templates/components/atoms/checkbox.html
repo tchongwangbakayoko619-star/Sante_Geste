@@ -1,0 +1,12 @@
+{# Atom: Checkbox #}
+{# Props: id, name, checked, required, disabled, value, class, custom_classes #}
+<input
+  type="checkbox"
+  id="{% if id %}{{ id }}{% else %}{{ name }}{% endif %}"
+  name="{{ name }}"
+  {% if value %}value="{{ value }}"{% endif %}
+  {% if checked %}checked{% endif %}
+  {% if required %}required{% endif %}
+  {% if disabled %}disabled{% endif %}
+  class="checkbox-custom {{ class }} {{ custom_classes }}"
+/>

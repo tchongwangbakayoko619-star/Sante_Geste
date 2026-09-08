@@ -1,0 +1,38 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="auth-layout">
+  <!-- Panneau Gauche : Hero / Marque (affiché uniquement à partir de lg: 1024px) -->
+  <aside class="auth-hero">
+    <!-- Éléments d'ambiance et glow subtils en arrière-plan -->
+    <span class="auth-glow auth-glow--top"></span>
+    <span class="auth-glow auth-glow--bottom"></span>
+    <!-- Motif pointillé subtil en fond de marque -->
+    <div class="auth-pattern"></div>
+
+    <div class="auth-hero__content">
+      {% block auth_hero %}
+        <!-- Contenu de l'organisme Hero -->
+      {% endblock auth_hero %}
+    </div>
+  </aside>
+
+  <!-- Panneau Droit : Formulaire interactif (pleine largeur mobile, 50% desktop) -->
+  <main class="auth-content">
+    <div class="auth-content__inner {% block container_width %}auth-content__inner--default{% endblock container_width %}">
+      <!-- Alertes & Messages Flash Django -->
+      {% include "components/molecules/flash-messages.html" %}
+
+      {% block auth_content %}
+        <!-- Contenu de l'organisme Formulaire -->
+      {% endblock auth_content %}
+    </div>
+  </main>
+</div>
+{% endblock content %}
+
+{% block javascript %}
+  <script src="{% static 'js/components/password-toggle.js' %}" defer></script>
+  <script src="{% static 'js/components/alerts.js' %}" defer></script>
+{% endblock javascript %}

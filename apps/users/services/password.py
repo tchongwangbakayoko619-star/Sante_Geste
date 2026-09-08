@@ -33,7 +33,7 @@ def request_password_reset(email: str) -> tuple[User | None, str | None, str | N
         # Anti-énumération : retourne silencieusement None sans lever d'erreur
         return None, None, None
 
-    _, raw_code, signed_token = request_otp(user, OTPPurposeEnum.PASSWORD_RESET)
+    otp_obj, raw_code, signed_token = request_otp(user, OTPPurposeEnum.PASSWORD_RESET)
     return user, raw_code, signed_token
 
 
