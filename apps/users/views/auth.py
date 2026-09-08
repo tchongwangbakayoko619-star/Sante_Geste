@@ -99,7 +99,7 @@ class UserLoginView(AnonymousRequiredMixin, RedirectToNextOrReferrerMixin, FormV
         if user is not None:
             reset_login_rate_limit(self.request, email=user.email)
             login(self.request, user)
-            messages.info(
+            messages.success(
                 self.request,
                 _("Bienvenue sur SantéGeste, %(name)s !")
                 % {"name": user.full_name or user.email},
@@ -114,7 +114,7 @@ class UserLogoutView(LoginRequiredMixin, View):
 
     def post(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         logout(request)
-        messages.info(request, _("Vous avez été déconnecté avec succès."))
+        messages.success(request, _("Vous avez été déconnecté avec succès."))
         return HttpResponseRedirect(reverse_lazy("home"))
 
     def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:

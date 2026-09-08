@@ -33,6 +33,12 @@
       setTimeout(() => {
         const parent = alertEl.parentElement;
         alertEl.remove();
+
+        // Émettre un événement personnalisé pour notifier les écouteurs de la suppression
+        document.dispatchEvent(new CustomEvent('alert:dismissed', {
+          detail: { element: alertEl }
+        }));
+
         // Si le conteneur n'a plus d'alertes, le nettoyer
         if (parent && parent.classList.contains('flash-messages-container') && parent.children.length === 0) {
           parent.remove();
@@ -152,8 +158,10 @@
     subtree: true,
   });
 
-  // Exposer un helper global pour créer des toasts dynamiques
-  window.showToast = function(message, type = 'info', duration = 5000) {
+  /**
+   * Crée et affiche une alerte toast dynamique dans le DOM
+   */
+  function createToast(message, type = 'info', duration = 5000) {
     let container = document.querySelector('.flash-messages-container');
     if (!container) {
       container = document.createElement('div');
@@ -222,5 +230,21 @@
 
     container.appendChild(alert);
     initAlert(alert);
+  }
+
+  // Écouteur d'évènement personnalisé pour afficher un toast de manière découplée
+  document.addEventListener('show-toast', (e) => {
+    const { message, type = 'info', duration = 5000 } = e.detail || {};
+    if (message) {
+      createToast(message, type, duration);
+    }
+  });
+
+  // Export d'aide global basé sur l'émission de l'évènement 'show-toast'
+  window.showToast = function(message, type = 'info', duration = 5000) {
+    document.dispatchEvent(new CustomEvent('show-toast', {
+      detail: { message, type, duration }
+    }));
   };
 })();
+

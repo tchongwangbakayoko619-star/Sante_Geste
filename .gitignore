@@ -279,3 +279,7 @@ santegeste/media/
 .envs/
 !.envs/**/example*
 !.envs/**/*.example
+
+# Generated CSS assets
+santegeste/static/css/output.css
+
