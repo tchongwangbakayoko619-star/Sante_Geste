@@ -1,0 +1,17 @@
+{# Template Atome: Skeleton Placeholder #}
+{# Parameters: #}
+{# - variant: 'text' (default), 'circle', 'card', 'button', 'rect' #}
+{# - width: CSS width class e.g. 'w-full', 'w-32', 'w-12' #}
+{# - height: CSS height class e.g. 'h-4', 'h-10', 'h-12' #}
+{# - extra_classes: additional Tailwind classes #}
+
+{% with shape=variant|default:"text" %}
+  <div
+    class="skeleton-base
+      {% if shape == 'circle' %}rounded-full{% elif shape == 'button' or shape == 'card' %}rounded-xl{% else %}rounded-md{% endif %}
+      {% if height %}{{ height }}{% else %}{% if shape == 'text' %}h-4.5{% elif shape == 'button' %}h-11{% elif shape == 'circle' %}h-10{% elif shape == 'card' %}h-32{% else %}h-6{% endif %}{% endif %}
+      {% if width %}{{ width }}{% else %}{% if shape == 'circle' %}w-10{% elif shape == 'button' %}w-full{% else %}w-full{% endif %}{% endif %}
+      {{ extra_classes|default:'' }}"
+    aria-hidden="true"
+  ></div>
+{% endwith %}

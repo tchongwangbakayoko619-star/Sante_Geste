@@ -1,90 +1,208 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{% block title %}SantéGeste{% endblock %}</title>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>{% block title %}CS² Health — SantéGeste{% endblock title %}</title>
+  <!--[if mso]>
+  <noscript>
+    <xml>
+      <o:OfficeDocumentSettings>
+        <o:PixelsPerInch>96</o:PixelsPerInch>
+      </o:OfficeDocumentSettings>
+    </xml>
+  </noscript>
+  <![endif]-->
   <style>
+    body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+    table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+    img { -ms-interpolation-mode: bicubic; border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-      background-color: #f8f9fa;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background-color: #f0fdfa;
       margin: 0;
       padding: 0;
-      color: #212529;
+      width: 100% !important;
+      color: #1e293b;
+    }
+    .email-wrapper {
+      width: 100%;
+      background-color: #f0fdfa;
+      padding: 40px 12px;
     }
     .email-container {
-      max-width: 600px;
-      margin: 30px auto;
+      max-width: 580px;
+      margin: 0 auto;
       background: #ffffff;
-      border-radius: 8px;
+      border-radius: 16px;
+      border: 1px solid #ccfbf1;
       overflow: hidden;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      box-shadow: 0 10px 25px -5px rgba(4, 38, 32, 0.1), 0 8px 10px -6px rgba(4, 38, 32, 0.05);
     }
     .email-header {
-      background-color: #0d6efd;
-      color: #ffffff;
-      padding: 24px;
+      padding: 32px 32px 20px 32px;
       text-align: center;
-    }
-    .email-header h1 {
-      margin: 0;
-      font-size: 24px;
-      font-weight: 700;
+      background-color: #042620;
+      border-bottom: 3px solid #0f6e5e;
     }
     .email-body {
-      padding: 32px 24px;
-      line-height: 1.6;
+      padding: 36px 36px 28px 36px;
+      line-height: 1.65;
+      color: #0f172a;
+      font-size: 15px;
+      background-color: #ffffff;
     }
-    .otp-code {
-      display: inline-block;
-      font-size: 32px;
-      font-weight: 800;
-      letter-spacing: 6px;
-      color: #0d6efd;
-      background-color: #e7f1ff;
-      padding: 12px 28px;
-      border-radius: 6px;
-      margin: 20px 0;
+    .email-footer {
+      background-color: #f8fafc;
+      border-top: 1px solid #e2e8f0;
+      padding: 24px 32px;
+      text-align: center;
+      font-size: 12px;
+      color: #64748b;
+      line-height: 1.5;
     }
     .btn-action {
       display: inline-block;
-      background-color: #0d6efd;
+      background-color: #14967F;
       color: #ffffff !important;
       text-decoration: none;
-      padding: 12px 24px;
-      font-weight: 600;
-      border-radius: 6px;
-      margin: 20px 0;
+      padding: 13px 32px;
+      font-weight: 700;
+      font-size: 15px;
+      border-radius: 10px;
+      box-shadow: 0 4px 14px rgba(20, 150, 127, 0.25);
     }
-    .email-footer {
-      background-color: #f1f3f5;
-      color: #6c757d;
-      padding: 16px 24px;
+    .btn-action:hover {
+      background-color: #0f7a67;
+    }
+    .otp-card {
+      background-color: #eafaf6;
+      border: 2px dashed #14967F;
+      border-radius: 14px;
+      padding: 22px 20px;
       text-align: center;
-      font-size: 13px;
+      margin: 24px 0;
     }
-    .alert-warning {
-      background-color: #fff3cd;
-      color: #664d03;
-      padding: 12px 16px;
-      border-radius: 6px;
-      border: 1px solid #ffecb5;
-      margin-top: 16px;
+    .otp-code {
+      font-size: 38px;
+      font-weight: 800;
+      letter-spacing: 8px;
+      color: #0c4139;
+      font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+      margin: 6px 0;
+    }
+    .alert-security {
+      background-color: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-left: 4px solid #14967F;
+      padding: 14px 16px;
+      border-radius: 8px;
+      color: #475569;
+      font-size: 13px;
+      line-height: 1.5;
+      margin-top: 24px;
+      text-align: left;
+    }
+    .badge-pill {
+      display: inline-block;
+      background-color: #eafaf6;
+      color: #0f7a67;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.75px;
+      padding: 4px 14px;
+      border-radius: 20px;
+      border: 1px solid #cbf2e8;
+    }
+    @media only screen and (max-width: 600px) {
+      .email-wrapper { padding: 16px 8px !important; }
+      .email-container { border-radius: 12px !important; }
+      .email-header { padding: 24px 20px 16px 20px !important; }
+      .email-body { padding: 24px 18px 24px 18px !important; }
+      .otp-code { font-size: 28px !important; letter-spacing: 6px !important; }
+      .btn-action { display: block !important; padding: 14px 16px !important; }
     }
   </style>
 </head>
-<body>
-  <div class="email-container">
-    <div class="email-header">
-      <h1>SantéGeste</h1>
-    </div>
-    <div class="email-body">
-      {% block content %}{% endblock %}
-    </div>
-    <div class="email-footer">
-      <p>&copy; {% now "Y" %} SantéGeste. Tous droits réservés.</p>
-      <p>Ceci est un message automatique, merci de ne pas y répondre directement.</p>
-    </div>
+<body style="margin: 0; padding: 0; background-color: #f0fdfa; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+  <div class="email-wrapper" style="width: 100%; background-color: #f0fdfa; padding: 40px 12px; box-sizing: border-box;">
+    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 580px; margin: 0 auto;">
+      <tr>
+        <td>
+          <div class="email-container" style="background: #ffffff; border-radius: 16px; border: 1px solid #ccfbf1; overflow: hidden; box-shadow: 0 10px 25px -5px rgba(4, 38, 32, 0.1);">
+            <!-- Top Primary Color Bar (#14967F) -->
+            <div style="height: 4px; background-color: #14967F; width: 100%;"></div>
+
+            <!-- Brand Header -->
+            <div class="email-header" style="padding: 32px 32px 20px 32px; text-align: center; background-color: #042620; border-bottom: 3px solid #0f6e5e;">
+              <table role="presentation" border="0" cellpadding="0" cellspacing="0" align="center" style="margin: 0 auto;">
+                <tr>
+                  <td style="vertical-align: middle; padding-right: 12px;">
+                    <div style="width: 44px; height: 44px; background-color: #14967F; border-radius: 12px; display: inline-block; text-align: center; line-height: 44px; box-shadow: 0 4px 10px rgba(20, 150, 127, 0.3);">
+                      <svg width="24" height="24" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="vertical-align: middle; margin-top: -2px;">
+                        <path d="M35 15C35 9.477 39.477 5 45 5H55C60.523 5 65 9.477 65 15V35H85C90.523 35 95 39.477 95 45V55C95 60.523 90.523 65 85 65H65V85C65 90.523 60.523 95 55 95H45C39.477 95 35 90.523 35 85V65H15C9.477 65 5 60.523 5 55V45C5 39.477 9.477 35 15 35H35V15Z" fill="#ffffff" />
+                        <path d="M12 50H36L44 32L54 68L64 42L70 50H88" stroke="#041f1b" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" />
+                      </svg>
+                    </div>
+                  </td>
+                  <td style="vertical-align: middle; text-align: left;">
+                    <div style="font-size: 20px; font-weight: 800; color: #ffffff; line-height: 1.1; letter-spacing: -0.5px;">
+                      CS<sup style="font-size: 13px; font-weight: 800; color: #2dd4bf; margin-left: 1px;">2</sup> Health
+                    </div>
+                    <div style="font-size: 11px; color: #5eead4; font-weight: 700; letter-spacing: 0.5px; margin-top: 2px;">
+                      SANTÉGESTE &bull; PLATEFORME MÉDICALE
+                    </div>
+                  </td>
+                </tr>
+              </table>
+              <div style="padding-top: 14px;">
+                <span style="display: inline-block; background-color: rgba(6, 64, 54, 0.7); border: 1px solid rgba(45, 212, 191, 0.35); border-radius: 9999px; padding: 4px 14px; font-size: 11px; font-weight: 600; color: #5eead4; letter-spacing: 0.5px;">
+                  🔒 Espace Sécurisé • Certifié HDS & RGPD
+                </span>
+              </div>
+            </div>
+
+            <!-- Content Area -->
+            <div class="email-body" style="padding: 36px 36px 28px 36px; line-height: 1.65; color: #0f172a; font-size: 15px;">
+              {% block content %}{% endblock content %}
+            </div>
+
+            <!-- Medical Reassurance Banner -->
+            <div style="padding: 0 36px 24px 36px;">
+              <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f0fdfa; border-radius: 12px; border: 1px solid #ccfbf1;">
+                <tr>
+                  <td style="padding: 16px 20px;">
+                    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                      <tr>
+                        <td width="32" valign="top" style="font-size: 20px; line-height: 1;">🛡️</td>
+                        <td style="font-size: 12px; color: #064036; line-height: 1.55;">
+                          <strong style="color: #042620;">Chiffrement Médical de Bout en Bout & Secret Médical :</strong> Vos échanges et données patients sont protégés conformément aux référentiels du secret médical et de sécurité des Données de Santé.
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </div>
+
+            <!-- Footer Area -->
+            <div class="email-footer" style="background-color: #f8fafc; border-top: 1px solid #e2e8f0; padding: 24px 32px; text-align: center; font-size: 12px; color: #64748b; line-height: 1.5;">
+              <p style="margin: 0 0 6px 0; font-weight: 700; color: #0f172a;">
+                &copy; {% now "Y" %} SantéGeste • CS² Health. Tous droits réservés.
+              </p>
+              <p style="margin: 0 0 8px 0; color: #64748b;">
+                Ceci est une notification automatique générée par le système SantéGeste. Merci de ne pas répondre directement à cet e-mail.
+              </p>
+              <p style="margin: 0; font-size: 11px; color: #94a3b8;">
+                Pour toute assistance technique, contactez l'administrateur de votre établissement de santé.
+              </p>
+            </div>
+          </div>
+        </td>
+      </tr>
+    </table>
   </div>
 </body>
 </html>

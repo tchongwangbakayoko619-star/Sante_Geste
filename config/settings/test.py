@@ -3,8 +3,10 @@ With these settings, tests run faster.
 """
 
 from .base import *  # noqa: F403
+from .base import INSTALLED_APPS
 from .base import TEMPLATES
 from .base import env
+INSTALLED_APPS = [*INSTALLED_APPS, "debug_toolbar"]
 
 # GENERAL
 # ------------------------------------------------------------------------------

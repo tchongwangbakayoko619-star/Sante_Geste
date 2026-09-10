@@ -117,14 +117,14 @@ def send_otp_email_helper(
         p_label = str(_("réinitialisation de votre mot de passe"))
         p_title = str(_("Réinitialisation de mot de passe"))
         subject = str(
-            _("Réinitialisation de votre mot de passe SantéGeste - Code : %(code)s")
+            _("Réinitialisation de votre mot de passe CS² Health - Code : %(code)s")
             % {"code": raw_code}
         )
     else:
         p_label = str(_("validation d'inscription"))
         p_title = str(_("Validation d'inscription"))
         subject = str(
-            _("Code de validation de votre compte SantéGeste - %(code)s")
+            _("Code de validation de votre compte CS² Health - %(code)s")
             % {"code": raw_code}
         )
 
@@ -146,12 +146,13 @@ def send_otp_email_helper(
     message_text = str(
         _(
             "Bonjour %(name)s,\n\n"
-            "Vous avez demandé un code pour la %(purpose)s de votre compte SantéGeste.\n"
-            "Voici votre code de sécurité : %(code)s.\n"
-            "Accédez directement à la page de vérification : %(url)s\n"
+            "Vous avez demandé un code pour la %(purpose)s de votre compte CS² Health.\n\n"
+            "Votre code de sécurité à usage unique : %(code)s\n\n"
+            "Accédez directement à la page de validation :\n%(url)s\n\n"
             "Ce code expire dans %(minutes)d minutes.\n\n"
-            "Si vous n'êtes pas à l'origine de cette demande, veuillez ignorer ce message.\n\n"
-            "L'équipe SantéGeste."
+            "Sécurité : Si vous n'êtes pas à l'origine de cette demande, veuillez ignorer ce message. "
+            "Ne partagez ce code avec personne.\n\n"
+            "L'équipe CS² Health • Votre partenaire de soin au quotidien"
         )
         % {
             "name": user_name,
@@ -184,14 +185,14 @@ def send_otp_email_helper(
 
 def send_welcome_email_helper(recipient_email: str, user_name: str) -> bool:
     """Helper d'envoi de l'e-mail de bienvenue post-activation avec rendu HTML."""
-    subject = str(_("Bienvenue sur SantéGeste !"))
+    subject = str(_("Bienvenue sur CS² Health !"))
     message_text = str(
         _(
             "Bonjour %(name)s,\n\n"
-            "Votre compte SantéGeste a été activé avec succès.\n"
-            "Vous pouvez désormais vous connecter et utiliser l'ensemble des fonctionnalités de la plateforme.\n\n"
+            "Votre compte professionnel CS² Health a été activé avec succès.\n"
+            "Vous pouvez désormais vous connecter et accéder à votre espace soignant.\n\n"
             "Cordialement,\n"
-            "L'équipe SantéGeste."
+            "L'équipe CS² Health • Votre partenaire de soin au quotidien"
         )
         % {"name": user_name}
     )
@@ -214,13 +215,13 @@ def send_security_alert_email_helper(
     action_label: str = "Modification du mot de passe",
 ) -> bool:
     """Helper d'envoi d'une alerte de sécurité avec rendu HTML."""
-    subject = str(_("Alerte de sécurité SantéGeste : %(action)s") % {"action": action_label})
+    subject = str(_("Alerte de sécurité CS² Health : %(action)s") % {"action": action_label})
     message_text = str(
         _(
             "Bonjour %(name)s,\n\n"
-            "Une opération sensible (%(action)s) a été effectuée sur votre compte SantéGeste.\n"
+            "Une opération sensible (%(action)s) a été effectuée sur votre compte professionnel CS² Health.\n"
             "Si vous n'avez pas réalisé cette action, contactez immédiatement le support technique.\n\n"
-            "L'équipe SantéGeste."
+            "L'équipe CS² Health."
         )
         % {"name": user_name, "action": action_label}
     )

@@ -1,0 +1,24 @@
+/* ==========================================================================
+   ATOMIC DESIGN - ATOM: SKELETON (Loading States)
+   ========================================================================== */
+
+.skeleton-base {
+  @apply bg-neutral-200 animate-pulse pointer-events-none select-none inline-block;
+  background-image: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0,
+    rgba(255, 255, 255, 0.4) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.8s infinite ease-in-out;
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}

@@ -1,22 +1,84 @@
 @import "tailwindcss";
 
 @theme {
-  --color-pawa-primary-50: #f0fdfa;
-  --color-pawa-primary-100: #ccfbf1;
-  --color-pawa-primary-500: #14b8a6;
-  --color-pawa-primary-600: #0d9488;
-  --color-pawa-primary-700: #0f766e;
-  --color-pawa-primary-900: #115e59;
+  /* Tokens SantéGeste / CS² Health - Centrés sur la couleur primaire #14967F */
+  --color-primary: #14967F;
+  --color-primary-hover: #0f7a67;
+  --color-primary-active: #0b6353;
+  --color-primary-light: #eafaf6;
 
-  --color-pawa-secondary-50: #f8fafc;
-  --color-pawa-secondary-100: #f1f5f9;
-  --color-pawa-secondary-600: #475569;
-  --color-pawa-secondary-900: #0f172a;
+  --color-health-primary: #14967F;
+  --color-health-primary-hover: #0f7a67;
+  --color-health-primary-active: #0b6353;
+  --color-health-btn: #14967F;
+  --color-health-btn-hover: #0f7a67;
+  --color-health-btn-active: #0b6353;
 
-  --color-pawa-status-success: #10b981;
-  --color-pawa-status-warning: #f59e0b;
-  --color-pawa-status-danger: #ef4444;
-  --color-pawa-status-info: #3b82f6;
+  /* Palette Déclinée #14967F (50 à 950) */
+  --color-health-50: #eafaf6;
+  --color-health-100: #cbf2e8;
+  --color-health-200: #9be5d3;
+  --color-health-300: #64d3ba;
+  --color-health-400: #36bca0;
+  --color-health-500: #14967F; /* COULEUR PRIMAIRE EXACTE */
+  --color-health-600: #0f7a67;
+  --color-health-700: #0e6254;
+  --color-health-800: #0f4e44;
+  --color-health-850: #0c4139;
+  --color-health-900: #0c3730;
+  --color-health-950: #041f1b;
 
+  /* Neutrals */
+  --color-neutral-50: #f8fafc;
+  --color-neutral-100: #f1f5f9;
+  --color-neutral-200: #e2e8f0;
+  --color-neutral-300: #cbd5e1;
+  --color-neutral-400: #94a3b8;
+  --color-neutral-500: #64748b;
+  --color-neutral-600: #475569;
+  --color-neutral-700: #334155;
+  --color-neutral-800: #1e293b;
+  --color-neutral-900: #0f172a;
+  --color-neutral-950: #020617;
+
+  /* États */
+  --color-emergency: #dc2626;
+  --color-warning: #d97706;
+  --color-success: #059669;
+  --color-info: #2563eb;
+
+  /* Typographie */
+  --font-title: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
 }
+
+/* Utilitaires & règles globales pour masquer les scrollbars */
+@utility no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+html,
+body {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none;
+}
+
+/* ==========================================================================
+   ATOMIC DESIGN - COMPONENT MODULE IMPORTS (Tailwind v4)
+   ========================================================================== */
+@import "./components/auth.css";
+@import "./components/buttons.css";
+@import "./components/forms.css";
+@import "./components/alerts.css";
+@import "./components/badges.css";
+@import "./components/skeletons.css";

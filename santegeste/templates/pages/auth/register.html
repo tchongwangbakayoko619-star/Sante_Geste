@@ -1,0 +1,15 @@
+{% extends "layouts/auth.html" %}
+{% load i18n %}
+
+{% block title %}{% translate "Créer un compte professionnel" %} - CS² Health{% endblock title %}
+
+{% block container_width %}max-w-xl{% endblock container_width %}
+
+{% block auth_hero %}
+  {% include "components/organisms/auth-hero.html" with logo_url="/" %}
+{% endblock auth_hero %}
+
+{% block auth_content %}
+  {% url 'users:login' as login_url %}
+  {% include "components/organisms/register-form.html" with form=form login_url=login_url %}
+{% endblock auth_content %}

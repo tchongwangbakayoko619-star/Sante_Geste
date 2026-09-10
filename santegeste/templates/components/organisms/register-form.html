@@ -1,0 +1,119 @@
+{# Organism: Register Form (CS² Health Professional Account) #}
+{# Props: #}
+{#   - form : objet formulaire Django #}
+{#   - action_url : URL de soumission du formulaire (défaut: '') #}
+{#   - login_url : URL de la page de connexion (optionnel) #}
+{#   - title : titre principal (défaut: 'Créer votre compte soignant') #}
+{#   - subtitle : sous-titre explication #}
+{#   - submit_text : libellé du bouton (défaut: 'Créer mon compte professionnel') #}
+{#   - show_security_badge : booléen (défaut: True) #}
+{#   - show_login_link : booléen (défaut: True) #}
+{#   - class / custom_classes : classes CSS additionnelles #}
+{% load i18n %}
+{% trans "Créer votre compte soignant" as default_reg_title %}
+{% trans "Rejoignez l'écosystème CS² Health pour gérer vos consultations et vos dossiers patients en toute fluidité." as default_reg_subtitle %}
+{% trans "Créer mon compte professionnel" as default_reg_submit %}
+{% trans "Prénom *" as fname_label %}
+{% trans "Nom *" as lname_label %}
+{% trans "Adresse e-mail *" as email_label %}
+{% trans "Téléphone professionnel" as tel_label %}
+{% trans "Format : 9 chiffres débutant par 6 (mobile) ou 2/3 (fixe Camtel)" as tel_hint %}
+{% trans "Rôle dans l'établissement *" as role_label %}
+{% trans "Mot de passe *" as pwd1_label %}
+{% trans "Confirmation *" as pwd2_label %}
+{% trans "Espace Sécurisé" as secure_badge_text %}
+
+<div class="auth-card-wide {{ class|default:'' }} {{ custom_classes|default:'' }}">
+
+  <!-- Top Brand Lockup -->
+  <div class="mb-5 flex justify-center">
+    {% include "components/molecules/brand-lockup.html" %}
+  </div>
+
+  <!-- Form Greeting Header -->
+  <div class="auth-header">
+    <h2 class="auth-title">
+      {{ title|default:default_reg_title }}
+    </h2>
+    <p class="auth-subtitle">
+      {{ subtitle|default:default_reg_subtitle }}
+    </p>
+  </div>
+
+  <!-- Form Body with JS Validation & Submit Loading -->
+  <form method="post" action="{{ action_url|default:'' }}" class="space-y-4" data-form-validate data-form-loading novalidate>
+    {% csrf_token %}
+
+    <!-- Global Non-field Errors -->
+    {% if form.non_field_errors %}
+      <div class="space-y-2 mb-4" role="region" aria-label="{% trans 'Erreurs de validation' %}">
+        {% for error in form.non_field_errors %}
+          {% include "components/molecules/alert.html" with variant="error" message=error %}
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <!-- Row 1: Prénom & Nom -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      {% include "components/molecules/form-field.html" with id="first_name" name="first_name" label=fname_label placeholder="Ex : Léa" value=form.first_name.value required=True autocomplete="given-name" has_error=form.first_name.errors error_message=form.first_name.errors.0 %}
+
+      {% include "components/molecules/form-field.html" with id="last_name" name="last_name" label=lname_label placeholder="Ex : Valois" value=form.last_name.value required=True autocomplete="family-name" has_error=form.last_name.errors error_message=form.last_name.errors.0 %}
+    </div>
+
+    <!-- Row 2: Email & Téléphone -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      {% include "components/molecules/form-field.html" with id="email" name="email" type="email" label=email_label placeholder="dr.valois@cs2-health.org" value=form.email.value required=True autocomplete="email" icon_left="mail" has_error=form.email.errors error_message=form.email.errors.0 %}
+
+      {% include "components/molecules/form-field.html" with id="telephone" name="telephone" type="tel" label=tel_label placeholder="+237 6XX XX XX XX" value=form.telephone.value autocomplete="tel" icon_left="phone" pattern="^(\+237|00237|237)?[236][0-9\s.-]{8,15}$" inputmode="tel" hint_text=tel_hint has_error=form.telephone.errors error_message=form.telephone.errors.0 %}
+    </div>
+
+    <!-- Row 3: Rôle dans l'établissement (Obligatoire) -->
+    <div>
+      {% include "components/molecules/select-field.html" with id="role" name="role" label=role_label value=form.role.value options=form.role.field.choices required=True icon_left="briefcase" has_error=form.role.errors error_message=form.role.errors.0 %}
+    </div>
+
+    <!-- Row 4: Mot de passe & Confirmation -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      {% include "components/molecules/password-field.html" with id="password1" name="password1" label=pwd1_label placeholder="••••••••••••" required=True autocomplete="new-password" has_error=form.password1.errors error_message=form.password1.errors.0 %}
+
+      {% include "components/molecules/password-field.html" with id="password2" name="password2" label=pwd2_label placeholder="••••••••••••" required=True autocomplete="new-password" has_error=form.password2.errors error_message=form.password2.errors.0 %}
+    </div>
+
+    <!-- Security reassurance -->
+    <div class="pt-1 flex items-center justify-between text-xs text-neutral-500">
+      <div class="flex items-center gap-1.5">
+        {% include "components/atoms/icon.html" with name="shield-check" size="w-4 h-4 text-emerald-600" %}
+        <span>{% trans "Chiffrement et secret médical garantis" %}</span>
+      </div>
+      {% if show_security_badge|default:True %}
+        {% include "components/atoms/badge.html" with variant="secure" text=secure_badge_text icon_name="lock" %}
+      {% endif %}
+    </div>
+
+    <!-- Submit CTA Button -->
+    <div class="pt-2">
+      {% include "components/atoms/button.html" with text=submit_text|default:default_reg_submit type="submit" full_width=True icon_left="login" variant="primary" %}
+    </div>
+  </form>
+
+  <!-- Footer Link to Login -->
+  {% if show_login_link|default:True and login_url %}
+    <div class="mt-8 text-center pt-4 border-t border-neutral-100">
+      <p class="text-xs sm:text-sm text-neutral-600">
+        {% trans "Vous avez déjà un compte ?" %}
+        <a href="{{ login_url }}" class="auth-link ml-1">
+          {% trans "Connectez-vous ici" %}
+        </a>
+      </p>
+    </div>
+  {% endif %}
+
+  <!-- Bottom Brand Footnote -->
+  <footer class="auth-footer">
+    <p class="auth-footer-text">
+      CS<sup class="text-[9px]">2</sup> Health • {% trans "Votre partenaire de soin au quotidien" %}
+    </p>
+  </footer>
+
+</div>
+

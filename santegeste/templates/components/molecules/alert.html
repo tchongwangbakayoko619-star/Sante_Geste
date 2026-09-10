@@ -1,0 +1,69 @@
+{# Molecule: Alert (CS² Health Design System) #}
+{# Props: #}
+{#   - variant / type: 'success' | 'warning' | 'error' | 'danger' | 'info' (défaut: 'info') #}
+{#   - message: texte principal de l'alerte #}
+{#   - errors: liste optionnelle d'erreurs (pour les formulaires) #}
+{#   - title: préfixe ou titre optionnel en gras #}
+{#   - dismissible: booléen (affiche un bouton de fermeture si True) #}
+{#   - auto_dismiss: millisecondes avant disparition automatique (ex: 5000) #}
+{#   - class / custom_classes: classes CSS additionnelles #}
+{% load i18n %}
+{% firstof variant type "info" as alert_variant %}
+
+<div
+  class="alert-base alert-{{ alert_variant }} border-l-4 px-5 py-4 text-sm font-medium rounded-r-xl shadow-lg relative overflow-hidden transition-all duration-300 ease-out {% if 'success' in alert_variant %}bg-emerald-950 border-emerald-400 text-emerald-200{% elif 'warning' in alert_variant %}bg-amber-950 border-yellow-400 text-yellow-200{% elif 'error' in alert_variant or 'danger' in alert_variant %}bg-red-950 border-red-500 text-red-200{% else %}bg-slate-900 border-blue-500 text-blue-200{% endif %} {{ class|default:'' }} {{ custom_classes|default:'' }}"
+  role="alert"
+  aria-live="{% if 'error' in alert_variant or 'danger' in alert_variant %}assertive{% else %}polite{% endif %}"
+  {% if auto_dismiss %}data-alert data-auto-dismiss="{{ auto_dismiss }}"{% elif dismissible %}data-alert{% endif %}
+>
+  <!-- Icône de l'alerte -->
+  <div class="shrink-0" aria-hidden="true">
+    {% if icon %}
+      {% include "components/atoms/icon.html" with name=icon size="w-5 h-5" %}
+    {% elif "success" in alert_variant %}
+      {% include "components/atoms/icon.html" with name="check" size="w-5 h-5" class="text-emerald-400" %}
+    {% elif "warning" in alert_variant %}
+      {% include "components/atoms/icon.html" with name="alert-triangle" size="w-5 h-5" class="text-yellow-400" %}
+    {% elif "error" in alert_variant or "danger" in alert_variant %}
+      {% include "components/atoms/icon.html" with name="x-circle" size="w-5 h-5" class="text-red-400" %}
+    {% else %}
+      {% include "components/atoms/icon.html" with name="info" size="w-5 h-5" class="text-blue-400" %}
+    {% endif %}
+  </div>
+
+  <!-- Contenu du message -->
+  <div class="flex-1 min-w-0 leading-snug">
+    {% if title %}
+      <strong class="font-bold mr-1">{{ title }}</strong>
+    {% endif %}
+    {% if message %}
+      <span>{{ message }}</span>
+    {% endif %}
+    {% if errors %}
+      <div class="space-y-1">
+        {% for error in errors %}
+          <p class="flex items-center gap-2">{{ error }}</p>
+        {% endfor %}
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Bouton de fermeture manuelle -->
+  {% if dismissible %}
+    <button
+      type="button"
+      class="shrink-0 -mr-1 p-2 min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg opacity-75 hover:opacity-100 transition-opacity cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-current"
+      data-alert-close
+      aria-label="{% translate 'Fermer cette notification' %}"
+    >
+      {% include "components/atoms/icon.html" with name="x-mark" size="w-4 h-4" %}
+    </button>
+  {% endif %}
+
+  <!-- Barre de défilement temporelle si auto_dismiss -->
+  {% if auto_dismiss %}
+    <div class="flash-alert-progress-track absolute bottom-0 left-0 right-0 h-0.5 bg-white/10 overflow-hidden">
+      <div class="flash-alert-progress-bar h-full w-full origin-left bg-current"></div>
+    </div>
+  {% endif %}
+</div>

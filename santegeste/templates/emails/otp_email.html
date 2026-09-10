@@ -1,33 +1,61 @@
 {% extends "emails/base_email.html" %}
 
-{% block title %}{{ purpose_title|default:"Code de vérification" }} - SantéGeste{% endblock %}
+{% block title %}{{ purpose_title|default:"Validation d'inscription" }} - CS² Health{% endblock %}
 
 {% block content %}
-<h2>{{ purpose_title|default:"Code de vérification" }}</h2>
-<p>Bonjour <strong>{{ user_name }}</strong>,</p>
-<p>Vous avez demandé un code pour la {{ purpose_label|default:"vérification de votre compte" }} SantéGeste. Saisissez le code ci-dessous pour valider l'opération :</p>
+<div style="text-align: center; margin-bottom: 20px;">
+  <span class="badge-pill" style="display: inline-block; background-color: #eafaf6; color: #0f7a67; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.75px; padding: 4px 14px; border-radius: 20px; border: 1px solid #cbf2e8;">
+    {{ purpose_title|default:"Validation d'inscription" }}
+  </span>
+</div>
 
+<h2 style="font-size: 22px; font-weight: 800; color: #0f172a; text-align: center; margin: 0 0 16px 0; letter-spacing: -0.5px;">
+  Votre code de vérification
+</h2>
 
-<div style="text-align: center; margin: 20px 0;">
-  <div class="otp-code">{{ raw_code }}</div>
+<p style="margin: 0 0 14px 0; color: #334155; font-size: 15px;">
+  Bonjour <strong>{{ user_name }}</strong>,
+</p>
+
+<p style="margin: 0 0 20px 0; color: #475569; font-size: 15px; line-height: 1.6;">
+  Vous avez demandé un code de sécurité pour la <strong>{{ purpose_label|default:"validation de votre compte" }}</strong> sur <strong>CS<sup>2</sup> Health</strong>. Saisissez le code ci-dessous pour valider l'opération :
+</p>
+
+<!-- OTP Code Box in Design System Primary Tint -->
+<div class="otp-card" style="background-color: #eafaf6; border: 2px dashed #14967F; border-radius: 14px; padding: 22px 20px; text-align: center; margin: 24px 0;">
+  <div style="font-size: 11px; font-weight: 800; color: #0f7a67; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 6px;">
+    Code de sécurité à usage unique
+  </div>
+  <div class="otp-code" style="font-size: 38px; font-weight: 800; letter-spacing: 8px; color: #0c4139; font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace; padding: 4px 0;">
+    {{ raw_code }}
+  </div>
+  <div style="font-size: 12px; color: #0f7a67; font-weight: 600; margin-top: 6px;">
+    ⏱️ Expire dans {{ validity_minutes|default:10 }} minutes
+  </div>
 </div>
 
 {% if action_url %}
-<div style="text-align: center; margin: 25px 0;">
-  <a href="{{ action_url }}" class="btn" style="background-color: #0d6efd; color: #ffffff; padding: 12px 28px; text-decoration: none; border-radius: 6px; font-weight: 600; display: inline-block; font-size: 16px;">
-    {% if purpose_title %}{{ purpose_title }}{% else %}Accéder à la vérification{% endif %}
-  </a>
-</div>
-<p style="text-align: center; font-size: 13px; color: #6c757d; margin-top: 10px;">
-  Ou copiez directement ce lien dans votre navigateur : <br>
-  <a href="{{ action_url }}" style="color: #0d6efd; word-break: break-all;">{{ action_url }}</a>
+<!-- CTA Button Table for reliable rendering in all email clients -->
+<table role="presentation" border="0" cellpadding="0" cellspacing="0" align="center" style="margin: 28px auto 16px auto;">
+  <tr>
+    <td align="center" style="border-radius: 10px; background-color: #14967F;">
+      <a href="{{ action_url }}" target="_blank" class="btn-action" style="background-color: #14967F; color: #ffffff !important; padding: 14px 32px; text-decoration: none; border-radius: 10px; font-weight: 700; display: inline-block; font-size: 15px; box-shadow: 0 4px 14px rgba(20, 150, 127, 0.25);">
+        {% if purpose_title %}{{ purpose_title }}{% else %}Valider mon compte{% endif %}
+      </a>
+    </td>
+  </tr>
+</table>
+
+<p style="text-align: center; font-size: 12px; color: #64748b; margin: 12px 0 24px 0; line-height: 1.5;">
+  Ou copiez directement ce lien dans votre navigateur :<br>
+  <a href="{{ action_url }}" style="color: #14967F; word-break: break-all; text-decoration: underline; font-weight: 500;">{{ action_url }}</a>
 </p>
 {% endif %}
 
-<p>Ce code est à usage unique et expire dans <strong>{{ validity_minutes|default:10 }} minutes</strong>.</p>
-
-
-<div class="alert-warning">
-  <p style="margin:0;"><strong>Sécurité :</strong> Si vous n'êtes pas à l'origine de cette demande, veuillez ignorer cet e-mail. Ne partagez ce code avec personne.</p>
+<!-- Security Alert Box -->
+<div class="alert-security" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid #14967F; padding: 14px 16px; border-radius: 8px; color: #475569; font-size: 13px; line-height: 1.5; margin-top: 20px;">
+  <p style="margin: 0;">
+    <strong style="color: #0f172a;">Sécurité :</strong> Si vous n'êtes pas à l'origine de cette demande, veuillez ignorer cet e-mail. Ne partagez ce code avec personne.
+  </p>
 </div>
 {% endblock %}

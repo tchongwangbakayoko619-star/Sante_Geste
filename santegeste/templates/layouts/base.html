@@ -1,0 +1,30 @@
+{% load static i18n %}
+<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE|default:'fr' }}" class="h-full bg-white">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}CS² Health - SantéGeste{% endblock title %}</title>
+
+  <!-- Google Fonts: Plus Jakarta Sans & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS v4 output -->
+  <link rel="stylesheet" href="{% static 'css/output.css' %}">
+
+  {% block css %}{% endblock css %}
+</head>
+<body class="h-full font-sans antialiased text-neutral-800 selection:bg-health-500 selection:text-white no-scrollbar">
+  {% include "components/atoms/skip-link.html" %}
+  {% block content %}{% endblock content %}
+
+  {% block javascript %}
+    <script src="{% static 'js/components/alerts.js' %}" defer></script>
+    <script src="{% static 'js/components/form-validation.js' %}" defer></script>
+    <script src="{% static 'js/components/form-loading.js' %}" defer></script>
+  {% endblock javascript %}
+</body>
+</html>

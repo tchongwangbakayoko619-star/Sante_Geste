@@ -1,0 +1,20 @@
+{# Molecule: Brand Lockup (Logo Squircle + CS² Health Title) #}
+{# Props: class, custom_classes #}
+{% load i18n %}
+<div class="flex items-center justify-center gap-3.5 {{ class }} {{ custom_classes }}">
+  <!-- Squircle Icon -->
+  <div class="brand-lockup-logo">
+    {% include "components/atoms/icon.html" with name="cross-heartbeat" size="w-full h-full text-white" %}
+  </div>
+
+  <!-- Text Lockup -->
+  <div class="flex flex-col justify-center text-left">
+    <div class="brand-lockup-title">
+      CS<sup class="text-sm font-bold text-neutral-900 ml-0.5">2</sup>
+    </div>
+    <span class="brand-lockup-subtitle">
+      {% trans "Health" %}
+    </span>
+  </div>
+</div>
+

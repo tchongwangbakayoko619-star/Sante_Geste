@@ -1,23 +1,47 @@
 {% extends "base.html" %}
-{% load i18n %}
+{% load static i18n %}
 
-{% block title %}{% translate "Édition du Profil" %} - SantéGeste{% endblock title %}
+{% block title %}{% translate "Modifier mon profil" %} - CS² Health{% endblock title %}
 
-{% block content %}
-<div class="container py-5">
-  <div class="row justify-content-center">
-    <div class="col-md-8">
-      <div class="card shadow-sm border-0 rounded-3">
-        <div class="card-body p-4">
-          <h2 class="card-title mb-4">{% translate "Modifier mon profil" %}</h2>
-          <form method="post" enctype="multipart/form-data">
-            {% csrf_token %}
-            {{ form.as_p }}
-            <button type="submit" class="btn btn-primary">{% translate "Enregistrer" %}</button>
-          </form>
-        </div>
-      </div>
+{% block content_inner %}
+{% trans "Prénom" as fname_label %}
+{% trans "Nom" as lname_label %}
+{% trans "Téléphone" as tel_label %}
+{% trans "Enregistrer les modifications" as save_btn_text %}
+
+<div class="max-w-xl mx-auto space-y-6">
+  <div class="bg-white border border-neutral-200/80 rounded-3xl p-6 sm:p-10 shadow-sm space-y-6">
+
+    <div class="flex items-center justify-between pb-4 border-b border-neutral-100">
+      <h1 class="font-title font-extrabold text-xl sm:text-2xl text-neutral-900">
+        {% trans "Modifier mon profil" %}
+      </h1>
+      <a href="{% url 'users:profile' %}" class="text-xs font-semibold text-neutral-500 hover:text-neutral-800 transition-colors">
+        {% trans "Annuler" %}
+      </a>
     </div>
+
+    <form method="post" enctype="multipart/form-data" class="space-y-4" novalidate>
+      {% csrf_token %}
+
+      {% if form.non_field_errors %}
+        <div class="space-y-2 mb-4">
+          {% for error in form.non_field_errors %}
+            {% include "components/molecules/alert.html" with variant="error" message=error %}
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      {% include "components/molecules/form-field.html" with id="first_name" name="first_name" label=fname_label value=form.first_name.value has_error=form.first_name.errors error_message=form.first_name.errors.0 %}
+      {% include "components/molecules/form-field.html" with id="last_name" name="last_name" label=lname_label value=form.last_name.value has_error=form.last_name.errors error_message=form.last_name.errors.0 %}
+      {% include "components/molecules/form-field.html" with id="telephone" name="telephone" type="tel" label=tel_label value=form.telephone.value icon_left="phone" has_error=form.telephone.errors error_message=form.telephone.errors.0 %}
+
+      <div class="pt-4">
+        {% include "components/atoms/button.html" with text=save_btn_text type="submit" full_width=True variant="primary" %}
+      </div>
+    </form>
+
   </div>
 </div>
-{% endblock content %}
+{% endblock content_inner %}
+

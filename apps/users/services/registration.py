@@ -11,7 +11,7 @@ from django.utils.translation import gettext_lazy as _
 
 from apps.users.models import OTP, MedicalProfile
 from utils.constants.otp import OTP_VALIDITY_MINUTES
-from utils.enums import OTPPurposeEnum
+from utils.enums import OTPPurposeEnum, UserRoleEnum
 from utils.otp import (
     OtpTokenError,
     OtpTokenExpiredError,
@@ -37,6 +37,7 @@ def register_user(
     first_name: str = "",
     last_name: str = "",
     telephone: str = "",
+    role: str = "",
     is_personnel_medical: bool = False,
     specialite: str = "",
     numero_ordre: str = "",
@@ -47,6 +48,14 @@ def register_user(
     Returns:
         tuple[User, str, str]: (utilisateur_créé, code_otp_en_clair, jeton_signé_otp)
     """
+    is_proprietaire = (role == UserRoleEnum.PROPRIETAIRE)
+    if role == UserRoleEnum.PERSONNEL_MEDICAL:
+        is_personnel_medical = True
+    is_responsable_pharmacie = (role == UserRoleEnum.RESPONSABLE_PHARMACIE)
+    is_vendeur_pharmacie = (role == UserRoleEnum.VENDEUR_PHARMACIE)
+    is_caissier = (role == UserRoleEnum.CAISSIER)
+    is_agent_accueil = (role == UserRoleEnum.AGENT_ACCUEIL)
+
     # 1. Création de l'utilisateur
     user = User.objects.create_user(
         email=email,
@@ -54,7 +63,12 @@ def register_user(
         first_name=first_name,
         last_name=last_name,
         telephone=telephone,
+        is_proprietaire=is_proprietaire,
         is_personnel_medical=is_personnel_medical,
+        is_responsable_pharmacie=is_responsable_pharmacie,
+        is_vendeur_pharmacie=is_vendeur_pharmacie,
+        is_caissier=is_caissier,
+        is_agent_accueil=is_agent_accueil,
         is_active=False,
         is_verified=False,
         avatar=avatar,

@@ -1,0 +1,12 @@
+{% comment %}
+  Atom : Label
+  Paramètres :
+  - for_id : identifiant de l'élément cible
+  - text : texte du libellé
+  - required : booléen
+  - class / custom_classes : classes additionnelles
+{% endcomment %}
+<label for="{{ for_id }}" class="form-label {{ class }} {{ custom_classes }}">
+<label for="{{ for_id|default:'' }}" class="form-label {{ class|default:'' }} {{ custom_classes|default:'' }}">
+  {{ text }}{% if required %} <span class="text-red-500 font-bold" aria-hidden="true">*</span>{% endif %}
+</label>

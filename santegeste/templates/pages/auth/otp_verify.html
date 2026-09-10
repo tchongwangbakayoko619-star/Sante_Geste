@@ -1,0 +1,14 @@
+{% extends "layouts/auth.html" %}
+{% load i18n %}
+
+{% block title %}{% translate "Vérification de sécurité" %} - CS² Health{% endblock title %}
+
+{% block auth_hero %}
+  {% include "components/organisms/auth-hero.html" with logo_url="/" %}
+{% endblock auth_hero %}
+
+{% block auth_content %}
+  {% url 'users:resend-otp' as resend_url %}
+  {% url 'users:register' as back_url %}
+  {% include "components/organisms/otp-form.html" with form=form resend_url=resend_url back_url=back_url back_text="Retour à l'inscription" title="Validation de votre compte" subtitle="Saisissez le code OTP à 6 chiffres reçu par e-mail pour activer votre compte professionnel." %}
+{% endblock auth_content %}

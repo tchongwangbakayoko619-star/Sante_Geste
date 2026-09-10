@@ -80,6 +80,13 @@ class RedirectToNextOrReferrerMixin:
 
     def get_success_url(self) -> str:
         """Méthode de redirection par défaut compatible avec FormView / CreateView / UpdateView."""
+        next_url = self.request.POST.get("next") or self.request.GET.get("next")
+        if next_url and self.is_safe_url(next_url) and not self.is_self_url(next_url):
+            return next_url
+
+        if getattr(self, "success_url", None):
+            return str(self.success_url)
+
         return self.get_redirect_url()
 
     def dispatch(

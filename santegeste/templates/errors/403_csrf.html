@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Accès interdit (403)" %}{% endblock title %}
+{% block content %}
+  <h1>{% trans "Accès interdit (403)" %}</h1>
+  <p>
+    {% if exception %}
+      {{ exception }}
+    {% else %}
+      {% trans "Vous n'êtes pas autorisé à accéder à cette page." %}
+    {% endif %}
+  </p>
+{% endblock content %}
+

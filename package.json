@@ -1,12 +1,15 @@
 {
-  "name": "santegeste",
-  "private": true,
-  "devDependencies": {
-    "@tailwindcss/cli": "^4.3.3",
-    "tailwindcss": "^4.3.3"
-  },
-  "scripts": {
-    "dev": "tailwindcss -i ./santegeste/static/css/input.css -o ./santegeste/static/css/dst/ouput.css --watch",
-    "build": "tailwindcss -i ./santegeste/static/css/input.css -o ./santegeste/static/css/dst/ouput.css --minify"
-  }
+    "name": "santegeste",
+    "version": "1.0.0",
+    "private": true,
+    "scripts": {
+        "dev": "tailwindcss -i ./santegeste/static/css/input.css -o ./santegeste/static/css/output.css --watch",
+        "build": "tailwindcss -i ./santegeste/static/css/input.css -o ./santegeste/static/css/output.css --minify",
+        "watch:css": "tailwindcss -i ./santegeste/static/css/input.css -o ./santegeste/static/css/output.css --watch",
+        "build:css": "tailwindcss -i ./santegeste/static/css/input.css -o ./santegeste/static/css/output.css --minify"
+    },
+    "devDependencies": {
+        "@tailwindcss/cli": "^4.3.3",
+        "tailwindcss": "^4.3.3"
+    }
 }

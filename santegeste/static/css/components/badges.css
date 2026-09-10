@@ -1,0 +1,43 @@
+@layer components {
+  /* --------------------------------------------------------------------------
+     BADGES & BRAND LOCKUPS (CS² Health Design System)
+     -------------------------------------------------------------------------- */
+
+  /* Badge Base Atom */
+  .badge-base {
+    @apply inline-flex items-center select-none transition-all duration-150;
+  }
+
+  /* Badge Sécurisé (Espace Sécurisé - Premium Medical Lock Badge) */
+  .badge-secure {
+    @apply gap-2 px-3 py-1.5 bg-gradient-to-r from-emerald-50/90 via-teal-50/80 to-emerald-50/60 border border-[#14967F]/25 text-[#14967F] text-xs font-bold rounded-xl shadow-2xs backdrop-blur-xs hover:border-[#14967F]/40 hover:shadow-xs;
+  }
+
+  /* Pill Highlight (Badge Hero Sombre) */
+  .badge-pill-highlight {
+    @apply gap-2 px-3.5 py-1.5 bg-emerald-950/60 border border-emerald-500/30 text-emerald-200 text-[11px] sm:text-xs font-semibold rounded-full backdrop-blur-xs tracking-wider uppercase;
+  }
+
+  /* Badge Neutre */
+  .badge-neutral {
+    @apply gap-1.5 px-2.5 py-1 bg-neutral-100 border border-neutral-200 text-neutral-700 text-xs font-medium rounded-lg;
+  }
+
+  /* Badge Succès */
+  .badge-success {
+    @apply gap-1.5 px-2.5 py-1 bg-emerald-50 border border-emerald-200/80 text-emerald-700 text-xs font-semibold rounded-lg;
+  }
+
+  /* Brand Lockup Molecule */
+  .brand-lockup-logo {
+    @apply w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br from-emerald-400 via-teal-600 to-emerald-800 p-2.5 sm:p-3 shadow-lg flex items-center justify-center shrink-0;
+  }
+
+  .brand-lockup-title {
+    @apply font-title font-extrabold text-2xl sm:text-3xl text-neutral-900 tracking-tight leading-none;
+  }
+
+  .brand-lockup-subtitle {
+    @apply font-title font-bold text-base sm:text-lg text-[#14967F] tracking-tight mt-0.5;
+  }
+}

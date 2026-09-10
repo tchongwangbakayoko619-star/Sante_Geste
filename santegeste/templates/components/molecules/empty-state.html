@@ -1,0 +1,30 @@
+{# Molecule: Empty State (CS² Health Design System) #}
+{# Props: #}
+{# - title: main heading e.g. "Aucun dossier trouvé" #}
+{# - description: explanatory text #}
+{# - icon_name: name of icon to show e.g. "folder-off", "inbox", "search" #}
+{# - action_text: CTA button text (optional) #}
+{# - action_url: CTA button URL (optional) #}
+{# - action_icon: icon for CTA button (optional) #}
+{% load i18n %}
+<div class="flex flex-col items-center justify-center p-8 sm:p-12 text-center bg-white rounded-2xl border border-neutral-200/80 shadow-sm max-w-lg mx-auto my-6">
+  <!-- Icon Badge -->
+  <div class="w-16 h-16 rounded-2xl bg-health-50 text-health-600 flex items-center justify-center mb-5 border border-health-100 shadow-inner">
+    {% include "components/atoms/icon.html" with name=icon_name|default:"inbox" size="w-8 h-8" %}
+  </div>
+
+  <!-- Title & Description -->
+  <h3 class="text-lg sm:text-xl font-bold text-neutral-900 mb-2">
+    {{ title|default:_("Aucune donnée disponible") }}
+  </h3>
+  <p class="text-sm text-neutral-600 max-w-sm mb-6 leading-relaxed">
+    {{ description|default:_("Il n'y a actuellement aucun élément à afficher ici. Revenez ultérieurement ou commencez par en ajouter un.") }}
+  </p>
+
+  <!-- CTA Action Button (Optional) -->
+  {% if action_text and action_url %}
+    <div>
+      {% include "components/atoms/button.html" with type="a" href=action_url text=action_text icon_left=action_icon variant="primary" %}
+    </div>
+  {% endif %}
+</div>

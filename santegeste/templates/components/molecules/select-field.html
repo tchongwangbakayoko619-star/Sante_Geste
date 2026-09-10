@@ -1,0 +1,29 @@
+{# Molecule: Select Field (Label + Select + Error/Hint) #}
+{# Props: id, name, label, value, options, required, icon_left, has_error, error_message, hint_text, class, custom_classes #}
+{% load i18n %}
+{% with select_id=id|default:name %}
+  <div class="form-group {{ class|default:'' }} {{ custom_classes|default:'' }}">
+    {% if label %}
+      {% include "components/atoms/label.html" with for_id=select_id text=label required=required %}
+    {% endif %}
+
+    {% if has_error and error_message %}
+      {% include "components/atoms/select.html" with id=select_id name=name value=value options=options required=required icon_left=icon_left has_error=has_error aria_describedby=select_id|add:"-error" %}
+    {% elif hint_text %}
+      {% include "components/atoms/select.html" with id=select_id name=name value=value options=options required=required icon_left=icon_left has_error=has_error aria_describedby=select_id|add:"-hint" %}
+    {% else %}
+      {% include "components/atoms/select.html" with id=select_id name=name value=value options=options required=required icon_left=icon_left has_error=has_error %}
+    {% endif %}
+
+    {% if has_error and error_message %}
+      <p class="form-error-text" id="{{ select_id }}-error" role="alert" aria-live="assertive">
+        <svg class="w-3.5 h-3.5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+        </svg>
+        <span>{{ error_message }}</span>
+      </p>
+    {% elif hint_text %}
+      <p class="form-hint-text" id="{{ select_id }}-hint">{{ hint_text }}</p>
+    {% endif %}
+  </div>
+{% endwith %}

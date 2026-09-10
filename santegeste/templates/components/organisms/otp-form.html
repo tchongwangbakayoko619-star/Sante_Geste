@@ -1,0 +1,109 @@
+{# Organism: OTP Verification Form (CS² Health) #}
+{# Props: #}
+{#   - form : objet formulaire Django #}
+{#   - action_url : URL de soumission du formulaire (défaut: '') #}
+{#   - resend_url : URL de renvoi du code OTP (optionnel) #}
+{#   - back_url : URL de retour (optionnel) #}
+{#   - back_text : libellé du lien de retour #}
+{#   - title : titre principal (défaut: 'Code de vérification') #}
+{#   - subtitle : sous-titre explication #}
+{#   - submit_text : libellé du bouton (défaut: 'Valider le code de sécurité') #}
+{#   - class / custom_classes : classes CSS additionnelles #}
+{% load i18n %}
+{% trans "Code de vérification" as default_otp_title %}
+{% trans "Saisissez le code de sécurité à 6 chiffres reçu par e-mail pour valider votre identité médicale." as default_otp_subtitle %}
+{% trans "Valider le code de sécurité" as default_otp_submit %}
+{% trans "Retour à la connexion" as default_back_text %}
+
+<div class="auth-card {{ class|default:'' }} {{ custom_classes|default:'' }}">
+
+  <!-- Top Brand Lockup -->
+  <div class="mb-6 flex justify-center">
+    {% include "components/molecules/brand-lockup.html" %}
+  </div>
+
+  <!-- Header -->
+  <div class="auth-header">
+    <div class="otp-icon-box">
+      {% include "components/atoms/icon.html" with name="key" size="w-6 h-6" %}
+    </div>
+    <h2 class="auth-title">
+      {{ title|default:default_otp_title }}
+    </h2>
+    <p class="auth-subtitle">
+      {{ subtitle|default:default_otp_subtitle }}
+    </p>
+  </div>
+
+  <!-- Form Body with JS Validation & Submit Loading -->
+  <form method="post" action="{{ action_url|default:'' }}" class="space-y-6" data-form-validate data-form-loading novalidate>
+    {% csrf_token %}
+
+    <!-- Global Errors -->
+    {% if form.non_field_errors %}
+      <div class="space-y-2 mb-4" role="region" aria-label="{% trans 'Erreurs de validation' %}">
+        {% for error in form.non_field_errors %}
+          {% include "components/molecules/alert.html" with variant="error" message=error %}
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <!-- 6-digit Big OTP Input -->
+    <div class="flex flex-col items-center gap-2">
+      <label for="code" class="text-xs font-bold text-neutral-700 uppercase tracking-wider">
+        {% trans "Code OTP à 6 chiffres" %}
+      </label>
+      <input
+        type="text"
+        name="code"
+        id="code"
+        maxlength="6"
+        pattern="\d*"
+        inputmode="numeric"
+        placeholder="••••••"
+        autofocus
+        required
+        class="otp-input-field {% if form.code.errors %}input-error{% endif %}"
+      />
+      {% if form.code.errors %}
+        <p class="text-xs text-red-600 font-medium text-center mt-1" role="alert">{{ form.code.errors.0 }}</p>
+      {% endif %}
+    </div>
+
+    <!-- Submit CTA Button -->
+    <div>
+      {% include "components/atoms/button.html" with text=submit_text|default:default_otp_submit type="submit" full_width=True icon_left="shield-check" variant="primary" %}
+    </div>
+  </form>
+
+  <!-- Resend Code Section -->
+  {% if resend_url %}
+    <div class="mt-6 pt-5 border-t border-neutral-100 text-center">
+      <form method="post" action="{{ resend_url }}" data-form-loading>
+        {% csrf_token %}
+        <button type="submit" class="text-xs sm:text-sm font-semibold text-[#14967F] hover:text-[#0f7a67] hover:underline transition-colors cursor-pointer">
+          {% trans "Renvoyer un nouveau code OTP" %}
+        </button>
+      </form>
+    </div>
+  {% endif %}
+
+  <!-- Back Link -->
+  {% if back_url %}
+    <div class="mt-4 text-center">
+      <a href="{{ back_url }}" class="inline-flex items-center gap-1.5 text-xs font-semibold text-neutral-500 hover:text-neutral-800 transition-colors">
+        {% include "components/atoms/icon.html" with name="arrow-left" size="w-3.5 h-3.5" %}
+        <span>{{ back_text|default:default_back_text }}</span>
+      </a>
+    </div>
+  {% endif %}
+
+  <!-- Bottom Brand Footnote -->
+  <footer class="auth-footer">
+    <p class="auth-footer-text">
+      CS<sup class="text-[9px]">2</sup> Health • {% trans "Sécurité & Secret médical garantis" %}
+    </p>
+  </footer>
+
+</div>
+

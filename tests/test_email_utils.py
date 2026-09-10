@@ -36,31 +36,52 @@ def test_send_transactional_email_plain_text() -> None:
 
 
 def test_send_otp_email_helper() -> None:
-    """Vérifie le helper d'envoi d'OTP."""
+    """Vérifie le helper d'envoi d'OTP avec respect du design system."""
     success = send_otp_email_helper(
         recipient_email="otp-test@santegeste.com",
         user_name="Alice",
         raw_code="654321",
         purpose_label="vérification",
+        token="test-token-123",
     )
     assert success is True
     assert len(mail.outbox) == 1
-    assert "654321" in mail.outbox[0].subject
+    msg = mail.outbox[0]
+    assert "654321" in msg.subject
+    assert "CS² Health" in msg.subject
+
+    # Vérification du rendu HTML et du design system
+    assert len(msg.alternatives) == 1
+    html_body, mime_type = msg.alternatives[0]
+    assert mime_type == "text/html"
+    assert "#14967F" in html_body  # Couleur primaire obligatoire
+    assert "654321" in html_body
+    assert "CS" in html_body and "Health" in html_body
+    assert "secret médical" in html_body.lower()
+    assert "test-token-123" in html_body
 
 
 def test_send_welcome_email_helper() -> None:
-    """Vérifie le helper d'e-mail de bienvenue."""
+    """Vérifie le helper d'e-mail de bienvenue avec respect du design system."""
     success = send_welcome_email_helper(
         recipient_email="welcome-test@santegeste.com",
         user_name="Bob",
     )
     assert success is True
     assert len(mail.outbox) == 1
-    assert "Bienvenue" in mail.outbox[0].subject
+    msg = mail.outbox[0]
+    assert "Bienvenue" in msg.subject
+    assert "CS² Health" in msg.subject
+
+    # Vérification du rendu HTML
+    assert len(msg.alternatives) == 1
+    html_body, _ = msg.alternatives[0]
+    assert "#14967F" in html_body
+    assert "CS" in html_body and "Health" in html_body
 
 
 def test_send_security_alert_email_helper() -> None:
-    """Vérifie le helper d'alerte de sécurité."""
+    """Vérifie le helper d'alerte de sécurité avec respect du design system."""
     success = send_security_alert_email_helper(
         recipient_email="security-test@santegeste.com",
         user_name="Charlie",
@@ -68,4 +89,13 @@ def test_send_security_alert_email_helper() -> None:
     )
     assert success is True
     assert len(mail.outbox) == 1
-    assert "Alerte de sécurité" in mail.outbox[0].subject
+    msg = mail.outbox[0]
+    assert "Alerte de sécurité" in msg.subject
+    assert "CS² Health" in msg.subject
+
+    # Vérification du rendu HTML
+    assert len(msg.alternatives) == 1
+    html_body, _ = msg.alternatives[0]
+    assert "#14967F" in html_body
+    assert "CS" in html_body and "Health" in html_body
+
