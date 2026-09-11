@@ -98,7 +98,8 @@ class RedirectToNextOrReferrerMixin:
         """Redirige les utilisateurs authentifiés uniquement si redirect_authenticated_user est activé."""
         if not hasattr(self, "request"):
             self.request = request
-        if self.redirect_authenticated_user and request.user.is_authenticated:
+        user = getattr(request, "user", None)
+        if self.redirect_authenticated_user and getattr(user, "is_authenticated", False):
             return HttpResponseRedirect(self.get_redirect_url())
         return super().dispatch(request, *args, **kwargs)  # type: ignore[misc]
 
@@ -117,7 +118,8 @@ class AnonymousRequiredMixin(RedirectToNextOrReferrerMixin):
         """Redirige les utilisateurs connectés avant l'affichage de la vue."""
         if not hasattr(self, "request"):
             self.request = request
-        if request.user.is_authenticated:
+        user = getattr(request, "user", None)
+        if getattr(user, "is_authenticated", False):
             return HttpResponseRedirect(self.get_redirect_url())
         return super().dispatch(request, *args, **kwargs)  # type: ignore[misc]
 
@@ -146,12 +148,17 @@ class RoleRequiredMixin(AccessMixin):
         self, request: HttpRequest, *args: Any, **kwargs: Any
     ) -> HttpResponse:
         """Vérifie l'authentification et les rôles attribués à l'utilisateur."""
-        if not request.user.is_authenticated or not request.user.is_active:
+        user = getattr(request, "user", None)
+        if (
+            not user
+            or not getattr(user, "is_authenticated", False)
+            or not getattr(user, "is_active", False)
+        ):
             return self.handle_no_permission()
 
         required = self.get_required_roles()
         if required and not check_user_roles(
-            request.user, required, require_all=self.require_all_roles
+            user, required, require_all=self.require_all_roles
         ):
             raise PermissionDenied(self.get_permission_denied_message())
 

@@ -454,8 +454,13 @@ def test_role_required_decorator_allows_authorized(rf: RequestFactory) -> None:
     assert response.content == b"FBV_CAISSE"
 
 
+@role_required(UserRoleEnum.PROPRIETAIRE, raise_exception=False, redirect_url="/dashboard/")
+def sample_proprio_redirect_dashboard_fbv(request):
+    return HttpResponse("FBV_PROPRIO")
+
+
 def test_role_required_decorator_redirects_when_raise_exception_false(rf: RequestFactory) -> None:
-    """Si raise_exception=False, redirige vers l'URL indiquée."""
+    """Si raise_exception=False, redirige vers l'URL de repli sans créer de boucle login/next."""
     user = User.objects.create_user(
         email="simple.user@santegeste.com",
         password="Password123!",
@@ -463,9 +468,17 @@ def test_role_required_decorator_redirects_when_raise_exception_false(rf: Reques
     request = rf.get("/fbv/proprio/")
     request.user = user
 
-    response = sample_proprio_redirect_fbv(request)
+    # Utilisateur connecté mais sans rôle : redirigé vers le dashboard (pas vers le login avec ?next=)
+    response = sample_proprio_redirect_dashboard_fbv(request)
     assert response.status_code == 302
-    assert "/custom-login/" in response.url
+    assert response.url == "/dashboard/"
+
+    # Utilisateur non connecté : redirigé vers le login avec le paramètre next
+    anon_req = rf.get("/fbv/proprio/")
+    anon_req.user = AnonymousUser()
+    anon_response = sample_proprio_redirect_dashboard_fbv(anon_req)
+    assert anon_response.status_code == 302
+    assert "next=" in anon_response.url and "/fbv/proprio/" in anon_response.url
 
 
 def test_patient_management_required_decorator(rf: RequestFactory) -> None:

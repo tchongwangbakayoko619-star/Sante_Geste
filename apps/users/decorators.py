@@ -5,9 +5,11 @@ from __future__ import annotations
 from functools import wraps
 from typing import Any, Callable
 
+from django.conf import settings
 from django.contrib.auth.views import redirect_to_login
 from django.core.exceptions import PermissionDenied
 from django.http import HttpRequest, HttpResponse
+from django.shortcuts import redirect
 from django.utils.translation import gettext_lazy as _
 
 from apps.users.services.rbac import check_user_roles
@@ -20,6 +22,7 @@ def role_required(
     *roles: UserRoleEnum | str,
     require_all: bool = False,
     login_url: str | None = None,
+    redirect_url: str | None = None,
     raise_exception: bool = True,
     message: str | None = None,
 ) -> Callable[[ViewFunc], ViewFunc]:
@@ -27,8 +30,9 @@ def role_required(
 
     - Si l'utilisateur n'est pas connecté ou inactif, il est redirigé vers le login (avec ?next=).
     - Si l'utilisateur est connecté mais ne possède pas les rôles requis :
-      - Si `raise_exception=True` (défaut), lève `PermissionDenied` (erreur 403 HTTP).
-      - Sinon, redirige vers `login_url` ou `settings.LOGIN_URL`.
+      - Si `raise_exception=True` (défaut strict), lève `PermissionDenied` (erreur 403 HTTP).
+      - Si `raise_exception=False`, redirige vers `redirect_url` ou `settings.LOGIN_REDIRECT_URL`
+        (sans boucle de connexion/next sur la page interdite).
     """
     error_message = message or _(
         "Vous n'avez pas les permissions requises pour accéder à cette ressource."
@@ -41,7 +45,11 @@ def role_required(
         ) -> HttpResponse:
             user = getattr(request, "user", None)
 
-            if not user or not user.is_authenticated or not user.is_active:
+            if (
+                not user
+                or not getattr(user, "is_authenticated", False)
+                or not getattr(user, "is_active", False)
+            ):
                 return redirect_to_login(request.get_full_path(), login_url)
 
             if roles and not check_user_roles(
@@ -49,7 +57,13 @@ def role_required(
             ):
                 if raise_exception:
                     raise PermissionDenied(error_message)
-                return redirect_to_login(request.get_full_path(), login_url)
+
+                target = (
+                    redirect_url
+                    or login_url
+                    or getattr(settings, "LOGIN_REDIRECT_URL", "home")
+                )
+                return redirect(target)
 
             return view_func(request, *args, **kwargs)
 
@@ -63,13 +77,14 @@ def _create_role_decorator(
     require_all: bool = False,
 ) -> Callable[..., Any]:
     """Fabrique de décorateur supportant la syntaxe avec ou sans parenthèses :
-    @decorateur ou @decorateur(raise_exception=False, login_url=...)
+    @decorateur ou @decorateur(raise_exception=False, redirect_url=...)
     """
 
     def decorator_factory(
         view_func: ViewFunc | None = None,
         *,
         login_url: str | None = None,
+        redirect_url: str | None = None,
         raise_exception: bool = True,
         message: str | None = None,
     ) -> Any:
@@ -77,6 +92,7 @@ def _create_role_decorator(
             *roles,
             require_all=require_all,
             login_url=login_url,
+            redirect_url=redirect_url,
             raise_exception=raise_exception,
             message=message,
         )
@@ -106,7 +122,6 @@ personnel_medical_required = _create_role_decorator(
 patient_management_required = _create_role_decorator(
     UserRoleEnum.AGENT_ACCUEIL,
     UserRoleEnum.PERSONNEL_MEDICAL,
-    require_all=False,
 )
 
 __all__ = [
