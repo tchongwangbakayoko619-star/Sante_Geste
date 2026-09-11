@@ -12,6 +12,9 @@ from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import gettext_lazy as _
 
+from apps.users.services.rbac import check_user_roles
+from utils.enums import UserRoleEnum
+
 
 class RedirectToNextOrReferrerMixin:
     """Mixin fournissant des redirections sécurisées contre les attaques d'Open Redirect.
@@ -120,44 +123,103 @@ class AnonymousRequiredMixin(RedirectToNextOrReferrerMixin):
 
 
 class RoleRequiredMixin(AccessMixin):
-    """Mixin de base pour restreindre l'accès à une vue selon des rôles applicatifs (RBAC)."""
+    """Mixin de base pour restreindre l'accès à une vue selon des rôles applicatifs (RBAC).
 
-    required_roles: list[str] = []
+    Supporte:
+    - required_roles: liste ou séquence de rôles (UserRoleEnum ou str).
+    - require_all_roles: bool (True pour ET logique, False pour OU logique).
+    - Redirection automatique vers login avec paramètre ?next= si non connecté ou inactif.
+    - Levée de PermissionDenied (403) si l'utilisateur est connecté mais non autorisé.
+    """
+
+    required_roles: list[UserRoleEnum | str] = []
+    require_all_roles: bool = False
     permission_denied_message: str = _(
         "Vous n'avez pas les permissions requises pour accéder à cette ressource."
     )
+
+    def get_required_roles(self) -> list[UserRoleEnum | str]:
+        """Retourne la liste des rôles requis pour accéder à la vue."""
+        return list(self.required_roles)
 
     def dispatch(
         self, request: HttpRequest, *args: Any, **kwargs: Any
     ) -> HttpResponse:
         """Vérifie l'authentification et les rôles attribués à l'utilisateur."""
-        if not request.user.is_authenticated:
+        if not request.user.is_authenticated or not request.user.is_active:
             return self.handle_no_permission()
 
-        if self.required_roles and not any(
-            getattr(request.user, f"is_{role}", False) for role in self.required_roles
+        required = self.get_required_roles()
+        if required and not check_user_roles(
+            request.user, required, require_all=self.require_all_roles
         ):
-            raise PermissionDenied(self.permission_denied_message)
+            raise PermissionDenied(self.get_permission_denied_message())
 
         return super().dispatch(request, *args, **kwargs)  # type: ignore[misc]
 
 
-class PersonnelMedicalRequiredMixin(RoleRequiredMixin):
-    """Restreint l'accès aux seuls membres du personnel médical (is_personnel_medical=True)."""
-
-    required_roles: list[str] = ["personnel_medical"]
-
-
 class ProprietaireRequiredMixin(RoleRequiredMixin):
-    """Restreint l'accès aux seuls propriétaires d'établissement (is_proprietaire=True)."""
+    """Restreint l'accès aux seuls propriétaires d'établissement (ou superuser)."""
 
-    required_roles: list[str] = ["proprietaire"]
+    required_roles: list[UserRoleEnum | str] = [UserRoleEnum.PROPRIETAIRE]
+
+
+class ResponsablePharmacieRequiredMixin(RoleRequiredMixin):
+    """Restreint l'accès aux seuls responsables pharmacie (ou superuser)."""
+
+    required_roles: list[UserRoleEnum | str] = [UserRoleEnum.RESPONSABLE_PHARMACIE]
+
+
+class VendeurPharmacieRequiredMixin(RoleRequiredMixin):
+    """Restreint l'accès aux vendeurs pharmacie (inclus les responsables pharmacie par héritage)."""
+
+    required_roles: list[UserRoleEnum | str] = [UserRoleEnum.VENDEUR_PHARMACIE]
+
+
+class PharmacyAccessRequiredMixin(RoleRequiredMixin):
+    """Accès générique au module pharmacie (vendeurs et responsables pharmacie)."""
+
+    required_roles: list[UserRoleEnum | str] = [UserRoleEnum.VENDEUR_PHARMACIE]
+
+
+class CaissierRequiredMixin(RoleRequiredMixin):
+    """Restreint l'accès aux caissiers (ou superuser)."""
+
+    required_roles: list[UserRoleEnum | str] = [UserRoleEnum.CAISSIER]
+
+
+class AgentAccueilRequiredMixin(RoleRequiredMixin):
+    """Restreint l'accès aux agents d'accueil (ou superuser)."""
+
+    required_roles: list[UserRoleEnum | str] = [UserRoleEnum.AGENT_ACCUEIL]
+
+
+class PersonnelMedicalRequiredMixin(RoleRequiredMixin):
+    """Restreint l'accès aux membres du personnel médical (ou superuser)."""
+
+    required_roles: list[UserRoleEnum | str] = [UserRoleEnum.PERSONNEL_MEDICAL]
+
+
+class PatientManagementRequiredMixin(RoleRequiredMixin):
+    """Accès à la gestion des patients (agents d'accueil OU personnel médical)."""
+
+    required_roles: list[UserRoleEnum | str] = [
+        UserRoleEnum.AGENT_ACCUEIL,
+        UserRoleEnum.PERSONNEL_MEDICAL,
+    ]
+    require_all_roles: bool = False
 
 
 __all__ = [
+    "AgentAccueilRequiredMixin",
     "AnonymousRequiredMixin",
+    "CaissierRequiredMixin",
+    "PatientManagementRequiredMixin",
     "PersonnelMedicalRequiredMixin",
+    "PharmacyAccessRequiredMixin",
     "ProprietaireRequiredMixin",
     "RedirectToNextOrReferrerMixin",
+    "ResponsablePharmacieRequiredMixin",
     "RoleRequiredMixin",
+    "VendeurPharmacieRequiredMixin",
 ]
