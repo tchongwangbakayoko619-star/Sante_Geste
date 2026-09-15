@@ -1,15 +1,71 @@
 {% extends "base.html" %}
 {% load i18n %}
 
-{% block title %}{% trans "Accès interdit (403)" %}{% endblock title %}
-{% block content %}
-  <h1>{% trans "Accès interdit (403)" %}</h1>
-  <p>
-    {% if exception %}
-      {{ exception }}
-    {% else %}
-      {% trans "Vous n'êtes pas autorisé à accéder à cette page." %}
-    {% endif %}
-  </p>
-{% endblock content %}
+{% block title %}{% trans "Accès interdit (403) - SantéGeste" %}{% endblock title %}
 
+{% block main %}
+<div class="min-h-[60vh] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-md w-full text-center space-y-6">
+
+    <!-- Icone Badge Alerte 403 -->
+    <div class="mx-auto flex items-center justify-center w-20 h-20 rounded-3xl bg-amber-50 text-amber-600 border border-amber-200/60 shadow-xs">
+      <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+      </svg>
+    </div>
+
+    <!-- Code d'erreur & Titre -->
+    <div class="space-y-2">
+      <span class="inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-red-100 text-red-700">
+        {% trans "Erreur 403" %}
+      </span>
+      <h1 class="text-2xl sm:text-3xl font-extrabold text-neutral-900 tracking-tight font-display">
+        {% trans "Accès non autorisé" %}
+      </h1>
+      <p class="text-sm sm:text-base text-neutral-600 leading-relaxed max-w-sm mx-auto">
+        {% if exception %}
+          {{ exception }}
+        {% else %}
+          {% trans "Vous ne disposez pas des privilèges ou des rôles applicatifs requis pour accéder à cette ressource." %}
+        {% endif %}
+      </p>
+    </div>
+
+    <!-- Information rôle / contextuel -->
+    {% if request.user.is_authenticated %}
+      <div class="bg-neutral-50 rounded-2xl p-4 border border-neutral-200/80 text-left text-xs text-neutral-600 space-y-1">
+        <div class="font-semibold text-neutral-800">{% trans "Compte connecté :" %} {{ request.user.email }}</div>
+        {% if request.user.active_roles %}
+          <div>{% trans "Rôles attribués :" %} <span class="font-medium text-neutral-700">{{ request.user.active_roles|join:", " }}</span></div>
+        {% else %}
+          <div class="text-neutral-500 italic">{% trans "Aucun rôle métier attribué à ce compte." %}</div>
+        {% endif %}
+      </div>
+    {% endif %}
+
+    <!-- Actions de navigation -->
+    <div class="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+      <a href="{% url 'home' %}" class="w-full sm:w-auto inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-[#14967F] hover:bg-[#117F6C] text-white font-semibold text-sm transition-colors shadow-xs">
+        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+        </svg>
+        {% trans "Retour à l'accueil" %}
+      </a>
+
+      {% if request.user.is_authenticated %}
+        <form method="post" action="{% url 'users:logout' %}" class="w-full sm:w-auto">
+          {% csrf_token %}
+          <button type="submit" class="w-full sm:w-auto inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-white hover:bg-neutral-100 text-neutral-700 border border-neutral-300 font-semibold text-sm transition-colors cursor-pointer">
+            {% trans "Changer de compte" %}
+          </button>
+        </form>
+      {% else %}
+        <a href="{% url 'users:login' %}" class="w-full sm:w-auto inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-white hover:bg-neutral-100 text-neutral-700 border border-neutral-300 font-semibold text-sm transition-colors">
+          {% trans "Se connecter" %}
+        </a>
+      {% endif %}
+    </div>
+
+  </div>
+</div>
+{% endblock main %}

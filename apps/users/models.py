@@ -13,7 +13,7 @@ from django.utils.translation import gettext_lazy as _
 from apps.users.managers import UserManager
 from core.models import BaseModel
 from utils.constants.otp import OTP_MAX_ATTEMPTS
-from utils.enums import OTPPurposeEnum
+from utils.enums import OTPPurposeEnum, UserRoleEnum
 from utils.phone import validate_phone_number
 from utils.validators import validate_image_file_size
 
@@ -126,18 +126,86 @@ class User(AbstractBaseUser, PermissionsMixin, BaseModel):
         full = f"{self.first_name} {self.last_name}".strip()
         return full or self.email
 
+    ROLE_FIELD_MAP: dict[UserRoleEnum, str] = {
+        UserRoleEnum.PROPRIETAIRE: "is_proprietaire",
+        UserRoleEnum.RESPONSABLE_PHARMACIE: "is_responsable_pharmacie",
+        UserRoleEnum.VENDEUR_PHARMACIE: "is_vendeur_pharmacie",
+        UserRoleEnum.CAISSIER: "is_caissier",
+        UserRoleEnum.AGENT_ACCUEIL: "is_agent_accueil",
+        UserRoleEnum.PERSONNEL_MEDICAL: "is_personnel_medical",
+    }
+
+    def get_direct_roles(self) -> set[UserRoleEnum]:
+        """Retourne l'ensemble des rôles directement assignés à l'utilisateur."""
+        from apps.users.services import rbac as rbac_service
+
+        return rbac_service.get_direct_roles(self)
+
+    def get_effective_roles(self) -> set[UserRoleEnum]:
+        """Retourne l'ensemble des rôles effectifs en appliquant l'héritage métier et le statut superuser."""
+        from apps.users.services import rbac as rbac_service
+
+        return rbac_service.get_effective_roles(self)
+
+    def has_role(self, *roles: UserRoleEnum | str) -> bool:
+        """Vérifie si l'utilisateur possède au moins un des rôles spécifiés (OU logique)."""
+        from apps.users.services import rbac as rbac_service
+
+        return rbac_service.has_role(self, *roles)
+
+    def has_all_roles(self, *roles: UserRoleEnum | str) -> bool:
+        """Vérifie si l'utilisateur possède tous les rôles spécifiés (ET logique)."""
+        from apps.users.services import rbac as rbac_service
+
+        return rbac_service.has_all_roles(self, *roles)
+
     @property
     def active_roles(self) -> list[str]:
-        """Retourne la liste des rôles actifs attribués à cet utilisateur."""
-        roles_map = [
-            ("proprietaire", self.is_proprietaire),
-            ("responsable_pharmacie", self.is_responsable_pharmacie),
-            ("vendeur_pharmacie", self.is_vendeur_pharmacie),
-            ("caissier", self.is_caissier),
-            ("agent_accueil", self.is_agent_accueil),
-            ("personnel_medical", self.is_personnel_medical),
-        ]
-        return [role for role, active in roles_map if active]
+        """Retourne la liste des chaînes de rôles directement attribués (rétro-compatibilité)."""
+        direct = self.get_direct_roles()
+        return [r.value for r in self.ROLE_FIELD_MAP if r in direct]
+
+    @property
+    def can_manage_pharmacy(self) -> bool:
+        """Indique si l'utilisateur peut gérer la pharmacie (stocks, inventaires)."""
+        from apps.users.services import rbac as rbac_service
+
+        return rbac_service.can_manage_pharmacy(self)
+
+    @property
+    def can_sell_pharmacy(self) -> bool:
+        """Indique si l'utilisateur peut effectuer des ventes en pharmacie."""
+        from apps.users.services import rbac as rbac_service
+
+        return rbac_service.can_sell_pharmacy(self)
+
+    @property
+    def can_manage_cash(self) -> bool:
+        """Indique si l'utilisateur peut gérer les opérations de caisse."""
+        from apps.users.services import rbac as rbac_service
+
+        return rbac_service.can_manage_cash(self)
+
+    @property
+    def can_manage_patients(self) -> bool:
+        """Indique si l'utilisateur peut gérer les patients et les rendez-vous."""
+        from apps.users.services import rbac as rbac_service
+
+        return rbac_service.can_manage_patients(self)
+
+    @property
+    def can_prescribe(self) -> bool:
+        """Indique si l'utilisateur a le droit légal de prescription médicale."""
+        from apps.users.services import rbac as rbac_service
+
+        return rbac_service.can_prescribe(self)
+
+    @property
+    def can_validate_sensitive_ops(self) -> bool:
+        """Indique si l'utilisateur peut valider des opérations sensibles d'administration."""
+        from apps.users.services import rbac as rbac_service
+
+        return rbac_service.can_validate_sensitive_ops(self)
 
 
 class MedicalProfile(BaseModel):

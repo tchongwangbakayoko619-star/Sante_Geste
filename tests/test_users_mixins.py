@@ -124,3 +124,40 @@ def test_personnel_medical_required_mixin_allows_medical_user() -> None:
     view.get = mock_dispatch
     response = view.dispatch(request)
     assert response == "OK"
+
+
+def test_redirect_fallback_invalid_route_recovers() -> None:
+    """Vérifie que get_redirect_url intercepte NoReverseMatch et renvoie l'URL par défaut sécurisée."""
+    factory = RequestFactory()
+    request = factory.get("/login/")
+    view = DummyRedirectView()
+    view.fallback_url = "non_existent_route_404_error"
+    view.setup(request)
+
+    # Doit intercepter NoReverseMatch et renvoyer la résolution de 'home' ('/')
+    assert view.get_redirect_url() == "/"
+
+
+def test_role_required_mixin_redirects_when_raise_exception_false() -> None:
+    """Vérifie que RoleRequiredMixin redirige vers redirect_url si raise_exception=False."""
+    factory = RequestFactory()
+    user_civil = User.objects.create_user(
+        email="civil2@santegeste.com",
+        password="Password123!",
+        is_personnel_medical=False,
+    )
+
+    class SoftMedicalView(PersonnelMedicalRequiredMixin, View):
+        raise_exception = False
+        redirect_url = "/dashboard/"
+
+    request = factory.get("/medical/sensitive/")
+    request.user = user_civil
+
+    view = SoftMedicalView()
+    view.setup(request)
+    response = view.dispatch(request)
+
+    assert response.status_code == 302
+    assert response.url == "/dashboard/"
+
