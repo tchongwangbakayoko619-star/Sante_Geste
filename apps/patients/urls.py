@@ -8,6 +8,7 @@ from apps.patients.views import AppointmentStatusUpdateView
 from apps.patients.views import PatientCreateView
 from apps.patients.views import PatientDetailView
 from apps.patients.views import PatientListView
+from apps.patients.views import PatientMedicalUpdateView
 from apps.patients.views import PatientUpdateView
 
 app_name = "patients"
@@ -18,6 +19,7 @@ urlpatterns = [
     path("nouveau/", PatientCreateView.as_view(), name="patient_create"),
     path("<uuid:pk>/", PatientDetailView.as_view(), name="patient_detail"),
     path("<uuid:pk>/modifier/", PatientUpdateView.as_view(), name="patient_update"),
+    path("<uuid:pk>/medical/", PatientMedicalUpdateView.as_view(), name="patient_medical_update"),
 
     # Rendez-vous et agenda médical
     path("rendez-vous/", AppointmentListView.as_view(), name="appointment_list"),

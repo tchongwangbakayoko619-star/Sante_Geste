@@ -6,6 +6,7 @@ from .appointment_views import AppointmentStatusUpdateView
 from .patient_views import PatientCreateView
 from .patient_views import PatientDetailView
 from .patient_views import PatientListView
+from .patient_views import PatientMedicalUpdateView
 from .patient_views import PatientUpdateView
 
 __all__ = [
@@ -15,6 +16,7 @@ __all__ = [
     "PatientCreateView",
     "PatientDetailView",
     "PatientListView",
+    "PatientMedicalUpdateView",
     "PatientUpdateView",
 ]
 

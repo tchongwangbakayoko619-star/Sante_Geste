@@ -143,3 +143,37 @@ class PatientSearchForm(forms.Form):
         ),
     )
 
+
+class PatientMedicalUpdateForm(forms.ModelForm):
+    """Formulaire réservé au personnel soignant pour la mise à jour des données cliniques."""
+
+    class Meta:
+        model = Patient
+        fields = [
+            "blood_group",
+            "allergies",
+            "chronic_diseases",
+        ]
+        widgets = {
+            "blood_group": forms.Select(
+                attrs={
+                    "class": "w-full px-4 py-2.5 rounded-xl border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-[#14967F] focus:border-[#14967F] text-sm text-neutral-800 transition-colors bg-white",
+                }
+            ),
+            "allergies": forms.Textarea(
+                attrs={
+                    "rows": 4,
+                    "placeholder": _("Ex: Pénicilline, Sulfamides, Latex... Laisser vide si aucune allergie constatée"),
+                    "class": "w-full px-4 py-2.5 rounded-xl border border-amber-300 bg-amber-50/20 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-sm text-neutral-800 transition-colors resize-none",
+                }
+            ),
+            "chronic_diseases": forms.Textarea(
+                attrs={
+                    "rows": 4,
+                    "placeholder": _("Ex: Diabète type 2 insulino-dépendant, HTA sous traitement, Asthme sévère..."),
+                    "class": "w-full px-4 py-2.5 rounded-xl border border-rose-300 bg-rose-50/20 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-rose-500 text-sm text-neutral-800 transition-colors resize-none",
+                }
+            ),
+        }
+
+

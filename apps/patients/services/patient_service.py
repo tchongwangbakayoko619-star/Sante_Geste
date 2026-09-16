@@ -94,6 +94,28 @@ def update_patient(*, patient: Patient, data: dict[str, Any], updated_by: User |
     return patient
 
 
+def update_patient_medical_record(
+    *,
+    patient: Patient,
+    data: dict[str, Any],
+    updated_by: User | None = None,
+) -> Patient:
+    """Met à jour exclusivement les données médicales (allergies, affections chroniques, groupe sanguin).
+
+    Réservé au personnel soignant habilité.
+    """
+    allowed_medical_fields = {"blood_group", "allergies", "chronic_diseases"}
+    for field in allowed_medical_fields:
+        if field in data:
+            setattr(patient, field, data[field])
+
+    if updated_by:
+        patient.set_updated_by(updated_by)
+
+    patient.save(update_fields=[*allowed_medical_fields, "updated_by", "updated_at"])
+    return patient
+
+
 def search_patients(query: str, *, active_only: bool = True) -> QuerySet[Patient]:
     """Recherche multi-critères rapide dans les dossiers patients.
 

@@ -352,6 +352,43 @@ def test_patient_create_and_update_forbidden_to_doctor(client, doctor_user, samp
     assert resp_update.status_code == 403
 
 
+@pytest.mark.django_db
+def test_patient_medical_update_view_doctor_allowed_agent_forbidden(client, doctor_user, agent_accueil, sample_patient):
+    """La mise à jour clinique est autorisée aux médecins et formellement interdite aux agents d'accueil."""
+    url_med = reverse("patients:patient_medical_update", kwargs={"pk": sample_patient.pk})
+
+    # 1. Agent d'accueil tente d'accéder au formulaire médical -> 403
+    client.force_login(agent_accueil)
+    resp_agent_get = client.get(url_med)
+    assert resp_agent_get.status_code == 403
+
+    resp_agent_post = client.post(url_med, data={"allergies": "Tentative non autorisée"})
+    assert resp_agent_post.status_code == 403
+
+    # 2. Médecin accède au formulaire médical -> 200
+    client.force_login(doctor_user)
+    resp_doc_get = client.get(url_med)
+    assert resp_doc_get.status_code == 200
+    assert "Mise à jour du profil clinique" in resp_doc_get.content.decode("utf-8")
+
+    # 3. Médecin met à jour les allergies et affections chroniques
+    post_data = {
+        "blood_group": BloodGroupEnum.AB_POSITIVE,
+        "allergies": "Pénicilline, Ibuprofène",
+        "chronic_diseases": "Diabète type 2, HTA",
+    }
+    resp_doc_post = client.post(url_med, data=post_data)
+    assert resp_doc_post.status_code == 302
+    assert resp_doc_post.url == sample_patient.get_absolute_url()
+
+    sample_patient.refresh_from_db()
+    assert sample_patient.blood_group == BloodGroupEnum.AB_POSITIVE
+    assert "Ibuprofène" in sample_patient.allergies
+    assert "Diabète type 2" in sample_patient.chronic_diseases
+    assert sample_patient.updated_by == doctor_user
+
+
+
 
 @pytest.mark.django_db
 def test_appointment_create_and_status_update_view(client, agent_accueil, doctor_user, sample_patient):

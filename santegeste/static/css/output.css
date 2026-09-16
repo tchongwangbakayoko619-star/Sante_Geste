@@ -64,6 +64,7 @@
     --color-rose-700: oklch(51.4% 0.222 16.935);
     --color-rose-800: oklch(45.5% 0.188 13.697);
     --color-rose-900: oklch(41% 0.159 10.272);
+    --color-rose-950: oklch(27.1% 0.105 12.094);
     --color-slate-800: oklch(27.9% 0.041 260.031);
     --color-slate-900: oklch(20.8% 0.042 265.755);
     --color-neutral-50: #f8fafc;
@@ -1640,6 +1641,9 @@
   .italic {
     font-style: italic;
   }
+  .underline {
+    text-decoration-line: underline;
+  }
   .antialiased {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -1880,6 +1884,9 @@
         background-color: color-mix(in oklab, var(--color-neutral-200) 80%, transparent);
       }
     }
+    .hover\:bg-purple-50:hover {
+      background-color: var(--color-purple-50);
+    }
     .hover\:bg-purple-100:hover {
       background-color: var(--color-purple-100);
     }
@@ -1937,6 +1944,9 @@
     }
     .hover\:text-rose-600:hover {
       color: var(--color-rose-600);
+    }
+    .hover\:text-rose-950:hover {
+      color: var(--color-rose-950);
     }
     .hover\:underline:hover {
       text-decoration-line: underline;
@@ -2063,6 +2073,9 @@
   @media (width >= 40rem) {
     .sm\:col-span-2 {
       grid-column: span 2 / span 2;
+    }
+    .sm\:block {
+      display: block;
     }
     .sm\:hidden {
       display: none;

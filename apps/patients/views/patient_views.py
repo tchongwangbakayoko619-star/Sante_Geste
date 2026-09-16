@@ -18,13 +18,16 @@ from django.views.generic.edit import CreateView
 from django.views.generic.edit import UpdateView
 
 from apps.patients.forms import PatientForm
+from apps.patients.forms import PatientMedicalUpdateForm
 from apps.patients.forms import PatientSearchForm
 from apps.patients.models import Patient
 from apps.patients.services import create_patient
 from apps.patients.services import search_patients
 from apps.patients.services import update_patient
+from apps.patients.services import update_patient_medical_record
 from apps.users.mixins import AgentAccueilRequiredMixin
 from apps.users.mixins import PatientManagementRequiredMixin
+from apps.users.mixins import PersonnelMedicalRequiredMixin
 
 
 class PatientListView(PatientManagementRequiredMixin, ListView):
@@ -164,4 +167,33 @@ class PatientUpdateView(AgentAccueilRequiredMixin, SuccessMessageMixin, UpdateVi
         context["action_text"] = _("Enregistrer les modifications")
         context["is_update"] = True
         return context
+
+
+class PatientMedicalUpdateView(PersonnelMedicalRequiredMixin, SuccessMessageMixin, UpdateView):
+    """Mise à jour des informations médicales et facteurs de risque (réservé au personnel soignant)."""
+
+    model = Patient
+    form_class = PatientMedicalUpdateForm
+    template_name = "patients/patient_medical_form.html"
+
+    def form_valid(self, form: PatientMedicalUpdateForm):
+        patient = update_patient_medical_record(
+            patient=self.get_object(),
+            data=form.cleaned_data,
+            updated_by=self.request.user,
+        )
+        self.object = patient
+        messages.success(
+            self.request,
+            _("Le profil médical de %(name)s (%(number)s) a été mis à jour avec succès.")
+            % {"name": patient.full_name, "number": patient.patient_number},
+        )
+        return redirect(patient.get_absolute_url())
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        context["title"] = _("Mise à jour du profil médical : %(name)s") % {"name": self.object.full_name}
+        context["patient"] = self.object
+        return context
+
 

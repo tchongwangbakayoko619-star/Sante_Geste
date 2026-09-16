@@ -86,6 +86,14 @@
             {% trans "Modifier la fiche" %}
           </a>
         {% endif %}
+        {% if request.user.is_personnel_medical or request.user.is_superuser %}
+          <a href="{% url 'patients:patient_medical_update' patient.pk %}" class="btn btn-outline py-2.5 px-4 text-xs sm:text-sm inline-flex items-center gap-2 border-purple-200 text-purple-700 hover:bg-purple-50 transition-colors">
+            <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            {% trans "Profil clinique" %}
+          </a>
+        {% endif %}
       </div>
 
     </div>
@@ -103,13 +111,20 @@
         </div>
 
         <div class="flex-1 space-y-3">
-          <div>
-            <h3 class="text-sm font-extrabold text-rose-900 uppercase tracking-wider">
-              {% trans "Alertes Médicales & Vigilance Thérapeutique" %}
-            </h3>
-            <p class="text-xs text-rose-700">
-              {% trans "Prise en charge soumise aux précautions ci-dessous" %}
-            </p>
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <h3 class="text-sm font-extrabold text-rose-900 uppercase tracking-wider">
+                {% trans "Alertes Médicales & Vigilance Thérapeutique" %}
+              </h3>
+              <p class="text-xs text-rose-700">
+                {% trans "Prise en charge soumise aux précautions ci-dessous" %}
+              </p>
+            </div>
+            {% if can_view_medical_info %}
+              <a href="{% url 'patients:patient_medical_update' patient.pk %}" class="text-xs font-bold text-rose-800 hover:text-rose-950 underline shrink-0">
+                {% trans "Modifier les alertes" %} &rarr;
+              </a>
+            {% endif %}
           </div>
 
           {% if can_view_medical_info %}
