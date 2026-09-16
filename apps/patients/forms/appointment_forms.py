@@ -136,3 +136,4 @@ class AppointmentStatusForm(forms.ModelForm):
                 }
             ),
         }
+

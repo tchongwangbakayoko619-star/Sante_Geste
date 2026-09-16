@@ -103,3 +103,4 @@ def search_patients(query: str, *, active_only: bool = True) -> QuerySet[Patient
         combined_q &= term_q
 
     return qs.filter(combined_q).distinct()
+

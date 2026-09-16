@@ -24,3 +24,4 @@ urlpatterns = [
     path("rendez-vous/planifier/", AppointmentCreateView.as_view(), name="appointment_create"),
     path("rendez-vous/<uuid:pk>/statut/", AppointmentStatusUpdateView.as_view(), name="appointment_status_update"),
 ]
+

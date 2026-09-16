@@ -17,3 +17,4 @@ __all__ = [
     "update_appointment_status",
     "update_patient",
 ]
+

@@ -232,3 +232,4 @@ class Appointment(SoftDeleteModel):
             AppointmentStatusEnum.MISSED: "bg-neutral-100 text-neutral-600 border-neutral-200 ring-neutral-500/20",
         }
         return mapping.get(self.status, "bg-neutral-100 text-neutral-700 border-neutral-200")
+

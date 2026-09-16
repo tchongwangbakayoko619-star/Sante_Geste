@@ -142,3 +142,4 @@ class PatientSearchForm(forms.Form):
             }
         ),
     )
+

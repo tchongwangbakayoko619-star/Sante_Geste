@@ -98,3 +98,4 @@ def update_appointment_status(
         appointment.set_updated_by(updated_by)
     appointment.save(update_fields=["status", "updated_by", "updated_at"])
     return appointment
+

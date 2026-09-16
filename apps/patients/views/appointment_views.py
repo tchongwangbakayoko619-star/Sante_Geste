@@ -139,3 +139,4 @@ class AppointmentStatusUpdateView(PatientManagementRequiredMixin, View):
                 },
             )
         return redirect(next_url)
+

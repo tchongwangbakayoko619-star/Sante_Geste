@@ -64,3 +64,4 @@ class AppointmentAdmin(admin.ModelAdmin):
         "created_by",
         "updated_by",
     ]
+

@@ -156,3 +156,4 @@ class PatientUpdateView(PatientManagementRequiredMixin, SuccessMessageMixin, Upd
         context["action_text"] = _("Enregistrer les modifications")
         context["is_update"] = True
         return context
+
