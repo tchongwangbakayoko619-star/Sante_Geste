@@ -78,12 +78,14 @@
           </svg>
           {% trans "Planifier un RDV" %}
         </a>
-        <a href="{% url 'patients:patient_update' patient.pk %}" class="btn btn-outline py-2.5 px-4 text-xs sm:text-sm inline-flex items-center gap-2">
-          <svg class="w-4 h-4 text-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
-          </svg>
-          {% trans "Modifier la fiche" %}
-        </a>
+        {% if request.user.is_agent_accueil or request.user.is_superuser %}
+          <a href="{% url 'patients:patient_update' patient.pk %}" class="btn btn-outline py-2.5 px-4 text-xs sm:text-sm inline-flex items-center gap-2">
+            <svg class="w-4 h-4 text-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+            </svg>
+            {% trans "Modifier la fiche" %}
+          </a>
+        {% endif %}
       </div>
 
     </div>

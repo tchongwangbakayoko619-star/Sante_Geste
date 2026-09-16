@@ -23,6 +23,7 @@ from apps.patients.models import Patient
 from apps.patients.services import create_patient
 from apps.patients.services import search_patients
 from apps.patients.services import update_patient
+from apps.users.mixins import AgentAccueilRequiredMixin
 from apps.users.mixins import PatientManagementRequiredMixin
 
 
@@ -109,8 +110,8 @@ class PatientDetailView(PatientManagementRequiredMixin, DetailView):
         return context
 
 
-class PatientCreateView(PatientManagementRequiredMixin, SuccessMessageMixin, CreateView):
-    """Enregistrement d'un nouveau dossier patient."""
+class PatientCreateView(AgentAccueilRequiredMixin, SuccessMessageMixin, CreateView):
+    """Enregistrement d'un nouveau dossier patient (réservé exclusivement à l'agent d'accueil)."""
 
     model = Patient
     form_class = PatientForm
@@ -136,8 +137,8 @@ class PatientCreateView(PatientManagementRequiredMixin, SuccessMessageMixin, Cre
         return context
 
 
-class PatientUpdateView(PatientManagementRequiredMixin, SuccessMessageMixin, UpdateView):
-    """Mise à jour des informations administratives ou médicales du dossier patient."""
+class PatientUpdateView(AgentAccueilRequiredMixin, SuccessMessageMixin, UpdateView):
+    """Mise à jour des informations administratives du dossier patient (réservé à l'agent d'accueil)."""
 
     model = Patient
     form_class = PatientForm

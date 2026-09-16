@@ -31,12 +31,14 @@
         </svg>
         {% trans "Agenda des RDV" %}
       </a>
-      <a href="{% url 'patients:patient_create' %}" class="btn btn-primary py-2.5 px-4 text-xs sm:text-sm inline-flex items-center gap-2 shadow-xs">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-        </svg>
-        {% trans "Nouveau patient" %}
-      </a>
+      {% if request.user.is_agent_accueil or request.user.is_superuser %}
+        <a href="{% url 'patients:patient_create' %}" class="btn btn-primary py-2.5 px-4 text-xs sm:text-sm inline-flex items-center gap-2 shadow-xs">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+          </svg>
+          {% trans "Nouveau patient" %}
+        </a>
+      {% endif %}
     </div>
   </div>
 
@@ -197,11 +199,13 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
                       </svg>
                     </a>
-                    <a href="{% url 'patients:patient_update' patient.pk %}" class="p-1.5 rounded-lg text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100 transition-colors" title="{% trans 'Modifier' %}">
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
-                      </svg>
-                    </a>
+                    {% if request.user.is_agent_accueil or request.user.is_superuser %}
+                      <a href="{% url 'patients:patient_update' patient.pk %}" class="p-1.5 rounded-lg text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100 transition-colors" title="{% trans 'Modifier' %}">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+                        </svg>
+                      </a>
+                    {% endif %}
                     <a href="{% url 'patients:appointment_create' %}?patient={{ patient.pk }}" class="p-1.5 rounded-lg text-neutral-500 hover:text-blue-600 hover:bg-blue-50 transition-colors" title="{% trans 'Planifier RDV' %}">
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
@@ -264,7 +268,7 @@
             <a href="{% url 'patients:patient_list' %}" class="btn btn-outline py-2 px-4 text-xs font-semibold">
               {% trans "Réinitialiser la recherche" %}
             </a>
-          {% else %}
+          {% elif request.user.is_agent_accueil or request.user.is_superuser %}
             <a href="{% url 'patients:patient_create' %}" class="btn btn-primary py-2 px-4 text-xs font-semibold">
               {% trans "+ Créer un premier dossier" %}
             </a>

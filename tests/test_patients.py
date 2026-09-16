@@ -333,6 +333,27 @@ def test_patient_create_view_post(client, agent_accueil):
 
 
 @pytest.mark.django_db
+def test_patient_create_and_update_forbidden_to_doctor(client, doctor_user, sample_patient):
+    """Le personnel médical n'a PAS le droit de créer ou modifier un dossier patient (réservé agent d'accueil)."""
+    client.force_login(doctor_user)
+
+    # 1. Tentative d'accès à la page de création -> 403
+    url_create = reverse("patients:patient_create")
+    resp_get = client.get(url_create)
+    assert resp_get.status_code == 403
+
+    # 2. Tentative de POST création -> 403
+    resp_post = client.post(url_create, data={"first_name": "Docteur", "last_name": "Test"})
+    assert resp_post.status_code == 403
+
+    # 3. Tentative d'accès à la modification -> 403
+    url_update = reverse("patients:patient_update", kwargs={"pk": sample_patient.pk})
+    resp_update = client.get(url_update)
+    assert resp_update.status_code == 403
+
+
+
+@pytest.mark.django_db
 def test_appointment_create_and_status_update_view(client, agent_accueil, doctor_user, sample_patient):
     """Vérifie la planification d'un RDV et le changement de statut via les vues."""
     client.force_login(agent_accueil)
