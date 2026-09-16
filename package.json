@@ -6,7 +6,9 @@
         "dev": "tailwindcss -i ./santegeste/static/css/input.css -o ./santegeste/static/css/output.css --watch",
         "build": "tailwindcss -i ./santegeste/static/css/input.css -o ./santegeste/static/css/output.css --minify",
         "watch:css": "tailwindcss -i ./santegeste/static/css/input.css -o ./santegeste/static/css/output.css --watch",
-        "build:css": "tailwindcss -i ./santegeste/static/css/input.css -o ./santegeste/static/css/output.css --minify"
+        "build:css": "tailwindcss -i ./santegeste/static/css/input.css -o ./santegeste/static/css/output.css --minify",
+        "server": "uv run python manage.py runserver",
+        "start": "uv run python manage.py runserver"
     },
     "devDependencies": {
         "@tailwindcss/cli": "^4.3.3",
