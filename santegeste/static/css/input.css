@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+@source "../../templates";
+@source "../../../apps";
+@source "../js";
+
 @theme {
   /* Tokens SantéGeste / CS² Health - Centrés sur la couleur primaire #14967F */
   --color-primary: #14967F;
@@ -20,7 +24,8 @@
   --color-health-200: #9be5d3;
   --color-health-300: #64d3ba;
   --color-health-400: #36bca0;
-  --color-health-500: #14967F; /* COULEUR PRIMAIRE EXACTE */
+  --color-health-500: #14967F;
+  /* COULEUR PRIMAIRE EXACTE */
   --color-health-600: #0f7a67;
   --color-health-700: #0e6254;
   --color-health-800: #0f4e44;
