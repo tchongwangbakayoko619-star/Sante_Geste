@@ -111,6 +111,7 @@ THIRD_PARTY_APPS = [
 LOCAL_APPS = [
     "core",
     "apps.users",
+    "apps.patients",
     # Your stuff: custom apps go here
 ]
 

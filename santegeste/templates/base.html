@@ -17,6 +17,14 @@
         <a href="{% url 'home' %}" class="text-sm font-semibold text-neutral-700 hover:text-[#14967F] transition-colors">
           {% translate "Accueil" %}
         </a>
+        {% if request.user.is_authenticated and request.user.is_agent_accueil or request.user.is_personnel_medical or request.user.is_superuser %}
+          <a href="{% url 'patients:patient_list' %}" class="text-sm font-semibold text-neutral-700 hover:text-[#14967F] transition-colors">
+            {% translate "Patients" %}
+          </a>
+          <a href="{% url 'patients:appointment_list' %}" class="text-sm font-semibold text-neutral-700 hover:text-[#14967F] transition-colors">
+            {% translate "Rendez-vous" %}
+          </a>
+        {% endif %}
         <a href="{% url 'about' %}" class="text-sm font-semibold text-neutral-700 hover:text-[#14967F] transition-colors">
           {% translate "À propos" %}
         </a>

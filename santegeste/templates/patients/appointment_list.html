@@ -1,0 +1,241 @@
+{% extends "base.html" %}
+{% load static i18n %}
+
+{% block title %}{% translate "Agenda des Rendez-vous" %} - CS² Health{% endblock title %}
+
+{% block content_inner %}
+<div class="space-y-6">
+
+  <!-- Header -->
+  <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <div>
+      <div class="flex items-center gap-2">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700">
+          <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+          {% trans "Planning Clinique" %}
+        </span>
+      </div>
+      <h1 class="text-2xl sm:text-3xl font-extrabold text-neutral-900 tracking-tight font-title mt-2">
+        {% trans "Agenda des Rendez-vous" %}
+      </h1>
+      <p class="text-sm text-neutral-500 mt-1">
+        {% trans "Gestion des flux de patients, file d'attente et consultations médicales" %}
+      </p>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <a href="{% url 'patients:patient_list' %}" class="btn btn-outline py-2.5 px-4 text-xs sm:text-sm inline-flex items-center gap-2">
+        <svg class="w-4 h-4 text-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+        </svg>
+        {% trans "Liste des patients" %}
+      </a>
+      <a href="{% url 'patients:appointment_create' %}" class="btn btn-primary py-2.5 px-4 text-xs sm:text-sm inline-flex items-center gap-2 shadow-xs font-bold">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+        </svg>
+        {% trans "Planifier un RDV" %}
+      </a>
+    </div>
+  </div>
+
+  <!-- Real-time Flow Counters for Today -->
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+    <div class="bg-white border border-neutral-200/80 rounded-2xl p-4 shadow-2xs">
+      <p class="text-[11px] font-bold text-neutral-500 uppercase tracking-wider">{% trans "Aujourd'hui" %}</p>
+      <p class="text-2xl font-black text-neutral-900 mt-1">{{ today_count }}</p>
+    </div>
+
+    <div class="bg-white border border-amber-200/80 rounded-2xl p-4 shadow-2xs">
+      <p class="text-[11px] font-bold text-amber-700 uppercase tracking-wider">{% trans "En salle d'attente" %}</p>
+      <p class="text-2xl font-black text-amber-600 mt-1">{{ waiting_count }}</p>
+    </div>
+
+    <div class="bg-white border border-purple-200/80 rounded-2xl p-4 shadow-2xs">
+      <p class="text-[11px] font-bold text-purple-700 uppercase tracking-wider">{% trans "En consultation" %}</p>
+      <p class="text-2xl font-black text-purple-600 mt-1">{{ in_consultation_count }}</p>
+    </div>
+
+    <div class="bg-white border border-emerald-200/80 rounded-2xl p-4 shadow-2xs">
+      <p class="text-[11px] font-bold text-emerald-700 uppercase tracking-wider">{% trans "Honorés / Terminés" %}</p>
+      <p class="text-2xl font-black text-emerald-600 mt-1">{{ completed_count }}</p>
+    </div>
+  </div>
+
+  <!-- Filters & Appointments Table -->
+  <div class="bg-white border border-neutral-200/80 rounded-3xl shadow-xs overflow-hidden">
+
+    <!-- Filters Navigation -->
+    <div class="p-4 sm:p-6 border-b border-neutral-100 flex flex-wrap items-center justify-between gap-4 bg-neutral-50/40">
+      <div class="flex flex-wrap items-center gap-2">
+        <a href="?date_filter=today" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-colors {% if date_filter == 'today' %}bg-[#14967F] text-white shadow-2xs{% else %}bg-white text-neutral-600 border border-neutral-200 hover:bg-neutral-50{% endif %}">
+          {% trans "Aujourd'hui" %}
+        </a>
+        <a href="?date_filter=upcoming" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-colors {% if date_filter == 'upcoming' %}bg-[#14967F] text-white shadow-2xs{% else %}bg-white text-neutral-600 border border-neutral-200 hover:bg-neutral-50{% endif %}">
+          {% trans "À venir" %}
+        </a>
+        <a href="?date_filter=past" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-colors {% if date_filter == 'past' %}bg-[#14967F] text-white shadow-2xs{% else %}bg-white text-neutral-600 border border-neutral-200 hover:bg-neutral-50{% endif %}">
+          {% trans "Historique" %}
+        </a>
+        <a href="?date_filter=all" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-colors {% if date_filter == 'all' %}bg-[#14967F] text-white shadow-2xs{% else %}bg-white text-neutral-600 border border-neutral-200 hover:bg-neutral-50{% endif %}">
+          {% trans "Tous" %}
+        </a>
+      </div>
+    </div>
+
+    <!-- Table -->
+    {% if appointments %}
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="border-b border-neutral-200/80 bg-neutral-50 text-[11px] font-bold text-neutral-500 uppercase tracking-wider">
+              <th class="py-3.5 px-4 sm:px-6">{% trans "Date & Heure" %}</th>
+              <th class="py-3.5 px-4 sm:px-6">{% trans "Patient" %}</th>
+              <th class="py-3.5 px-4 sm:px-6">{% trans "Praticien" %}</th>
+              <th class="py-3.5 px-4 sm:px-6">{% trans "Motif" %}</th>
+              <th class="py-3.5 px-4 sm:px-6">{% trans "Statut" %}</th>
+              <th class="py-3.5 px-4 sm:px-6 text-right">{% trans "Actions" %}</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-neutral-100 text-sm">
+            {% for rdv in appointments %}
+              <tr class="hover:bg-neutral-50/80 transition-colors">
+
+                <!-- Date & Heure -->
+                <td class="py-4 px-4 sm:px-6">
+                  <div class="font-bold text-neutral-900 text-xs">
+                    {{ rdv.scheduled_at|date:"d/m/Y" }}
+                  </div>
+                  <div class="text-[#14967F] font-black text-sm">
+                    {{ rdv.scheduled_at|date:"H:i" }}
+                    <span class="text-neutral-400 font-normal text-xs">({{ rdv.estimated_duration_minutes }}m)</span>
+                  </div>
+                </td>
+
+                <!-- Patient -->
+                <td class="py-4 px-4 sm:px-6">
+                  <a href="{{ rdv.patient.get_absolute_url }}" class="font-bold text-neutral-900 hover:text-[#14967F] block">
+                    {{ rdv.patient.full_name }}
+                  </a>
+                  <span class="font-mono text-[11px] text-neutral-400">{{ rdv.patient.patient_number }}</span>
+                  <a href="tel:{{ rdv.patient.phone_number }}" class="text-xs text-neutral-500 block hover:underline">
+                    {{ rdv.patient.phone_number }}
+                  </a>
+                </td>
+
+                <!-- Praticien -->
+                <td class="py-4 px-4 sm:px-6">
+                  <span class="text-xs font-semibold text-neutral-800">
+                    Dr. {{ rdv.doctor.full_name }}
+                  </span>
+                </td>
+
+                <!-- Motif -->
+                <td class="py-4 px-4 sm:px-6">
+                  <p class="text-xs text-neutral-700 max-w-xs truncate font-medium">
+                    {{ rdv.reason }}
+                  </p>
+                  {% if rdv.notes %}
+                    <p class="text-[11px] text-neutral-400 truncate mt-0.5">{{ rdv.notes }}</p>
+                  {% endif %}
+                </td>
+
+                <!-- Statut -->
+                <td class="py-4 px-4 sm:px-6">
+                  <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold border {{ rdv.status_badge_class }}">
+                    {{ rdv.get_status_display }}
+                  </span>
+                </td>
+
+                <!-- Quick actions -->
+                <td class="py-4 px-4 sm:px-6 text-right">
+                  <div class="inline-flex items-center gap-1.5">
+                    {% if rdv.status == "scheduled" %}
+                      <form method="post" action="{% url 'patients:appointment_status_update' rdv.pk %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="status" value="waiting">
+                        <button type="submit" class="px-2.5 py-1 text-xs font-bold rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200 transition-colors cursor-pointer" title="{% trans 'Patient arrivé' %}">
+                          {% trans "Arrivé" %}
+                        </button>
+                      </form>
+                    {% elif rdv.status == "waiting" %}
+                      <form method="post" action="{% url 'patients:appointment_status_update' rdv.pk %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="status" value="in_consultation">
+                        <button type="submit" class="px-2.5 py-1 text-xs font-bold rounded-lg bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200 transition-colors cursor-pointer" title="{% trans 'Appeler en consultation' %}">
+                          {% trans "Consulter" %}
+                        </button>
+                      </form>
+                    {% elif rdv.status == "in_consultation" %}
+                      <form method="post" action="{% url 'patients:appointment_status_update' rdv.pk %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="status" value="completed">
+                        <button type="submit" class="px-2.5 py-1 text-xs font-bold rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 transition-colors cursor-pointer" title="{% trans 'Terminer la consultation' %}">
+                          {% trans "Terminé" %}
+                        </button>
+                      </form>
+                    {% endif %}
+
+                    {% if rdv.status != "cancelled" and rdv.status != "completed" %}
+                      <form method="post" action="{% url 'patients:appointment_status_update' rdv.pk %}" onsubmit="return confirm('{% trans "Confirmer l\'annulation de ce rendez-vous ?" %}');">
+                        {% csrf_token %}
+                        <input type="hidden" name="status" value="cancelled">
+                        <button type="submit" class="p-1.5 text-neutral-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition-colors cursor-pointer" title="{% trans 'Annuler' %}">
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                          </svg>
+                        </button>
+                      </form>
+                    {% endif %}
+                  </div>
+                </td>
+
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      {% if is_paginated %}
+        <div class="px-6 py-4 border-t border-neutral-100 flex items-center justify-between">
+          <p class="text-xs text-neutral-500">
+            {% blocktrans with current=page_obj.number total=paginator.num_pages %}Page {{ current }} sur {{ total }}{% endblocktrans %}
+          </p>
+          <div class="flex items-center gap-2">
+            {% if page_obj.has_previous %}
+              <a href="?page={{ page_obj.previous_page_number }}&date_filter={{ date_filter }}" class="btn btn-outline py-1.5 px-3 text-xs">
+                {% trans "Précédent" %}
+              </a>
+            {% endif %}
+            {% if page_obj.has_next %}
+              <a href="?page={{ page_obj.next_page_number }}&date_filter={{ date_filter }}" class="btn btn-outline py-1.5 px-3 text-xs">
+                {% trans "Suivant" %}
+              </a>
+            {% endif %}
+          </div>
+        </div>
+      {% endif %}
+
+    {% else %}
+      <div class="p-12 text-center space-y-3">
+        <div class="w-16 h-16 rounded-full bg-neutral-100 text-neutral-400 mx-auto flex items-center justify-center">
+          <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+          </svg>
+        </div>
+        <h3 class="text-base font-bold text-neutral-800">{% trans "Aucun rendez-vous sur cette période" %}</h3>
+        <p class="text-xs text-neutral-500 max-w-sm mx-auto">
+          {% trans "Aucune consultation n'est programmée pour le filtre sélectionné." %}
+        </p>
+        <div class="pt-2">
+          <a href="{% url 'patients:appointment_create' %}" class="btn btn-primary py-2 px-4 text-xs font-semibold">
+            {% trans "+ Planifier un rendez-vous" %}
+          </a>
+        </div>
+      </div>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock content_inner %}

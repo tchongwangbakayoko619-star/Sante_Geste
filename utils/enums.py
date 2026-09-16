@@ -20,3 +20,37 @@ class UserRoleEnum(models.TextChoices):
     VENDEUR_PHARMACIE = "vendeur_pharmacie", "Vendeur pharmacie"
     CAISSIER = "caissier", "Caissier"
     AGENT_ACCUEIL = "agent_accueil", "Agent d'accueil"
+
+
+class GenderEnum(models.TextChoices):
+    """Genre / Sexe du patient."""
+
+    MALE = "M", "Masculin"
+    FEMALE = "F", "Féminin"
+    OTHER = "O", "Autre"
+
+
+class BloodGroupEnum(models.TextChoices):
+    """Groupe sanguin et rhésus."""
+
+    A_POSITIVE = "A+", "A+"
+    A_NEGATIVE = "A-", "A-"
+    B_POSITIVE = "B+", "B+"
+    B_NEGATIVE = "B-", "B-"
+    AB_POSITIVE = "AB+", "AB+"
+    AB_NEGATIVE = "AB-", "AB-"
+    O_POSITIVE = "O+", "O+"
+    O_NEGATIVE = "O-", "O-"
+    UNKNOWN = "UNKNOWN", "Non déterminé"
+
+
+class AppointmentStatusEnum(models.TextChoices):
+    """Statuts du cycle de vie d'un rendez-vous médical."""
+
+    SCHEDULED = "scheduled", "Programmé"
+    WAITING = "waiting", "En attente"
+    IN_CONSULTATION = "in_consultation", "En consultation"
+    COMPLETED = "completed", "Terminé"
+    CANCELLED = "cancelled", "Annulé"
+    MISSED = "missed", "Non honoré / Absent"
+

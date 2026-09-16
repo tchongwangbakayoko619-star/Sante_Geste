@@ -17,6 +17,8 @@ urlpatterns = [
     path(settings.ADMIN_URL, admin.site.urls),
     # Application Users
     path("users/", include("apps.users.urls", namespace="users")),
+    # Application Patients & Rendez-vous
+    path("patients/", include("apps.patients.urls", namespace="patients")),
     # Media files
     *static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT),
 ]
