@@ -20,6 +20,7 @@ from apps.patients.forms import AppointmentForm
 from apps.patients.forms import AppointmentStatusForm
 from apps.patients.models import Appointment
 from apps.patients.models import Patient
+from apps.patients.services import create_appointment
 from apps.patients.services import update_appointment_status
 from apps.users.mixins import PatientManagementRequiredMixin
 from utils.enums import AppointmentStatusEnum
@@ -92,10 +93,16 @@ class AppointmentCreateView(PatientManagementRequiredMixin, SuccessMessageMixin,
         return initial
 
     def form_valid(self, form: AppointmentForm):
-        appointment = form.save(commit=False)
-        appointment.set_created_by(self.request.user)
-        appointment.set_updated_by(self.request.user)
-        appointment.save()
+        data = form.cleaned_data
+        appointment = create_appointment(
+            patient=data["patient"],
+            doctor=data["doctor"],
+            scheduled_at=data["scheduled_at"],
+            estimated_duration_minutes=data["estimated_duration_minutes"] or 30,
+            reason=data["reason"],
+            notes=data.get("notes", ""),
+            created_by=self.request.user,
+        )
         self.object = appointment
         messages.success(
             self.request,
@@ -125,18 +132,23 @@ class AppointmentStatusUpdateView(PatientManagementRequiredMixin, View):
         next_url = request.POST.get("next") or reverse("patients:appointment_list")
 
         if new_status:
-            update_appointment_status(
-                appointment=appointment,
-                new_status=new_status,
-                updated_by=request.user,
-            )
-            messages.success(
-                request,
-                _("Le statut du rendez-vous de %(patient)s est désormais « %(status)s ».")
-                % {
-                    "patient": appointment.patient.full_name,
-                    "status": appointment.get_status_display(),
-                },
-            )
+            from django.core.exceptions import ValidationError
+            try:
+                update_appointment_status(
+                    appointment=appointment,
+                    new_status=new_status,
+                    updated_by=request.user,
+                )
+                messages.success(
+                    request,
+                    _("Le statut du rendez-vous de %(patient)s est désormais « %(status)s ».")
+                    % {
+                        "patient": appointment.patient.full_name,
+                        "status": appointment.get_status_display(),
+                    },
+                )
+            except ValidationError as exc:
+                messages.error(request, str(exc.message if hasattr(exc, "message") else exc))
+
         return redirect(next_url)
 

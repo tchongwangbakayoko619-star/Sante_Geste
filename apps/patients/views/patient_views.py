@@ -93,11 +93,18 @@ class PatientDetailView(PatientManagementRequiredMixin, DetailView):
         )
         context["can_view_medical_info"] = can_view_medical_info
 
-        # Rendez-vous du patient ordonnés du plus récent au plus ancien
-        context["appointments"] = self.object.appointments.all().order_by("-scheduled_at")
-        context["upcoming_appointments"] = self.object.appointments.filter(
-            scheduled_at__gte=timezone.now()
-        ).order_by("scheduled_at")
+        # Rendez-vous du patient ordonnés du plus récent au plus ancien (optimisé select_related pour éviter N+1 queries)
+        context["appointments"] = (
+            self.object.appointments
+            .select_related("doctor")
+            .order_by("-scheduled_at")
+        )
+        context["upcoming_appointments"] = (
+            self.object.appointments
+            .select_related("doctor")
+            .filter(scheduled_at__gte=timezone.now())
+            .order_by("scheduled_at")
+        )
 
         return context
 

@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from typing import Any
 
+from django.db import IntegrityError
 from django.db import transaction
 from django.db.models import Q
 from django.db.models import QuerySet
@@ -46,18 +47,36 @@ def generate_patient_number() -> str:
         return f"{prefix}{next_seq:04d}"
 
 
-def create_patient(*, data: dict[str, Any], created_by: User | None = None) -> Patient:
-    """Crée un nouveau dossier patient avec matricule unique."""
-    data_copy = dict(data)
-    if "patient_number" not in data_copy or not data_copy["patient_number"]:
-        data_copy["patient_number"] = generate_patient_number()
+def create_patient(
+    *,
+    data: dict[str, Any],
+    created_by: User | None = None,
+    max_retries: int = 3,
+) -> Patient:
+    """Crée un nouveau dossier patient avec matricule unique.
 
-    patient = Patient(**data_copy)
-    if created_by:
-        patient.set_created_by(created_by)
-        patient.set_updated_by(created_by)
-    patient.save()
-    return patient
+    Intègre un mécanisme de réessai en cas de concurrence simultanée (race condition)
+    sur la génération du numéro de matricule unique.
+    """
+    data_copy = dict(data)
+    auto_generate = not bool(data_copy.get("patient_number"))
+
+    for attempt in range(max_retries):
+        if auto_generate:
+            data_copy["patient_number"] = generate_patient_number()
+
+        patient = Patient(**data_copy)
+        if created_by:
+            patient.set_created_by(created_by)
+            patient.set_updated_by(created_by)
+
+        try:
+            patient.save()
+            return patient
+        except IntegrityError:
+            # Si le matricule a été forcé manuellement ou si nous avons épuisé les tentatives
+            if not auto_generate or attempt == max_retries - 1:
+                raise
 
 
 def update_patient(*, patient: Patient, data: dict[str, Any], updated_by: User | None = None) -> Patient:

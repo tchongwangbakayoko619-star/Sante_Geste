@@ -362,3 +362,30 @@ def test_appointment_create_and_status_update_view(client, agent_accueil, doctor
     assert resp_status.status_code == 302
     apt.refresh_from_db()
     assert apt.status == AppointmentStatusEnum.WAITING
+
+
+@pytest.mark.django_db
+def test_create_patient_retry_on_integrity_error(agent_accueil, monkeypatch):
+    """Vérifie que create_patient retente la génération de matricule en cas de collision concurrente."""
+    from django.db import IntegrityError
+
+    original_save = Patient.save
+    call_count = 0
+
+    def mock_save(self, *args, **kwargs):
+        nonlocal call_count
+        call_count += 1
+        # Échoue la première fois avec IntegrityError (collision simulée), puis réussit
+        if call_count == 1:
+            raise IntegrityError("duplicate key value violates unique constraint")
+        return original_save(self, *args, **kwargs)
+
+    monkeypatch.setattr(Patient, "save", mock_save)
+
+    patient = create_patient(
+        data={"first_name": "Test", "last_name": "Retry", "phone_number": "+22501020304"},
+        created_by=agent_accueil,
+    )
+    assert patient.pk is not None
+    assert call_count == 2
+
