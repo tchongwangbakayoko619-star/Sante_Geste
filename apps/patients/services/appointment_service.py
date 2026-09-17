@@ -6,7 +6,9 @@ from datetime import datetime
 from datetime import timedelta
 from typing import TYPE_CHECKING
 
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
+from django.db import transaction
 from django.utils.translation import gettext_lazy as _
 
 from apps.patients.models import Appointment
@@ -60,26 +62,32 @@ def create_appointment(
     notes: str = "",
     created_by: User | None = None,
 ) -> Appointment:
-    """Crée un rendez-vous médical en vérifiant l'absence de conflit d'agenda."""
-    if not check_doctor_availability(doctor, scheduled_at, estimated_duration_minutes):
-        raise ValidationError(
-            _("Le praticien a déjà une consultation programmée sur ce créneau horaire.")
-        )
+    """Crée un rendez-vous médical en vérifiant l'absence de conflit d'agenda avec verrou pessimiste."""
+    user_model = get_user_model()
+    with transaction.atomic():
+        # Verrouillage pessimiste sur la ligne du praticien pour sérialiser
+        # les réservations concurrentes et prévenir les conditions de course (double-booking).
+        user_model.objects.select_for_update().get(pk=doctor.pk)
 
-    appointment = Appointment(
-        patient=patient,
-        doctor=doctor,
-        scheduled_at=scheduled_at,
-        estimated_duration_minutes=estimated_duration_minutes,
-        reason=reason,
-        notes=notes,
-        status=AppointmentStatusEnum.SCHEDULED,
-    )
-    if created_by:
-        appointment.set_created_by(created_by)
-        appointment.set_updated_by(created_by)
-    appointment.save()
-    return appointment
+        if not check_doctor_availability(doctor, scheduled_at, estimated_duration_minutes):
+            raise ValidationError(
+                _("Le praticien a déjà une consultation programmée sur ce créneau horaire.")
+            )
+
+        appointment = Appointment(
+            patient=patient,
+            doctor=doctor,
+            scheduled_at=scheduled_at,
+            estimated_duration_minutes=estimated_duration_minutes,
+            reason=reason,
+            notes=notes,
+            status=AppointmentStatusEnum.SCHEDULED,
+        )
+        if created_by:
+            appointment.set_created_by(created_by)
+            appointment.set_updated_by(created_by)
+        appointment.save()
+        return appointment
 
 
 def update_appointment_status(

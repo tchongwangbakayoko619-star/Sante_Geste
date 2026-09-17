@@ -310,6 +310,97 @@ def test_check_doctor_availability_and_collision(sample_patient, doctor_user):
     assert check_doctor_availability(doctor_user, overlap_time, 30) is True
 
 
+@pytest.mark.django_db
+def test_appointment_model_anti_double_booking(sample_patient, doctor_user):
+    """Vérifie que le modèle Appointment empêche le double-booking au niveau ORM/save()."""
+    base_time = timezone.now() + timedelta(days=2)
+    slot1_start = base_time.replace(hour=14, minute=0, second=0, microsecond=0)
+
+    # 1. Création d'un premier rendez-vous de 14h00 à 14h30 (30 min)
+    apt1 = Appointment.objects.create(
+        patient=sample_patient,
+        doctor=doctor_user,
+        scheduled_at=slot1_start,
+        estimated_duration_minutes=30,
+        reason="Consultation initiale",
+    )
+    assert apt1.pk is not None
+
+    # 2. Tentative de création d'un rendez-vous chevauchant en amont (13h45 - 14h15)
+    overlap_before = Appointment(
+        patient=sample_patient,
+        doctor=doctor_user,
+        scheduled_at=slot1_start - timedelta(minutes=15),
+        estimated_duration_minutes=30,
+        reason="Consultation amont chevauchante",
+    )
+    with pytest.raises(ValidationError) as exc_info:
+        overlap_before.save()
+    assert "scheduled_at" in exc_info.value.message_dict
+
+    # 3. Tentative de création d'un rendez-vous chevauchant en aval (14h15 - 14h45)
+    overlap_after = Appointment(
+        patient=sample_patient,
+        doctor=doctor_user,
+        scheduled_at=slot1_start + timedelta(minutes=15),
+        estimated_duration_minutes=30,
+        reason="Consultation aval chevauchante",
+    )
+    with pytest.raises(ValidationError) as exc_info:
+        overlap_after.save()
+    assert "scheduled_at" in exc_info.value.message_dict
+
+    # 4. Tentative de création d'un rendez-vous englobant (13h50 - 14h40)
+    overlap_encompassing = Appointment(
+        patient=sample_patient,
+        doctor=doctor_user,
+        scheduled_at=slot1_start - timedelta(minutes=10),
+        estimated_duration_minutes=50,
+        reason="Consultation englobante",
+    )
+    with pytest.raises(ValidationError) as exc_info:
+        overlap_encompassing.save()
+    assert "scheduled_at" in exc_info.value.message_dict
+
+    # 5. Créneaux strictement contigus (13h30-14h00 et 14h30-15h00) -> Autorisés sans conflit
+    adjacent_before = Appointment.objects.create(
+        patient=sample_patient,
+        doctor=doctor_user,
+        scheduled_at=slot1_start - timedelta(minutes=30),
+        estimated_duration_minutes=30,
+        reason="Consultation contiguë avant",
+    )
+    adjacent_after = Appointment.objects.create(
+        patient=sample_patient,
+        doctor=doctor_user,
+        scheduled_at=slot1_start + timedelta(minutes=30),
+        estimated_duration_minutes=30,
+        reason="Consultation contiguë après",
+    )
+    assert adjacent_before.pk is not None
+    assert adjacent_after.pk is not None
+
+    # 6. Mise à jour du RDV 1 sans modifier l'horaire (ex: notes ou motif) -> Pas de faux conflit
+    apt1.reason = "Motif modifié"
+    apt1.save()
+    apt1.refresh_from_db()
+    assert apt1.reason == "Motif modifié"
+
+    # 7. Un RDV avec statut CANCELLED ne doit pas bloquer un créneau
+    apt1.status = AppointmentStatusEnum.CANCELLED
+    apt1.save()
+
+    # Création sur le créneau libéré (14h00 - 14h30) -> Doit réussir
+    rebooked = Appointment.objects.create(
+        patient=sample_patient,
+        doctor=doctor_user,
+        scheduled_at=slot1_start,
+        estimated_duration_minutes=30,
+        reason="Nouveau rendez-vous sur créneau libéré",
+    )
+    assert rebooked.pk is not None
+
+
 # ==============================================================================
 # 3. Tests de Sécurité RBAC & Vues
 # ==============================================================================

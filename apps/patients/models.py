@@ -6,6 +6,7 @@ from datetime import datetime
 from datetime import timedelta
 
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
 from django.utils import timezone
@@ -372,4 +373,67 @@ class Appointment(SoftDeleteModel):
             AppointmentStatusEnum.MISSED: "bg-neutral-100 text-neutral-600 border-neutral-200 ring-neutral-500/20",
         }
         return mapping.get(self.status, "bg-neutral-100 text-neutral-700 border-neutral-200")
+
+    def clean(self) -> None:
+        """Vérifie l'absence de chevauchement d'agenda pour le médecin (anti double-booking)."""
+        super().clean()
+        if not self.doctor_id or not self.scheduled_at:
+            return
+
+        # Les rendez-vous annulés ne bloquent pas le créneau
+        if self.status == AppointmentStatusEnum.CANCELLED:
+            return
+
+        duration = self.estimated_duration_minutes or 30
+        new_start = self.scheduled_at
+        new_end = new_start + timedelta(minutes=duration)
+
+        # Fenêtre temporelle d'exploration pour la détection
+        window_start = new_start - timedelta(hours=8)
+        window_end = new_end + timedelta(hours=8)
+
+        overlapping = (
+            Appointment.objects.filter(
+                doctor_id=self.doctor_id,
+                scheduled_at__gte=window_start,
+                scheduled_at__lte=window_end,
+            )
+            .exclude(status=AppointmentStatusEnum.CANCELLED)
+        )
+        if self.pk:
+            overlapping = overlapping.exclude(pk=self.pk)
+
+        for apt in overlapping:
+            # Chevauchement ssi (apt.start < new_end) et (apt.end > new_start)
+            if apt.scheduled_at < new_end and apt.end_time > new_start:
+                doctor_display = ""
+                if hasattr(self, "doctor") and self.doctor:
+                    doctor_display = self.doctor.full_name or self.doctor.email
+                raise ValidationError(
+                    {
+                        "scheduled_at": _(
+                            "Conflit d'agenda : Le praticien %(doctor)s a déjà une consultation "
+                            "programmée sur ce créneau (de %(start)s à %(end)s)."
+                        )
+                        % {
+                            "doctor": f"Dr. {doctor_display}" if doctor_display else "",
+                            "start": timezone.localtime(apt.scheduled_at).strftime("%H:%M"),
+                            "end": timezone.localtime(apt.end_time).strftime("%H:%M"),
+                        }
+                    }
+                )
+
+    def save(self, *args, **kwargs):
+        """Valide la cohérence des créneaux avant enregistrement."""
+        update_fields = kwargs.get("update_fields")
+        if (
+            update_fields is None
+            or "scheduled_at" in update_fields
+            or "doctor" in update_fields
+            or "estimated_duration_minutes" in update_fields
+            or "status" in update_fields
+        ):
+            self.clean()
+        super().save(*args, **kwargs)
+
 
