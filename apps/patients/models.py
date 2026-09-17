@@ -15,6 +15,7 @@ from core.models import SoftDeleteModel
 from utils.enums import AppointmentStatusEnum
 from utils.enums import BloodGroupEnum
 from utils.enums import GenderEnum
+from utils.phone import validate_phone_number
 
 
 class Patient(SoftDeleteModel):
@@ -55,6 +56,7 @@ class Patient(SoftDeleteModel):
     phone_number = models.CharField(
         max_length=20,
         db_index=True,
+        validators=[validate_phone_number],
         verbose_name=_("Numéro de téléphone"),
     )
     email = models.EmailField(
@@ -85,6 +87,7 @@ class Patient(SoftDeleteModel):
         max_length=20,
         blank=True,
         default="",
+        validators=[validate_phone_number],
         verbose_name=_("Téléphone du contact d'urgence"),
     )
     emergency_contact_relation = models.CharField(

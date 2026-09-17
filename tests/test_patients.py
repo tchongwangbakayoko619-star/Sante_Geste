@@ -93,6 +93,31 @@ def test_patient_model_properties(sample_patient):
 
 
 @pytest.mark.django_db
+def test_patient_phone_number_model_validation():
+    """Vérifie que la validation du numéro de téléphone au niveau du modèle Patient fonctionne."""
+    # Numéro invalide (contient des lettres)
+    invalid_patient = Patient(
+        patient_number="PAT-2026-9999",
+        first_name="Invalid",
+        last_name="Phone",
+        phone_number="0701020304ABCD",
+    )
+    with pytest.raises(ValidationError):
+        invalid_patient.full_clean()
+
+    # Numéro de contact d'urgence invalide
+    invalid_emergency = Patient(
+        patient_number="PAT-2026-9998",
+        first_name="Invalid",
+        last_name="Emergency",
+        phone_number="+2250701020304",
+        emergency_contact_phone="NOT_A_PHONE",
+    )
+    with pytest.raises(ValidationError):
+        invalid_emergency.full_clean()
+
+
+@pytest.mark.django_db
 def test_patient_soft_delete(sample_patient):
     """Vérifie la suppression logique (Soft Delete) du patient."""
     patient_id = sample_patient.pk
