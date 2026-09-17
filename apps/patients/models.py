@@ -11,7 +11,11 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
+from core.models import BaseModel
 from core.models import SoftDeleteModel
+from utils.enums import AllergenCategoryEnum
+from utils.enums import AllergyCriticalityEnum
+from utils.enums import AllergyVerificationStatusEnum
 from utils.enums import AppointmentStatusEnum
 from utils.enums import BloodGroupEnum
 from utils.enums import GenderEnum
@@ -149,13 +153,146 @@ class Patient(SoftDeleteModel):
     @property
     def has_critical_alerts(self) -> bool:
         """Vrai si le patient a des allergies ou pathologies chroniques signalées."""
-        return bool(
+        has_text_alerts = bool(
             (self.allergies and self.allergies.strip())
             or (self.chronic_diseases and self.chronic_diseases.strip())
         )
+        return has_text_alerts or self.patient_allergies.exists()
+
+    @property
+    def critical_allergies(self):
+        """Retourne le queryset des allergies à risque vital élevé."""
+        return self.patient_allergies.filter(
+            criticality=AllergyCriticalityEnum.HIGH
+        ).select_related("allergen")
 
     def get_absolute_url(self) -> str:
         return reverse("patients:patient_detail", kwargs={"pk": self.pk})
+
+
+class Allergen(BaseModel):
+    """Référentiel des substances et molécules allergènes."""
+
+    name = models.CharField(
+        max_length=150,
+        unique=True,
+        db_index=True,
+        verbose_name=_("Nom de la substance"),
+    )
+    category = models.CharField(
+        max_length=30,
+        choices=AllergenCategoryEnum.choices,
+        default=AllergenCategoryEnum.MEDICATION,
+        db_index=True,
+        verbose_name=_("Catégorie"),
+    )
+    atc_code = models.CharField(
+        max_length=20,
+        blank=True,
+        default="",
+        db_index=True,
+        verbose_name=_("Code ATC"),
+        help_text=_("Code de classification anatomique, thérapeutique et chimique de l'OMS (ex: J01C)."),
+    )
+    cross_reactivity_group = models.CharField(
+        max_length=100,
+        blank=True,
+        default="",
+        db_index=True,
+        verbose_name=_("Groupe de réactivité croisée"),
+        help_text=_("Ex: Bêta-lactamines, Sulfamides, AINS."),
+    )
+    description = models.TextField(
+        blank=True,
+        default="",
+        verbose_name=_("Description / Précisions pharmacologiques"),
+    )
+
+    class Meta:
+        db_table = "allergens"
+        verbose_name = _("Allergène")
+        verbose_name_plural = _("Allergènes")
+        ordering = ["name"]
+        indexes = [
+            models.Index(fields=["name"], name="allergen_name_idx"),
+            models.Index(fields=["atc_code"], name="allergen_atc_idx"),
+            models.Index(fields=["category"], name="allergen_cat_idx"),
+        ]
+
+    def __str__(self) -> str:
+        if self.atc_code:
+            return f"{self.name} [{self.atc_code}]"
+        return self.name
+
+
+class PatientAllergy(BaseModel):
+    """Allergie codifiée et documentée pour un patient."""
+
+    patient = models.ForeignKey(
+        Patient,
+        on_delete=models.CASCADE,
+        related_name="patient_allergies",
+        verbose_name=_("Patient"),
+    )
+    allergen = models.ForeignKey(
+        Allergen,
+        on_delete=models.PROTECT,
+        related_name="patient_allergies",
+        verbose_name=_("Allergène / Substance"),
+    )
+    criticality = models.CharField(
+        max_length=25,
+        choices=AllergyCriticalityEnum.choices,
+        default=AllergyCriticalityEnum.HIGH,
+        db_index=True,
+        verbose_name=_("Niveau de criticité"),
+    )
+    verification_status = models.CharField(
+        max_length=25,
+        choices=AllergyVerificationStatusEnum.choices,
+        default=AllergyVerificationStatusEnum.CONFIRMED,
+        verbose_name=_("Statut de vérification"),
+    )
+    reaction = models.CharField(
+        max_length=255,
+        blank=True,
+        default="",
+        verbose_name=_("Manifestation clinique / Réaction"),
+        help_text=_("Ex: Œdème de Quincke, Choc anaphylactique, Urticaire, Bronchospasme..."),
+    )
+    diagnosed_date = models.DateField(
+        null=True,
+        blank=True,
+        verbose_name=_("Date du diagnostic"),
+    )
+    notes = models.TextField(
+        blank=True,
+        default="",
+        verbose_name=_("Observations médicales complémentaires"),
+    )
+
+    class Meta:
+        db_table = "patient_allergies"
+        verbose_name = _("Allergie patient")
+        verbose_name_plural = _("Allergies patients")
+        ordering = ["-criticality", "allergen__name"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["patient", "allergen"],
+                name="unique_patient_allergen",
+            ),
+        ]
+        indexes = [
+            models.Index(fields=["patient", "criticality"], name="pat_allergy_crit_idx"),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.patient.full_name} - {self.allergen.name} ({self.get_criticality_display()})"
+
+    @property
+    def has_life_threatening_risk(self) -> bool:
+        """Indique si l'allergie présente un danger vital immédiat (anaphylaxie)."""
+        return self.criticality == AllergyCriticalityEnum.HIGH
 
 
 class Appointment(SoftDeleteModel):

@@ -3,6 +3,8 @@
 from .appointment_views import AppointmentCreateView
 from .appointment_views import AppointmentListView
 from .appointment_views import AppointmentStatusUpdateView
+from .patient_views import PatientAllergyCreateView
+from .patient_views import PatientAllergyDeleteView
 from .patient_views import PatientCreateView
 from .patient_views import PatientDetailView
 from .patient_views import PatientListView
@@ -13,10 +15,13 @@ __all__ = [
     "AppointmentCreateView",
     "AppointmentListView",
     "AppointmentStatusUpdateView",
+    "PatientAllergyCreateView",
+    "PatientAllergyDeleteView",
     "PatientCreateView",
     "PatientDetailView",
     "PatientListView",
     "PatientMedicalUpdateView",
     "PatientUpdateView",
 ]
+
 

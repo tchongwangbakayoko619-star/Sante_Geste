@@ -54,3 +54,31 @@ class AppointmentStatusEnum(models.TextChoices):
     CANCELLED = "cancelled", "Annulé"
     MISSED = "missed", "Non honoré / Absent"
 
+
+class AllergenCategoryEnum(models.TextChoices):
+    """Catégories d'allergènes / substances selon les standards de santé."""
+
+    MEDICATION = "medication", "Médicament / Molécule active"
+    FOOD = "food", "Alimentaire"
+    ENVIRONMENT = "environment", "Environnemental / Aéro-allergène"
+    BIOLOGICAL = "biological", "Biologique / Latex / Venin"
+    OTHER = "other", "Autre substance"
+
+
+class AllergyCriticalityEnum(models.TextChoices):
+    """Niveau de criticité d'une allergie (aligné sur FHIR AllergyIntoleranceCriticality)."""
+
+    LOW = "low", "Faible (réaction mineure)"
+    MODERATE = "moderate", "Modérée"
+    HIGH = "high", "Élevée (Risque vital / Anaphylaxie)"
+    UNABLE_TO_ASSESS = "unable_to_assess", "Indéterminée"
+
+
+class AllergyVerificationStatusEnum(models.TextChoices):
+    """Statut de vérification clinique de l'allergie (aligné sur FHIR)."""
+
+    SUSPECTED = "suspected", "Suspectée / Déclarée par le patient"
+    CONFIRMED = "confirmed", "Confirmée par bilan / Praticien"
+    REFUTED = "refuted", "Réfutée / Erronée"
+
+

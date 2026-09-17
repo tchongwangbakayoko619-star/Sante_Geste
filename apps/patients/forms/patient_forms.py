@@ -7,7 +7,9 @@ from typing import Any
 from django import forms
 from django.utils.translation import gettext_lazy as _
 
+from apps.patients.models import Allergen
 from apps.patients.models import Patient
+from apps.patients.models import PatientAllergy
 from utils.phone import validate_phone_number
 
 
@@ -183,5 +185,57 @@ class PatientMedicalUpdateForm(forms.ModelForm):
                 }
             ),
         }
+
+
+class PatientAllergyForm(forms.ModelForm):
+    """Formulaire d'enregistrement d'une allergie codifiée pour un patient."""
+
+    class Meta:
+        model = PatientAllergy
+        fields = [
+            "allergen",
+            "criticality",
+            "verification_status",
+            "reaction",
+            "diagnosed_date",
+            "notes",
+        ]
+        widgets = {
+            "allergen": forms.Select(
+                attrs={
+                    "class": "w-full px-4 py-2.5 rounded-xl border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-[#14967F] focus:border-[#14967F] text-sm text-neutral-800 transition-colors bg-white",
+                }
+            ),
+            "criticality": forms.Select(
+                attrs={
+                    "class": "w-full px-4 py-2.5 rounded-xl border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-[#14967F] focus:border-[#14967F] text-sm text-neutral-800 transition-colors bg-white",
+                }
+            ),
+            "verification_status": forms.Select(
+                attrs={
+                    "class": "w-full px-4 py-2.5 rounded-xl border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-[#14967F] focus:border-[#14967F] text-sm text-neutral-800 transition-colors bg-white",
+                }
+            ),
+            "reaction": forms.TextInput(
+                attrs={
+                    "placeholder": _("Ex: Œdème de Quincke, Urticaire aiguë, Choc anaphylactique..."),
+                    "class": "w-full px-4 py-2.5 rounded-xl border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-[#14967F] focus:border-[#14967F] text-sm text-neutral-800 transition-colors",
+                }
+            ),
+            "diagnosed_date": forms.DateInput(
+                attrs={
+                    "type": "date",
+                    "class": "w-full px-4 py-2.5 rounded-xl border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-[#14967F] focus:border-[#14967F] text-sm text-neutral-800 transition-colors",
+                }
+            ),
+            "notes": forms.Textarea(
+                attrs={
+                    "rows": 3,
+                    "placeholder": _("Précisions contextuelles, circonstances de survenue..."),
+                    "class": "w-full px-4 py-2.5 rounded-xl border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-[#14967F] focus:border-[#14967F] text-sm text-neutral-800 transition-colors resize-none",
+                }
+            ),
+        }
+
 
 

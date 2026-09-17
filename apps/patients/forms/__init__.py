@@ -2,6 +2,7 @@
 
 from .appointment_forms import AppointmentForm
 from .appointment_forms import AppointmentStatusForm
+from .patient_forms import PatientAllergyForm
 from .patient_forms import PatientForm
 from .patient_forms import PatientMedicalUpdateForm
 from .patient_forms import PatientSearchForm
@@ -9,6 +10,7 @@ from .patient_forms import PatientSearchForm
 __all__ = [
     "AppointmentForm",
     "AppointmentStatusForm",
+    "PatientAllergyForm",
     "PatientForm",
     "PatientMedicalUpdateForm",
     "PatientSearchForm",

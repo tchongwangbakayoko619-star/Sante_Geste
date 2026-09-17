@@ -53,8 +53,123 @@
     </div>
   </div>
 
-  <!-- Medical Update Form -->
+  <!-- Section 1 : Allergies Codifiées & Standardisées (Norme OMS / ATC) -->
+  <div class="bg-white border border-neutral-200/80 rounded-3xl p-6 sm:p-8 shadow-xs space-y-5">
+    <div class="flex items-center justify-between pb-3 border-b border-neutral-100">
+      <div>
+        <h2 class="text-base font-bold text-neutral-900 flex items-center gap-2">
+          <span>🧬</span> {% trans "Allergies Médicamenteuses & Substances Codifiées" %}
+        </h2>
+        <p class="text-xs text-neutral-500">{% trans "Permet le croisement automatique et le blocage des prescriptions contre-indiquées." %}</p>
+      </div>
+      <span class="text-xs font-semibold px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200">
+        {% trans "Standard CDSS / ATC" %}
+      </span>
+    </div>
+
+    <!-- Liste des allergies codifiées actives -->
+    {% if patient_allergies %}
+      <div class="space-y-2">
+        <p class="text-xs font-bold text-neutral-700 uppercase tracking-wider">{% trans "Allergies actuellement enregistrées" %} :</p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {% for pa in patient_allergies %}
+            <div class="p-3.5 rounded-2xl border {% if pa.has_life_threatening_risk %}bg-rose-50/60 border-rose-200{% else %}bg-amber-50/40 border-amber-200{% endif %} flex items-start justify-between gap-3">
+              <div class="space-y-1 text-xs">
+                <div class="flex items-center gap-2">
+                  <span class="font-bold text-neutral-900 text-sm">{{ pa.allergen.name }}</span>
+                  {% if pa.criticality == 'high' %}
+                    <span class="px-2 py-0.5 rounded text-[10px] font-extrabold bg-rose-600 text-white">{% trans "Risque vital" %}</span>
+                  {% elif pa.criticality == 'moderate' %}
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-200 text-amber-900">{% trans "Modérée" %}</span>
+                  {% else %}
+                    <span class="px-2 py-0.5 rounded text-[10px] font-medium bg-neutral-200 text-neutral-700">{{ pa.get_criticality_display }}</span>
+                  {% endif %}
+                </div>
+                <p class="text-[11px] text-neutral-600">
+                  {% if pa.allergen.atc_code %}<span class="font-mono font-semibold">ATC: {{ pa.allergen.atc_code }}</span>{% endif %}
+                  {% if pa.allergen.cross_reactivity_group %} • Famille: {{ pa.allergen.cross_reactivity_group }}{% endif %}
+                </p>
+                {% if pa.reaction %}
+                  <p class="text-[11px] text-neutral-700"><span class="font-medium">{% trans "Réaction" %}:</span> {{ pa.reaction }}</p>
+                {% endif %}
+              </div>
+              <form method="post" action="{% url 'patients:patient_allergy_delete' patient.pk pa.pk %}" onsubmit="return confirm('{% trans "Retirer cette allergie codifiée du dossier ?" %}');">
+                {% csrf_token %}
+                <button type="submit" class="text-xs text-rose-600 hover:text-rose-800 font-semibold p-1 rounded-lg hover:bg-rose-100 transition-colors" title="{% trans 'Retirer' %}">
+                  ✕
+                </button>
+              </form>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    {% else %}
+      <p class="text-xs text-neutral-500 italic">{% trans "Aucune allergie codifiée n'est enregistrée pour ce patient." %}</p>
+    {% endif %}
+
+    <!-- Formulaire d'ajout rapide d'une allergie codifiée -->
+    <div class="pt-4 border-t border-neutral-100">
+      <details class="group">
+        <summary class="text-xs font-bold text-[#14967F] hover:text-[#0e7462] cursor-pointer flex items-center gap-1.5 transition-colors">
+          <span>➕ {% trans "Ajouter une substance allergène codifiée" %}</span>
+        </summary>
+        <form method="post" action="{% url 'patients:patient_allergy_create' patient.pk %}" class="mt-4 p-4 rounded-2xl bg-neutral-50 border border-neutral-200/80 space-y-4">
+          {% csrf_token %}
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label for="{{ allergy_form.allergen.id_for_label }}" class="block text-xs font-bold text-neutral-700 mb-1">
+                {% trans "Substance / Molécule" %} <span class="text-rose-500">*</span>
+              </label>
+              {{ allergy_form.allergen }}
+            </div>
+            <div>
+              <label for="{{ allergy_form.criticality.id_for_label }}" class="block text-xs font-bold text-neutral-700 mb-1">
+                {% trans "Niveau de criticité" %} <span class="text-rose-500">*</span>
+              </label>
+              {{ allergy_form.criticality }}
+            </div>
+            <div>
+              <label for="{{ allergy_form.verification_status.id_for_label }}" class="block text-xs font-bold text-neutral-700 mb-1">
+                {% trans "Statut de vérification" %}
+              </label>
+              {{ allergy_form.verification_status }}
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label for="{{ allergy_form.reaction.id_for_label }}" class="block text-xs font-bold text-neutral-700 mb-1">
+                {% trans "Manifestation clinique / Réaction" %}
+              </label>
+              {{ allergy_form.reaction }}
+            </div>
+            <div>
+              <label for="{{ allergy_form.notes.id_for_label }}" class="block text-xs font-bold text-neutral-700 mb-1">
+                {% trans "Observations cliniques" %}
+              </label>
+              {{ allergy_form.notes }}
+            </div>
+          </div>
+          <div class="flex justify-end">
+            <button type="submit" class="btn btn-primary py-2 px-4 text-xs font-bold shadow-xs">
+              {% trans "Valider et ajouter l'allergène" %}
+            </button>
+          </div>
+        </form>
+      </details>
+    </div>
+  </div>
+
+  <!-- Section 2 : Antécédents, Groupe sanguin et Notes libres -->
   <div class="bg-white border border-neutral-200/80 rounded-3xl p-6 sm:p-8 shadow-xs space-y-6">
+    <div class="flex items-center justify-between pb-4 border-b border-neutral-100">
+      <div>
+        <h2 class="text-base font-bold text-neutral-900">{% trans "Profil Médical Général & Antécédents" %}</h2>
+        <p class="text-xs text-neutral-500">{% trans "Groupe sanguin, antécédents chroniques et observations textuelles libres." %}</p>
+      </div>
+      <span class="text-xs font-bold px-3 py-1 rounded-xl bg-rose-50 text-rose-700 border border-rose-200">
+        {% trans "Accès Soignant Réservé" %}
+      </span>
+    </div>
 
     <form method="post" class="space-y-6" novalidate>
       {% csrf_token %}
@@ -84,17 +199,17 @@
         {% endif %}
       </div>
 
-      <!-- Allergies -->
+      <!-- Allergies libres -->
       <div>
         <label for="{{ form.allergies.id_for_label }}" class="block text-xs font-bold text-amber-900 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
           <svg class="w-4 h-4 text-amber-500" fill="currentColor" viewBox="0 0 20 20">
             <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
           </svg>
-          {% trans "Allergies médicamenteuses & intolérances" %}
+          {% trans "Autres allergies / Observations textuelles libres" %}
         </label>
         {{ form.allergies }}
         <p class="text-[11px] text-neutral-500 mt-1">
-          {% trans "Ces informations déclencheront des alertes de sécurité lors des futures prescriptions." %}
+          {% trans "Pour les allergies rares ou déclaratives non répertoriées ci-dessus." %}
         </p>
         {% if form.allergies.errors %}
           <p class="text-xs text-rose-600 font-medium mt-1">{{ form.allergies.errors.0 }}</p>
@@ -121,10 +236,10 @@
       <!-- Actions -->
       <div class="flex items-center justify-end gap-3 pt-4 border-t border-neutral-100">
         <a href="{{ patient.get_absolute_url }}" class="btn btn-outline py-2.5 px-5 text-sm font-semibold">
-          {% trans "Annuler" %}
+          {% trans "Retour au dossier" %}
         </a>
         <button type="submit" class="btn btn-primary py-2.5 px-6 text-sm font-bold shadow-xs">
-          {% trans "Enregistrer le profil clinique" %}
+          {% trans "Enregistrer les modifications" %}
         </button>
       </div>
 

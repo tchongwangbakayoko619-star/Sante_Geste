@@ -1,7 +1,6 @@
 """Service de gestion des dossiers patients."""
 
-from __future__ import annotations
-
+from datetime import date
 from typing import TYPE_CHECKING
 from typing import Any
 
@@ -11,7 +10,11 @@ from django.db.models import Q
 from django.db.models import QuerySet
 from django.utils import timezone
 
+from apps.patients.models import Allergen
 from apps.patients.models import Patient
+from apps.patients.models import PatientAllergy
+from utils.enums import AllergyCriticalityEnum
+from utils.enums import AllergyVerificationStatusEnum
 
 if TYPE_CHECKING:
     from apps.users.models import User
@@ -114,6 +117,90 @@ def update_patient_medical_record(
 
     patient.save(update_fields=[*allowed_medical_fields, "updated_by", "updated_at"])
     return patient
+
+
+def add_patient_allergy(
+    *,
+    patient: Patient,
+    allergen: Allergen,
+    criticality: str = AllergyCriticalityEnum.HIGH,
+    verification_status: str = AllergyVerificationStatusEnum.CONFIRMED,
+    reaction: str = "",
+    diagnosed_date: date | None = None,
+    notes: str = "",
+    created_by: User | None = None,
+) -> PatientAllergy:
+    """Associe une allergie codifiée au dossier d'un patient."""
+    allergy, created = PatientAllergy.objects.update_or_create(
+        patient=patient,
+        allergen=allergen,
+        defaults={
+            "criticality": criticality,
+            "verification_status": verification_status,
+            "reaction": reaction,
+            "diagnosed_date": diagnosed_date,
+            "notes": notes,
+        },
+    )
+    if created_by:
+        if created:
+            allergy.set_created_by(created_by)
+        allergy.set_updated_by(created_by)
+        allergy.save()
+    return allergy
+
+
+def remove_patient_allergy(
+    *,
+    patient: Patient,
+    allergen: Allergen,
+) -> bool:
+    """Supprime une allergie codifiée du dossier patient."""
+    deleted_count, _ = PatientAllergy.objects.filter(
+        patient=patient,
+        allergen=allergen,
+    ).delete()
+    return deleted_count > 0
+
+
+def check_allergy_contraindication(
+    *,
+    patient: Patient,
+    atc_code: str = "",
+    cross_reactivity_group: str = "",
+    substance_name: str = "",
+) -> list[PatientAllergy]:
+    """Détecte les contre-indications allergiques pour une substance ou un médicament.
+
+    Vérifie par code ATC partiel (famille médicamenteuse, ex: 'J01C' pour pénicillines),
+    groupe de réactivité croisée ou nom de la substance.
+    """
+    contraindications = []
+    patient_allergies = patient.patient_allergies.select_related("allergen").all()
+
+    for pa in patient_allergies:
+        allergen = pa.allergen
+        # 1. Correspondance exacte ou partielle par nom de substance
+        if substance_name and (
+            substance_name.lower() in allergen.name.lower()
+            or allergen.name.lower() in substance_name.lower()
+        ):
+            contraindications.append(pa)
+            continue
+
+        # 2. Correspondance par code ATC (ex: médicament débutant par J01C et allergie J01C)
+        if atc_code and allergen.atc_code:
+            if atc_code.startswith(allergen.atc_code) or allergen.atc_code.startswith(atc_code):
+                contraindications.append(pa)
+                continue
+
+        # 3. Correspondance par groupe de réactivité croisée (ex: Bêta-lactamines, AINS)
+        if cross_reactivity_group and allergen.cross_reactivity_group:
+            if cross_reactivity_group.lower() == allergen.cross_reactivity_group.lower():
+                contraindications.append(pa)
+                continue
+
+    return contraindications
 
 
 def search_patients(query: str, *, active_only: bool = True) -> QuerySet[Patient]:

@@ -2,8 +2,10 @@
 
 from django.contrib import admin
 
+from apps.patients.models import Allergen
 from apps.patients.models import Appointment
 from apps.patients.models import Patient
+from apps.patients.models import PatientAllergy
 
 
 @admin.register(Patient)
@@ -64,4 +66,21 @@ class AppointmentAdmin(admin.ModelAdmin):
         "created_by",
         "updated_by",
     ]
+
+
+@admin.register(Allergen)
+class AllergenAdmin(admin.ModelAdmin):
+    list_display = ["name", "category", "atc_code", "cross_reactivity_group", "created_at"]
+    search_fields = ["name", "atc_code", "cross_reactivity_group", "description"]
+    list_filter = ["category", "created_at"]
+    readonly_fields = ["id", "created_at", "updated_at", "created_by", "updated_by"]
+
+
+@admin.register(PatientAllergy)
+class PatientAllergyAdmin(admin.ModelAdmin):
+    list_display = ["patient", "allergen", "criticality", "verification_status", "reaction", "diagnosed_date"]
+    search_fields = ["patient__last_name", "patient__first_name", "allergen__name", "reaction"]
+    list_filter = ["criticality", "verification_status", "allergen__category"]
+    readonly_fields = ["id", "created_at", "updated_at", "created_by", "updated_by"]
+
 

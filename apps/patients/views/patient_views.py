@@ -8,19 +8,24 @@ from django.contrib import messages
 from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import QuerySet
 from django.http import JsonResponse
+from django.shortcuts import get_object_or_404
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+from django.views import View
 from django.views.generic import DetailView
 from django.views.generic import ListView
 from django.views.generic.edit import CreateView
 from django.views.generic.edit import UpdateView
 
+from apps.patients.forms import PatientAllergyForm
 from apps.patients.forms import PatientForm
 from apps.patients.forms import PatientMedicalUpdateForm
 from apps.patients.forms import PatientSearchForm
+from apps.patients.models import Allergen
 from apps.patients.models import Patient
+from apps.patients.models import PatientAllergy
 from apps.patients.services import create_patient
 from apps.patients.services import search_patients
 from apps.patients.services import update_patient
@@ -110,6 +115,13 @@ class PatientDetailView(PatientManagementRequiredMixin, DetailView):
             .order_by("scheduled_at")
         )
 
+        # Allergies codifiées avec détails pharmacologiques
+        context["patient_allergies"] = (
+            self.object.patient_allergies
+            .select_related("allergen")
+            .order_by("-criticality", "allergen__name")
+        )
+
         return context
 
 
@@ -194,6 +206,56 @@ class PatientMedicalUpdateView(PersonnelMedicalRequiredMixin, SuccessMessageMixi
         context = super().get_context_data(**kwargs)
         context["title"] = _("Mise à jour du profil médical : %(name)s") % {"name": self.object.full_name}
         context["patient"] = self.object
+        context["patient_allergies"] = (
+            self.object.patient_allergies
+            .select_related("allergen")
+            .order_by("-criticality", "allergen__name")
+        )
+        context["allergy_form"] = PatientAllergyForm()
         return context
+
+
+class PatientAllergyCreateView(PersonnelMedicalRequiredMixin, View):
+    """Ajout d'une allergie codifiée au dossier patient par le soignant."""
+
+    def post(self, request, pk, *args, **kwargs):
+        patient = get_object_or_404(Patient, pk=pk)
+        form = PatientAllergyForm(request.POST)
+        if form.is_valid():
+            allergy = form.save(commit=False)
+            allergy.patient = patient
+            allergy.set_created_by(request.user)
+            allergy.set_updated_by(request.user)
+            allergy.save()
+            messages.success(
+                request,
+                _("L'allergie codifiée '%(allergen)s' a été ajoutée avec succès.")
+                % {"allergen": allergy.allergen.name},
+            )
+        else:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{field}: {error}")
+
+        next_url = request.POST.get("next") or reverse("patients:patient_medical_update", kwargs={"pk": patient.pk})
+        return redirect(next_url)
+
+
+class PatientAllergyDeleteView(PersonnelMedicalRequiredMixin, View):
+    """Retrait d'une allergie codifiée du dossier patient."""
+
+    def post(self, request, pk, allergy_id, *args, **kwargs):
+        patient = get_object_or_404(Patient, pk=pk)
+        allergy = get_object_or_404(PatientAllergy, pk=allergy_id, patient=patient)
+        allergen_name = allergy.allergen.name
+        allergy.delete()
+        messages.success(
+            request,
+            _("L'allergie codifiée '%(allergen)s' a été supprimée du dossier.")
+            % {"allergen": allergen_name},
+        )
+        next_url = request.POST.get("next") or reverse("patients:patient_medical_update", kwargs={"pk": patient.pk})
+        return redirect(next_url)
+
 
 

@@ -8,19 +8,29 @@ import pytest
 from django.contrib.auth import get_user_model
 from django.core.exceptions import PermissionDenied
 from django.core.exceptions import ValidationError
+from django.db import IntegrityError
+from django.db import transaction
 from django.urls import reverse
 from django.utils import timezone
 
 from apps.patients.forms import PatientForm
+from apps.patients.models import Allergen
 from apps.patients.models import Appointment
 from apps.patients.models import Patient
+from apps.patients.models import PatientAllergy
+from apps.patients.services import add_patient_allergy
+from apps.patients.services import check_allergy_contraindication
 from apps.patients.services import check_doctor_availability
 from apps.patients.services import create_appointment
 from apps.patients.services import create_patient
 from apps.patients.services import generate_patient_number
+from apps.patients.services import remove_patient_allergy
 from apps.patients.services import search_patients
 from apps.patients.services import update_appointment_status
 from apps.patients.services import update_patient
+from utils.enums import AllergenCategoryEnum
+from utils.enums import AllergyCriticalityEnum
+from utils.enums import AllergyVerificationStatusEnum
 from utils.enums import AppointmentStatusEnum
 from utils.enums import BloodGroupEnum
 from utils.enums import GenderEnum
@@ -499,4 +509,146 @@ def test_create_patient_retry_on_integrity_error(agent_accueil, monkeypatch):
     )
     assert patient.pk is not None
     assert call_count == 2
+
+
+# ==============================================================================
+# 4. Tests des Allergies Codifiées & Contre-indications Pharmaceutiques (CDSS)
+# ==============================================================================
+
+@pytest.mark.django_db
+def test_allergen_and_patient_allergy_model(sample_patient, doctor_user):
+    """Vérifie le modèle Allergen, PatientAllergy et les contraintes relationnelles."""
+    allergen = Allergen.objects.create(
+        name="Amoxicilline Trihydrate",
+        category=AllergenCategoryEnum.MEDICATION,
+        atc_code="J01CA04",
+        cross_reactivity_group="Bêta-lactamines",
+    )
+    assert str(allergen) == "Amoxicilline Trihydrate [J01CA04]"
+
+    # Contrainte d'unicité sur le nom
+    with transaction.atomic():
+        with pytest.raises(IntegrityError):
+            Allergen.objects.create(name="Amoxicilline Trihydrate")
+
+    # Association au patient
+    pa = PatientAllergy.objects.create(
+        patient=sample_patient,
+        allergen=allergen,
+        criticality=AllergyCriticalityEnum.HIGH,
+        reaction="Œdème de Quincke",
+        created_by=doctor_user,
+    )
+    assert pa.has_life_threatening_risk is True
+    assert sample_patient.has_critical_alerts is True
+    assert allergen in [a.allergen for a in sample_patient.critical_allergies]
+
+    # Contrainte unique (patient, allergen)
+    with transaction.atomic():
+        with pytest.raises(IntegrityError):
+            PatientAllergy.objects.create(
+                patient=sample_patient,
+                allergen=allergen,
+                criticality=AllergyCriticalityEnum.LOW,
+            )
+
+
+@pytest.mark.django_db
+def test_patient_allergy_services(sample_patient, doctor_user):
+    """Vérifie l'ajout, la suppression et la détection d'interactions/contre-indications."""
+    allergen_peni = Allergen.objects.create(
+        name="Pénicilline G",
+        category=AllergenCategoryEnum.MEDICATION,
+        atc_code="J01CE01",
+        cross_reactivity_group="Bêta-lactamines",
+    )
+
+    # 1. Ajout via service
+    pa = add_patient_allergy(
+        patient=sample_patient,
+        allergen=allergen_peni,
+        criticality=AllergyCriticalityEnum.HIGH,
+        reaction="Choc anaphylactique",
+        created_by=doctor_user,
+    )
+    assert pa.pk is not None
+    assert pa.created_by == doctor_user
+
+    # 2. Détection par code ATC partiel (J01C)
+    contra_atc = check_allergy_contraindication(
+        patient=sample_patient,
+        atc_code="J01C",
+    )
+    assert len(contra_atc) == 1
+    assert contra_atc[0].allergen == allergen_peni
+
+    # 3. Détection par groupe de réactivité croisée (Bêta-lactamines)
+    contra_group = check_allergy_contraindication(
+        patient=sample_patient,
+        cross_reactivity_group="bêta-lactamines",
+    )
+    assert len(contra_group) == 1
+
+    # 4. Détection par nom de substance
+    contra_name = check_allergy_contraindication(
+        patient=sample_patient,
+        substance_name="Pénicilline",
+    )
+    assert len(contra_name) == 1
+
+    # Absence de contre-indication pour un médicament sans rapport (ex: Paracétamol)
+    contra_none = check_allergy_contraindication(
+        patient=sample_patient,
+        atc_code="N02BE01",
+        cross_reactivity_group="Analgésiques",
+        substance_name="Paracétamol",
+    )
+    assert len(contra_none) == 0
+
+    # 5. Suppression de l'allergie
+    removed = remove_patient_allergy(patient=sample_patient, allergen=allergen_peni)
+    assert removed is True
+    assert not sample_patient.patient_allergies.exists()
+
+
+@pytest.mark.django_db
+def test_patient_allergy_views_rbac(client, agent_accueil, doctor_user, sample_patient):
+    """Vérifie le contrôle d'accès RBAC des vues de gestion des allergies codifiées."""
+    allergen = Allergen.objects.create(
+        name="Sulfaméthoxazole",
+        category=AllergenCategoryEnum.MEDICATION,
+        atc_code="J01EE01",
+    )
+    url_add = reverse("patients:patient_allergy_create", kwargs={"pk": sample_patient.pk})
+
+    # 1. Agent d'accueil : 403 Forbidden
+    client.force_login(agent_accueil)
+    resp_agent = client.post(url_add, data={"allergen": str(allergen.pk), "criticality": AllergyCriticalityEnum.HIGH})
+    assert resp_agent.status_code == 403
+
+    # 2. Médecin : Ajout autorisé
+    client.force_login(doctor_user)
+    resp_doc = client.post(
+        url_add,
+        data={
+            "allergen": str(allergen.pk),
+            "criticality": AllergyCriticalityEnum.HIGH,
+            "verification_status": AllergyVerificationStatusEnum.CONFIRMED,
+            "reaction": "Toxidermie",
+        },
+    )
+    assert resp_doc.status_code == 302
+    created_allergy = PatientAllergy.objects.get(patient=sample_patient, allergen=allergen)
+    assert created_allergy.reaction == "Toxidermie"
+    assert created_allergy.created_by == doctor_user
+
+    # 3. Médecin : Suppression autorisée
+    url_del = reverse(
+        "patients:patient_allergy_delete",
+        kwargs={"pk": sample_patient.pk, "allergy_id": created_allergy.pk},
+    )
+    resp_del = client.post(url_del)
+    assert resp_del.status_code == 302
+    assert not PatientAllergy.objects.filter(pk=created_allergy.pk).exists()
+
 
