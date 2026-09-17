@@ -104,7 +104,12 @@ class AppointmentForm(forms.ModelForm):
         duration = cleaned_data.get("estimated_duration_minutes") or 30
 
         if doctor:
-            if not doctor.is_active:
+            if not doctor.is_personnel_medical:
+                self.add_error(
+                    "doctor",
+                    _("Ce professionnel n'est pas habilité comme personnel médical."),
+                )
+            elif not doctor.is_active:
                 is_new = not self.instance or not self.instance.pk
                 if is_new or self.instance.doctor_id != doctor.id:
                     self.add_error(

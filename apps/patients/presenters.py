@@ -106,3 +106,4 @@ class PatientPresenter:
     def status_dot_class(self) -> str:
         """Classe Tailwind CSS de la pastille de couleur du statut."""
         return get_patient_status_dot_class(self.patient.status)
+

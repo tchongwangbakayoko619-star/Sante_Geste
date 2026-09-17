@@ -64,3 +64,4 @@ def as_appointment_presenter_filter(appointment: Any) -> AppointmentPresenter:
 def as_patient_presenter_filter(patient: Any) -> PatientPresenter:
     """Enveloppe une instance de patient dans son presenter dédié."""
     return PatientPresenter(patient)
+

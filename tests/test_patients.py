@@ -23,12 +23,15 @@ from apps.patients.models import PatientAllergy
 from apps.patients.presenters import AppointmentPresenter
 from apps.patients.presenters import PatientPresenter
 from apps.patients.services import add_patient_allergy
+from apps.patients.services import cancel_appointment
 from apps.patients.services import check_allergy_contraindication
 from apps.patients.services import check_doctor_availability
 from apps.patients.services import create_appointment
 from apps.patients.services import create_patient
 from apps.patients.services import generate_patient_number
+from apps.patients.services import get_appointment_daily_stats
 from apps.patients.services import remove_patient_allergy
+from apps.patients.services import reschedule_appointment
 from apps.patients.services import search_patients
 from apps.patients.services import update_appointment_status
 from apps.patients.services import update_patient
@@ -601,7 +604,7 @@ def test_create_patient_retry_on_integrity_error(agent_accueil, monkeypatch):
     monkeypatch.setattr(Patient, "save", mock_save)
 
     patient = create_patient(
-        data={"first_name": "Test", "last_name": "Retry", "phone_number": "+22501020304"},
+        data={"first_name": "Test", "last_name": "Retry", "phone_number": "+237699112233"},
         created_by=agent_accueil,
     )
     assert patient.pk is not None
@@ -1048,6 +1051,150 @@ def test_presenters_and_template_tags_separation(sample_patient, doctor_user):
     assert "badge_apt:bg-rose-50 text-rose-700" in rendered
     assert "badge_pat:bg-rose-50 text-rose-700" in rendered
     assert "dot_pat:bg-rose-500" in rendered
+
+
+# ==============================================================================
+# 9. Tests Habilitation Médicale Obligatoire & Non-Masquage des Erreurs Téléphone
+# ==============================================================================
+
+@pytest.mark.django_db
+def test_appointment_requires_is_personnel_medical(sample_patient, agent_accueil, doctor_user):
+    """Vérifie qu'un rendez-vous exige impérativement un praticien ayant is_personnel_medical=True."""
+    future_time = timezone.now() + timedelta(days=2)
+
+    # 1. Vérification au niveau du service create_appointment
+    with pytest.raises(ValidationError) as exc_service:
+        create_appointment(
+            patient=sample_patient,
+            doctor=agent_accueil,
+            scheduled_at=future_time,
+            reason="Tentative consultation avec agent accueil",
+        )
+    assert "pas habilité comme personnel médical" in str(exc_service.value).lower()
+
+    # 2. Vérification au niveau du modèle Appointment.clean()
+    invalid_apt = Appointment(
+        patient=sample_patient,
+        doctor=agent_accueil,
+        scheduled_at=future_time,
+        reason="Tentative modèle ORM",
+    )
+    with pytest.raises(ValidationError) as exc_clean:
+        invalid_apt.clean()
+    assert "doctor" in exc_clean.value.message_dict
+    assert "pas habilité comme personnel médical" in str(exc_clean.value.message_dict["doctor"][0]).lower()
+
+    # 3. Vérification au niveau du formulaire AppointmentForm
+    form = AppointmentForm(
+        data={
+            "patient": sample_patient.pk,
+            "doctor": agent_accueil.pk,
+            "scheduled_at": future_time.strftime("%Y-%m-%dT%H:%M"),
+            "estimated_duration_minutes": 30,
+            "reason": "Consultation formulaire",
+        }
+    )
+    assert not form.is_valid()
+    assert "doctor" in form.errors
+
+
+@pytest.mark.django_db
+def test_phone_normalization_errors_not_masked_on_save():
+    """Vérifie que les erreurs de normalisation téléphonique ne sont plus masquées par pass à l'enregistrement."""
+    # 1. Téléphone principal invalide avec lettres
+    p1 = Patient(
+        first_name="Jean",
+        last_name="Invalide",
+        phone_number="699000000XYZ",
+    )
+    with pytest.raises(ValidationError) as exc_p1:
+        p1.save()
+    assert "phone_number" in exc_p1.value.message_dict
+
+    # 2. Contact d'urgence invalide
+    p2 = Patient(
+        first_name="Marie",
+        last_name="Invalide",
+        phone_number="+237699112233",
+        emergency_contact_phone="PAS_UN_NUMERO",
+    )
+    with pytest.raises(ValidationError) as exc_p2:
+        p2.save()
+    assert "emergency_contact_phone" in exc_p2.value.message_dict
+
+
+# ==============================================================================
+# 10. Tests des Opérations Métier AppointmentService (Reschedule, Cancel, Stats)
+# ==============================================================================
+
+@pytest.mark.django_db
+def test_appointment_service_reschedule_cancel_and_stats(sample_patient, doctor_user):
+    """Vérifie les opérations métier complètes dans AppointmentService avec concurrence sérialisée."""
+    base_time = timezone.now().replace(hour=9, minute=0, second=0, microsecond=0) + timedelta(days=1)
+
+    # 1. Création initiale
+    apt = create_appointment(
+        patient=sample_patient,
+        doctor=doctor_user,
+        scheduled_at=base_time,
+        estimated_duration_minutes=30,
+        reason="Consultation initiale",
+    )
+    assert apt.status == AppointmentStatusEnum.SCHEDULED
+
+    # 2. Reschedule vers un nouveau créneau disponible
+    new_time = base_time + timedelta(hours=3)
+    updated_apt = reschedule_appointment(
+        appointment=apt,
+        new_scheduled_at=new_time,
+        new_duration_minutes=45,
+        notes="Reporté à la demande du patient",
+    )
+    assert updated_apt.scheduled_at == new_time
+    assert updated_apt.estimated_duration_minutes == 45
+    assert updated_apt.notes == "Reporté à la demande du patient"
+
+    # 3. Création d'un second RDV
+    apt2 = create_appointment(
+        patient=sample_patient,
+        doctor=doctor_user,
+        scheduled_at=base_time + timedelta(hours=1),
+        estimated_duration_minutes=30,
+        reason="Deuxième consultation",
+    )
+
+    # 4. Tentative de reschedule créant un conflit d'agenda -> Rejeté par reschedule_appointment
+    with pytest.raises(ValidationError):
+        reschedule_appointment(
+            appointment=updated_apt,
+            new_scheduled_at=apt2.scheduled_at,
+            new_duration_minutes=30,
+        )
+
+    # 5. Annulation via cancel_appointment -> Libère le créneau
+    cancelled = cancel_appointment(
+        appointment=apt2,
+        cancellation_reason="Imprévu patient",
+    )
+    assert cancelled.status == AppointmentStatusEnum.CANCELLED
+    assert "[ANNULÉ] Imprévu patient" in cancelled.notes
+
+    # Le créneau de apt2 est désormais libre : updated_apt peut être déplacé dessus
+    reassigned = reschedule_appointment(
+        appointment=updated_apt,
+        new_scheduled_at=apt2.scheduled_at,
+        new_duration_minutes=30,
+    )
+    assert reassigned.scheduled_at == apt2.scheduled_at
+
+    # 6. Statistiques journalières via get_appointment_daily_stats
+    stats = get_appointment_daily_stats(target_date=reassigned.scheduled_at)
+    assert "today_count" in stats
+    assert "waiting_count" in stats
+    assert "in_consultation_count" in stats
+    assert "completed_count" in stats
+    assert stats["today_count"] >= 1
+
 
 
 

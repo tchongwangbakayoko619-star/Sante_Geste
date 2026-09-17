@@ -157,18 +157,22 @@ class Patient(SoftDeleteModel):
         elif self.status != PatientStatusEnum.DECEASED and self.deceased_at:
             self.deceased_at = None
 
-        # Normalisation automatique au format international standard E.164
+        # Normalisation et validation automatique au format international standard E.164
+        phone_errors = {}
         if self.phone_number:
             try:
                 self.phone_number = normalize_phone_number(self.phone_number)
-            except ValidationError:
-                pass
+            except ValidationError as exc:
+                phone_errors["phone_number"] = exc
 
         if self.emergency_contact_phone:
             try:
                 self.emergency_contact_phone = normalize_phone_number(self.emergency_contact_phone)
-            except ValidationError:
-                pass
+            except ValidationError as exc:
+                phone_errors["emergency_contact_phone"] = exc
+
+        if phone_errors:
+            raise ValidationError(phone_errors)
 
     def save(self, *args, **kwargs):
         if not self.patient_number:
@@ -353,6 +357,7 @@ class Appointment(SoftDeleteModel):
     doctor = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
+        limit_choices_to={"is_personnel_medical": True},
         related_name="doctor_appointments",
         verbose_name=_("Médecin / Praticien"),
     )
@@ -427,29 +432,38 @@ class Appointment(SoftDeleteModel):
                         }
                     )
 
-        # Contrôle du praticien (éligibilité et statut actif au sein de l'établissement)
+        # Contrôle du praticien (habilitation médicale et statut actif au sein de l'établissement)
         if self.doctor_id:
             user_model = get_user_model()
             doc = getattr(self, "doctor", None) or user_model.objects.filter(pk=self.doctor_id).first()
-            if doc and not doc.is_active:
-                is_new = not self.pk
-                doctor_changed = False
-                if not is_new:
-                    old_doc_id = (
-                        Appointment.objects.filter(pk=self.pk)
-                        .values_list("doctor_id", flat=True)
-                        .first()
-                    )
-                    doctor_changed = old_doc_id != self.doctor_id
-                if is_new or doctor_changed:
+            if doc:
+                if not doc.is_personnel_medical:
                     raise ValidationError(
                         {
                             "doctor": _(
-                                "Ce praticien n'est plus en activité au sein de l'établissement. "
-                                "Impossible de lui assigner un rendez-vous."
+                                "L'utilisateur assigné n'est pas habilité comme personnel médical."
                             )
                         }
                     )
+                if not doc.is_active:
+                    is_new = not self.pk
+                    doctor_changed = False
+                    if not is_new:
+                        old_doc_id = (
+                            Appointment.objects.filter(pk=self.pk)
+                            .values_list("doctor_id", flat=True)
+                            .first()
+                        )
+                        doctor_changed = old_doc_id != self.doctor_id
+                    if is_new or doctor_changed:
+                        raise ValidationError(
+                            {
+                                "doctor": _(
+                                    "Ce praticien n'est plus en activité au sein de l'établissement. "
+                                    "Impossible de lui assigner un rendez-vous."
+                                )
+                            }
+                        )
 
         if not self.doctor_id or not self.scheduled_at:
             return

@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from apps.patients.models import Appointment
@@ -27,8 +28,14 @@ def check_doctor_availability(
     duration_minutes: int = 30,
     exclude_appointment_id: uuid.UUID | str | None = None,
 ) -> bool:
-    """Vérifie si un praticien est disponible sans chevauchement de rendez-vous."""
-    if not doctor.is_active:
+    """Vérifie si un praticien est disponible sans chevauchement de rendez-vous.
+
+    Un praticien est disponible ssi :
+    1. Il est actif au sein de l'établissement (is_active=True).
+    2. Il fait partie du personnel médical habilité (is_personnel_medical=True).
+    3. Aucun rendez-vous non-annulé ne chevauche le créneau demandé.
+    """
+    if not doctor.is_active or not doctor.is_personnel_medical:
         return False
 
     new_start = scheduled_at
@@ -65,7 +72,11 @@ def create_appointment(
     notes: str = "",
     created_by: User | None = None,
 ) -> Appointment:
-    """Crée un rendez-vous médical en vérifiant l'absence de conflit d'agenda avec verrou pessimiste."""
+    """Crée un rendez-vous médical en sérialisant les accès concurrents (verrou pessimiste)."""
+    if not doctor.is_personnel_medical:
+        raise ValidationError(
+            _("L'utilisateur sélectionné n'est pas habilité comme personnel médical.")
+        )
     if not doctor.is_active:
         raise ValidationError(
             _("Impossible de planifier un rendez-vous avec un praticien inactif ou ayant quitté l'établissement.")
@@ -74,7 +85,7 @@ def create_appointment(
     user_model = get_user_model()
     with transaction.atomic():
         # Verrouillage pessimiste sur la ligne du praticien pour sérialiser
-        # les réservations concurrentes et prévenir les conditions de course (double-booking).
+        # les réservations concurrentes et éliminer les conditions de course (double-booking).
         user_model.objects.select_for_update().get(pk=doctor.pk)
 
         if not check_doctor_availability(doctor, scheduled_at, estimated_duration_minutes):
@@ -98,6 +109,76 @@ def create_appointment(
         return appointment
 
 
+def reschedule_appointment(
+    *,
+    appointment: Appointment,
+    new_scheduled_at: datetime,
+    new_duration_minutes: int | None = None,
+    new_doctor: User | None = None,
+    notes: str | None = None,
+    updated_by: User | None = None,
+) -> Appointment:
+    """Reporte ou réassigne un rendez-vous médical avec verrouillage pessimiste anti-concurrence."""
+    target_doctor = new_doctor or appointment.doctor
+    target_duration = new_duration_minutes or appointment.estimated_duration_minutes or 30
+
+    if not target_doctor.is_personnel_medical:
+        raise ValidationError(
+            _("L'utilisateur sélectionné n'est pas habilité comme personnel médical.")
+        )
+    if not target_doctor.is_active:
+        raise ValidationError(
+            _("Impossible de planifier un rendez-vous avec un praticien inactif ou ayant quitté l'établissement.")
+        )
+
+    user_model = get_user_model()
+    with transaction.atomic():
+        # Sérialisation des modifications sur l'agenda du praticien cible
+        user_model.objects.select_for_update().get(pk=target_doctor.pk)
+        locked_apt = Appointment.objects.select_for_update().get(pk=appointment.pk)
+
+        if not check_doctor_availability(
+            doctor=target_doctor,
+            scheduled_at=new_scheduled_at,
+            duration_minutes=target_duration,
+            exclude_appointment_id=locked_apt.pk,
+        ):
+            raise ValidationError(
+                _("Le praticien a déjà une consultation programmée sur ce créneau horaire.")
+            )
+
+        locked_apt.doctor = target_doctor
+        locked_apt.scheduled_at = new_scheduled_at
+        locked_apt.estimated_duration_minutes = target_duration
+        if notes is not None:
+            locked_apt.notes = notes
+        if updated_by:
+            locked_apt.set_updated_by(updated_by)
+
+        locked_apt.save()
+        return locked_apt
+
+
+def cancel_appointment(
+    *,
+    appointment: Appointment,
+    cancellation_reason: str = "",
+    cancelled_by: User | None = None,
+) -> Appointment:
+    """Annule un rendez-vous médical et libère immédiatement le créneau du praticien."""
+    with transaction.atomic():
+        locked_apt = Appointment.objects.select_for_update().get(pk=appointment.pk)
+        locked_apt.status = AppointmentStatusEnum.CANCELLED
+        if cancellation_reason:
+            prefix = _("[ANNULÉ]")
+            existing_notes = locked_apt.notes.strip()
+            locked_apt.notes = f"{existing_notes}\n{prefix} {cancellation_reason}".strip()
+        if cancelled_by:
+            locked_apt.set_updated_by(cancelled_by)
+        locked_apt.save(update_fields=["status", "notes", "updated_by", "updated_at"])
+        return locked_apt
+
+
 def update_appointment_status(
     *,
     appointment: Appointment,
@@ -115,3 +196,17 @@ def update_appointment_status(
     appointment.save(update_fields=["status", "updated_by", "updated_at"])
     return appointment
 
+
+def get_appointment_daily_stats(target_date: datetime | None = None) -> dict[str, int]:
+    """Calcule les statistiques consolidées de l'agenda et de la file d'attente journalière."""
+    base_time = target_date or timezone.now()
+    day_start = base_time.replace(hour=0, minute=0, second=0, microsecond=0)
+    day_end = day_start + timedelta(days=1)
+
+    today_qs = Appointment.objects.filter(scheduled_at__gte=day_start, scheduled_at__lt=day_end)
+    return {
+        "today_count": today_qs.count(),
+        "waiting_count": today_qs.filter(status=AppointmentStatusEnum.WAITING).count(),
+        "in_consultation_count": today_qs.filter(status=AppointmentStatusEnum.IN_CONSULTATION).count(),
+        "completed_count": today_qs.filter(status=AppointmentStatusEnum.COMPLETED).count(),
+    }

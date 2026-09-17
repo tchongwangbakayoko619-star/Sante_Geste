@@ -21,6 +21,7 @@ from apps.patients.forms import AppointmentStatusForm
 from apps.patients.models import Appointment
 from apps.patients.models import Patient
 from apps.patients.services import create_appointment
+from apps.patients.services import get_appointment_daily_stats
 from apps.patients.services import update_appointment_status
 from apps.users.mixins import PatientManagementRequiredMixin
 from utils.enums import AppointmentStatusEnum
@@ -62,17 +63,9 @@ class AppointmentListView(PatientManagementRequiredMixin, ListView):
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
-        now = timezone.now()
-        today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
-        today_end = today_start + timezone.timedelta(days=1)
-
-        today_qs = Appointment.objects.filter(scheduled_at__gte=today_start, scheduled_at__lt=today_end)
         context["date_filter"] = self.request.GET.get("date_filter", "today")
         context["selected_status"] = self.request.GET.get("status", "")
-        context["today_count"] = today_qs.count()
-        context["waiting_count"] = today_qs.filter(status=AppointmentStatusEnum.WAITING).count()
-        context["in_consultation_count"] = today_qs.filter(status=AppointmentStatusEnum.IN_CONSULTATION).count()
-        context["completed_count"] = today_qs.filter(status=AppointmentStatusEnum.COMPLETED).count()
+        context.update(get_appointment_daily_stats())
         context["statuses"] = AppointmentStatusEnum.choices
         return context
 
