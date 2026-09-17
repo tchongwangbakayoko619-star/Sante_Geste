@@ -4,6 +4,7 @@ from datetime import date
 from typing import TYPE_CHECKING
 from typing import Any
 
+from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from django.db import transaction
 from django.db.models import Q
@@ -15,6 +16,7 @@ from apps.patients.models import Patient
 from apps.patients.models import PatientAllergy
 from utils.enums import AllergyCriticalityEnum
 from utils.enums import AllergyVerificationStatusEnum
+from utils.phone import normalize_phone_number
 
 if TYPE_CHECKING:
     from apps.users.models import User
@@ -204,12 +206,12 @@ def check_allergy_contraindication(
 
 
 def search_patients(query: str, *, active_only: bool = True) -> QuerySet[Patient]:
-    """Recherche multi-critères rapide dans les dossiers patients.
+    """Recherche multi-critères rapide dans les dossiers patients avec normalisation téléphonique.
 
     Critères pris en charge :
     - Matricule exact ou partiel (PAT-...)
     - Nom et/ou prénom (recherche combinée)
-    - Numéro de téléphone
+    - Numéro de téléphone (recherche par format brut, format normalisé E.164 ou séquence numérique)
     - Email
     """
     qs = Patient.objects.all() if active_only else Patient.all_objects.all()
@@ -217,8 +219,23 @@ def search_patients(query: str, *, active_only: bool = True) -> QuerySet[Patient
     if not cleaned_query:
         return qs
 
+    # 1. Analyse téléphonique intelligente si la requête contient des chiffres
+    phone_digits = "".join(c for c in cleaned_query if c.isdigit())
+    phone_q = Q()
+    if len(phone_digits) >= 3:
+        try:
+            normalized_query_phone = normalize_phone_number(cleaned_query)
+            phone_q |= Q(phone_number__icontains=normalized_query_phone)
+            phone_q |= Q(emergency_contact_phone__icontains=normalized_query_phone)
+        except ValidationError:
+            pass
+        # Correspondance sur séquence de chiffres
+        phone_q |= Q(phone_number__icontains=phone_digits)
+        phone_q |= Q(emergency_contact_phone__icontains=phone_digits)
+
+    # 2. Recherche textuelle multi-termes classique
     terms = cleaned_query.split()
-    combined_q = Q()
+    combined_text_q = Q()
 
     for term in terms:
         term_q = (
@@ -228,7 +245,8 @@ def search_patients(query: str, *, active_only: bool = True) -> QuerySet[Patient
             | Q(phone_number__icontains=term)
             | Q(email__icontains=term)
         )
-        combined_q &= term_q
+        combined_text_q &= term_q
 
-    return qs.filter(combined_q).distinct()
+    final_q = (combined_text_q | phone_q) if phone_q else combined_text_q
+    return qs.filter(final_q).distinct()
 

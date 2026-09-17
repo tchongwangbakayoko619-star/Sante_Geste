@@ -810,3 +810,69 @@ def test_patient_status_lifecycle_and_appointment_blocking(sample_patient, docto
     assert valid_apt.pk is not None
 
 
+# ==============================================================================
+# 6. Tests de Normalisation Téléphonique E.164 & Résolution de Recherche
+# ==============================================================================
+
+@pytest.mark.django_db
+def test_patient_phone_e164_normalization_on_save_and_form():
+    """Vérifie que les numéros de téléphone sont normalisés en E.164 à l'enregistrement et dans les formulaires."""
+    # 1. Enregistrement direct via ORM : format local avec espaces -> normalisé en E.164 (+237...)
+    patient = Patient(
+        first_name="Paul",
+        last_name="Biya",
+        phone_number="699 11 22 33",
+        emergency_contact_phone="237 677 44 55 66",
+    )
+    patient.save()
+    patient.refresh_from_db()
+    assert patient.phone_number == "+237699112233"
+    assert patient.emergency_contact_phone == "+237677445566"
+
+    # 2. Formulaire PatientForm : nettoyage et normalisation
+    form = PatientForm(
+        data={
+            "first_name": "Samuel",
+            "last_name": "Eto'o",
+            "gender": GenderEnum.MALE,
+            "blood_group": BloodGroupEnum.O_POSITIVE,
+            "phone_number": "690 00 00 00",
+            "emergency_contact_phone": "+237 670 00 00 00",
+        }
+    )
+    assert form.is_valid(), f"Form errors: {form.errors}"
+    assert form.cleaned_data["phone_number"] == "+237690000000"
+    assert form.cleaned_data["emergency_contact_phone"] == "+237670000000"
+
+    saved_patient = form.save()
+    assert saved_patient.phone_number == "+237690000000"
+    assert saved_patient.emergency_contact_phone == "+237670000000"
+
+
+@pytest.mark.django_db
+def test_search_patients_by_various_phone_formats():
+    """Vérifie que la recherche retrouve le patient quel que soit le format téléphonique saisi."""
+    patient = Patient.objects.create(
+        first_name="Chantal",
+        last_name="Ayissi",
+        phone_number="+237698765432",
+        emergency_contact_phone="+237671234567",
+    )
+
+    # 1. Recherche avec le numéro local à 9 chiffres sans indicatif
+    res_local = search_patients("698765432")
+    assert patient in res_local
+
+    # 2. Recherche avec espaces
+    res_spaces = search_patients("698 76 54 32")
+    assert patient in res_spaces
+
+    # 3. Recherche avec indicatif international
+    res_intl = search_patients("+237698765432")
+    assert patient in res_intl
+
+    # 4. Recherche par contact d'urgence avec espaces
+    res_emergency = search_patients("671 23 45 67")
+    assert patient in res_emergency
+
+

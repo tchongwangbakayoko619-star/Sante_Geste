@@ -11,6 +11,7 @@ from apps.patients.models import Allergen
 from apps.patients.models import Patient
 from apps.patients.models import PatientAllergy
 from utils.enums import PatientStatusEnum
+from utils.phone import normalize_phone_number
 from utils.phone import validate_phone_number
 
 
@@ -22,6 +23,18 @@ class PatientForm(forms.ModelForm):
         if "status" in self.fields:
             self.fields["status"].required = False
             self.fields["status"].initial = PatientStatusEnum.ACTIVE
+
+    def clean_phone_number(self) -> str:
+        phone = self.cleaned_data.get("phone_number", "")
+        if phone:
+            return normalize_phone_number(phone)
+        return phone
+
+    def clean_emergency_contact_phone(self) -> str:
+        phone = self.cleaned_data.get("emergency_contact_phone", "")
+        if phone:
+            return normalize_phone_number(phone)
+        return phone
 
     phone_number = forms.CharField(
         label=_("Téléphone"),

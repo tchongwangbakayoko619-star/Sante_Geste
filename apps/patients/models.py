@@ -21,6 +21,7 @@ from utils.enums import AppointmentStatusEnum
 from utils.enums import BloodGroupEnum
 from utils.enums import GenderEnum
 from utils.enums import PatientStatusEnum
+from utils.phone import normalize_phone_number
 from utils.phone import validate_phone_number
 
 
@@ -146,7 +147,7 @@ class Patient(SoftDeleteModel):
         return f"{self.patient_number} - {self.full_name}"
 
     def clean(self) -> None:
-        """Validation et cohérence du statut vital (identitovigilance)."""
+        """Validation du statut vital (identitovigilance) et normalisation téléphonique E.164."""
         super().clean()
         if not self.status:
             self.status = PatientStatusEnum.ACTIVE
@@ -155,7 +156,24 @@ class Patient(SoftDeleteModel):
         elif self.status != PatientStatusEnum.DECEASED and self.deceased_at:
             self.deceased_at = None
 
+        # Normalisation automatique au format international standard E.164
+        if self.phone_number:
+            try:
+                self.phone_number = normalize_phone_number(self.phone_number)
+            except ValidationError:
+                pass
+
+        if self.emergency_contact_phone:
+            try:
+                self.emergency_contact_phone = normalize_phone_number(self.emergency_contact_phone)
+            except ValidationError:
+                pass
+
     def save(self, *args, **kwargs):
+        if not self.patient_number:
+            from apps.patients.services.patient_service import generate_patient_number
+
+            self.patient_number = generate_patient_number()
         self.clean()
         super().save(*args, **kwargs)
 
