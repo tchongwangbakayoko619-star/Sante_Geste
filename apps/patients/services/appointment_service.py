@@ -22,6 +22,39 @@ if TYPE_CHECKING:
     from apps.users.models import User
 
 
+def find_conflicting_appointment(
+    *,
+    doctor: User | str | uuid.UUID,
+    scheduled_at: datetime,
+    duration_minutes: int = 30,
+    exclude_appointment_id: uuid.UUID | str | None = None,
+) -> Appointment | None:
+    """Recherche et retourne un rendez-vous entrant en conflit d'agenda avec le créneau spécifié."""
+    doctor_id = getattr(doctor, "pk", doctor)
+    new_start = scheduled_at
+    new_end = new_start + timedelta(minutes=duration_minutes)
+
+    # Fenêtre temporelle d'exploration pour la détection
+    window_start = new_start - timedelta(hours=8)
+    window_end = new_end + timedelta(hours=8)
+
+    qs = Appointment.objects.filter(
+        doctor_id=doctor_id,
+        scheduled_at__gte=window_start,
+        scheduled_at__lte=window_end,
+    ).exclude(status=AppointmentStatusEnum.CANCELLED)
+
+    if exclude_appointment_id:
+        qs = qs.exclude(id=exclude_appointment_id)
+
+    for apt in qs:
+        # Chevauchement ssi (apt.start < new_end) et (apt.end > new_start)
+        if apt.scheduled_at < new_end and apt.end_time > new_start:
+            return apt
+
+    return None
+
+
 def check_doctor_availability(
     doctor: User,
     scheduled_at: datetime,
@@ -38,28 +71,13 @@ def check_doctor_availability(
     if not doctor.is_active or not doctor.is_personnel_medical:
         return False
 
-    new_start = scheduled_at
-    new_end = new_start + timedelta(minutes=duration_minutes)
-
-    # Fenêtre élargie pour charger les RDV du créneau
-    window_start = new_start - timedelta(hours=8)
-    window_end = new_end + timedelta(hours=8)
-
-    qs = Appointment.objects.filter(
+    conflict = find_conflicting_appointment(
         doctor=doctor,
-        scheduled_at__gte=window_start,
-        scheduled_at__lte=window_end,
-    ).exclude(status=AppointmentStatusEnum.CANCELLED)
-
-    if exclude_appointment_id:
-        qs = qs.exclude(id=exclude_appointment_id)
-
-    for apt in qs:
-        # Chevauchement si (apt.start < new_end) et (apt.end > new_start)
-        if apt.scheduled_at < new_end and apt.end_time > new_start:
-            return False
-
-    return True
+        scheduled_at=scheduled_at,
+        duration_minutes=duration_minutes,
+        exclude_appointment_id=exclude_appointment_id,
+    )
+    return conflict is None
 
 
 def create_appointment(

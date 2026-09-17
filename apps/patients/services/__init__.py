@@ -3,6 +3,7 @@
 from .appointment_service import cancel_appointment
 from .appointment_service import check_doctor_availability
 from .appointment_service import create_appointment
+from .appointment_service import find_conflicting_appointment
 from .appointment_service import get_appointment_daily_stats
 from .appointment_service import reschedule_appointment
 from .appointment_service import update_appointment_status
@@ -22,6 +23,7 @@ __all__ = [
     "check_doctor_availability",
     "create_appointment",
     "create_patient",
+    "find_conflicting_appointment",
     "generate_patient_number",
     "get_appointment_daily_stats",
     "remove_patient_allergy",

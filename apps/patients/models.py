@@ -472,57 +472,53 @@ class Appointment(SoftDeleteModel):
         if self.status == AppointmentStatusEnum.CANCELLED:
             return
 
-        duration = self.estimated_duration_minutes or 30
-        new_start = self.scheduled_at
-        new_end = new_start + timedelta(minutes=duration)
+        from apps.patients.services.appointment_service import find_conflicting_appointment
 
-        # Fenêtre temporelle d'exploration pour la détection
-        window_start = new_start - timedelta(hours=8)
-        window_end = new_end + timedelta(hours=8)
-
-        overlapping = (
-            Appointment.objects.filter(
-                doctor_id=self.doctor_id,
-                scheduled_at__gte=window_start,
-                scheduled_at__lte=window_end,
-            )
-            .exclude(status=AppointmentStatusEnum.CANCELLED)
+        conflict = find_conflicting_appointment(
+            doctor=self.doctor_id,
+            scheduled_at=self.scheduled_at,
+            duration_minutes=self.estimated_duration_minutes or 30,
+            exclude_appointment_id=self.pk,
         )
-        if self.pk:
-            overlapping = overlapping.exclude(pk=self.pk)
-
-        for apt in overlapping:
-            # Chevauchement ssi (apt.start < new_end) et (apt.end > new_start)
-            if apt.scheduled_at < new_end and apt.end_time > new_start:
-                doctor_display = ""
-                if hasattr(self, "doctor") and self.doctor:
-                    doctor_display = self.doctor.full_name or self.doctor.email
-                raise ValidationError(
-                    {
-                        "scheduled_at": _(
-                            "Conflit d'agenda : Le praticien %(doctor)s a déjà une consultation "
-                            "programmée sur ce créneau (de %(start)s à %(end)s)."
-                        )
-                        % {
-                            "doctor": f"Dr. {doctor_display}" if doctor_display else "",
-                            "start": timezone.localtime(apt.scheduled_at).strftime("%H:%M"),
-                            "end": timezone.localtime(apt.end_time).strftime("%H:%M"),
-                        }
+        if conflict:
+            doctor_display = ""
+            if hasattr(self, "doctor") and self.doctor:
+                doctor_display = self.doctor.full_name or self.doctor.email
+            raise ValidationError(
+                {
+                    "scheduled_at": _(
+                        "Conflit d'agenda : Le praticien %(doctor)s a déjà une consultation "
+                        "programmée sur ce créneau (de %(start)s à %(end)s)."
+                    )
+                    % {
+                        "doctor": f"Dr. {doctor_display}" if doctor_display else "",
+                        "start": timezone.localtime(conflict.scheduled_at).strftime("%H:%M"),
+                        "end": timezone.localtime(conflict.end_time).strftime("%H:%M"),
                     }
-                )
+                }
+            )
 
     def save(self, *args, **kwargs):
-        """Valide la cohérence des créneaux avant enregistrement."""
+        """Valide la cohérence des créneaux avant enregistrement avec verrouillage pessimiste anti-concurrence."""
+        from django.db import transaction
+
         update_fields = kwargs.get("update_fields")
-        if (
+        requires_schedule_validation = (
             update_fields is None
             or "scheduled_at" in update_fields
             or "doctor" in update_fields
             or "patient" in update_fields
             or "estimated_duration_minutes" in update_fields
             or "status" in update_fields
-        ):
-            self.clean()
-        super().save(*args, **kwargs)
+        )
+        if requires_schedule_validation and self.doctor_id:
+            user_model = get_user_model()
+            with transaction.atomic():
+                user_model.objects.select_for_update().filter(pk=self.doctor_id).first()
+                self.clean()
+                return super().save(*args, **kwargs)
+
+        self.clean()
+        return super().save(*args, **kwargs)
 
 
