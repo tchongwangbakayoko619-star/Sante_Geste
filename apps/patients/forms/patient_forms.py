@@ -21,7 +21,21 @@ class PatientForm(forms.ModelForm):
         validators=[validate_phone_number],
         widget=forms.TextInput(
             attrs={
+                "type": "tel",
                 "placeholder": "+225 07 00 00 00 00",
+                "class": "w-full px-4 py-2.5 rounded-xl border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-[#14967F] focus:border-[#14967F] text-sm text-neutral-800 transition-colors",
+            }
+        ),
+    )
+    emergency_contact_phone = forms.CharField(
+        label=_("Téléphone du contact d'urgence"),
+        max_length=20,
+        required=False,
+        validators=[validate_phone_number],
+        widget=forms.TextInput(
+            attrs={
+                "type": "tel",
+                "placeholder": _("Numéro joignable 24h/24"),
                 "class": "w-full px-4 py-2.5 rounded-xl border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-[#14967F] focus:border-[#14967F] text-sm text-neutral-800 transition-colors",
             }
         ),
@@ -96,12 +110,6 @@ class PatientForm(forms.ModelForm):
             "emergency_contact_name": forms.TextInput(
                 attrs={
                     "placeholder": _("Nom et prénom du proche"),
-                    "class": "w-full px-4 py-2.5 rounded-xl border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-[#14967F] focus:border-[#14967F] text-sm text-neutral-800 transition-colors",
-                }
-            ),
-            "emergency_contact_phone": forms.TextInput(
-                attrs={
-                    "placeholder": _("Numéro joignable 24h/24"),
                     "class": "w-full px-4 py-2.5 rounded-xl border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-[#14967F] focus:border-[#14967F] text-sm text-neutral-800 transition-colors",
                 }
             ),

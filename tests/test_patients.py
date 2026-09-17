@@ -11,6 +11,7 @@ from django.core.exceptions import ValidationError
 from django.urls import reverse
 from django.utils import timezone
 
+from apps.patients.forms import PatientForm
 from apps.patients.models import Appointment
 from apps.patients.models import Patient
 from apps.patients.services import check_doctor_availability
@@ -115,6 +116,33 @@ def test_patient_phone_number_model_validation():
     )
     with pytest.raises(ValidationError):
         invalid_emergency.full_clean()
+
+
+@pytest.mark.django_db
+def test_patient_form_phone_validation():
+    """Vérifie la validation des téléphones (principal et urgence) dans PatientForm."""
+    valid_data = {
+        "first_name": "Test",
+        "last_name": "Form",
+        "gender": GenderEnum.MALE,
+        "blood_group": BloodGroupEnum.A_POSITIVE,
+        "phone_number": "+237699000000",
+        "emergency_contact_phone": "",
+    }
+    # Formulaire valide avec contact d'urgence vide
+    form = PatientForm(data=valid_data)
+    assert form.is_valid(), f"Form errors: {form.errors}"
+
+    # Formulaire valide avec contact d'urgence valide
+    valid_data["emergency_contact_phone"] = "+2250701020304"
+    form = PatientForm(data=valid_data)
+    assert form.is_valid()
+
+    # Formulaire invalide avec contact d'urgence erroné
+    valid_data["emergency_contact_phone"] = "NOT_A_VALID_PHONE"
+    form = PatientForm(data=valid_data)
+    assert not form.is_valid()
+    assert "emergency_contact_phone" in form.errors
 
 
 @pytest.mark.django_db

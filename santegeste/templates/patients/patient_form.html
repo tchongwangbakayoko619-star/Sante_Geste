@@ -30,7 +30,7 @@
     {% endif %}
   </div>
 
-  <form method="post" class="space-y-6" novalidate>
+  <form method="post" class="space-y-6" data-form-validate novalidate>
     {% csrf_token %}
 
     {% if form.non_field_errors %}
@@ -273,4 +273,9 @@
 
 </div>
 {% endblock content_inner %}
+
+{% block javascript %}
+  {{ block.super }}
+  <script src="{% static 'js/components/form-validation.js' %}" defer></script>
+{% endblock javascript %}
 
