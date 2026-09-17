@@ -10,11 +10,18 @@ from django.utils.translation import gettext_lazy as _
 from apps.patients.models import Allergen
 from apps.patients.models import Patient
 from apps.patients.models import PatientAllergy
+from utils.enums import PatientStatusEnum
 from utils.phone import validate_phone_number
 
 
 class PatientForm(forms.ModelForm):
     """Formulaire complet d'enregistrement et d'édition de dossier patient."""
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        if "status" in self.fields:
+            self.fields["status"].required = False
+            self.fields["status"].initial = PatientStatusEnum.ACTIVE
 
     phone_number = forms.CharField(
         label=_("Téléphone"),
@@ -51,6 +58,7 @@ class PatientForm(forms.ModelForm):
             "date_of_birth",
             "gender",
             "blood_group",
+            "status",
             "phone_number",
             "email",
             "profession",
@@ -86,6 +94,11 @@ class PatientForm(forms.ModelForm):
                 }
             ),
             "blood_group": forms.Select(
+                attrs={
+                    "class": "w-full px-4 py-2.5 rounded-xl border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-[#14967F] focus:border-[#14967F] text-sm text-neutral-800 transition-colors bg-white",
+                }
+            ),
+            "status": forms.Select(
                 attrs={
                     "class": "w-full px-4 py-2.5 rounded-xl border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-[#14967F] focus:border-[#14967F] text-sm text-neutral-800 transition-colors bg-white",
                 }

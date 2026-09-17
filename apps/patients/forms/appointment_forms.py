@@ -13,6 +13,7 @@ from apps.patients.models import Appointment
 from apps.patients.models import Patient
 from apps.patients.services.appointment_service import check_doctor_availability
 from utils.enums import AppointmentStatusEnum
+from utils.enums import PatientStatusEnum
 
 User = get_user_model()
 
@@ -85,10 +86,10 @@ class AppointmentForm(forms.ModelForm):
             lambda u: f"Dr. {u.full_name}" if u.full_name else u.email
         )
 
-        # Limite aux patients actifs
-        self.fields["patient"].queryset = Patient.objects.filter(is_active=True).order_by(
-            "last_name", "first_name"
-        )
+        # Limite aux patients avec dossier actif (suivi régulier)
+        self.fields["patient"].queryset = Patient.objects.filter(
+            status=PatientStatusEnum.ACTIVE
+        ).order_by("last_name", "first_name")
         self.fields["patient"].label_from_instance = (
             lambda p: f"{p.patient_number} - {p.full_name}"
         )

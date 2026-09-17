@@ -17,6 +17,7 @@ class PatientAdmin(admin.ModelAdmin):
         "phone_number",
         "gender",
         "blood_group",
+        "status",
         "is_active",
         "created_at",
     ]
@@ -27,7 +28,7 @@ class PatientAdmin(admin.ModelAdmin):
         "phone_number",
         "email",
     ]
-    list_filter = ["is_active", "gender", "blood_group", "created_at"]
+    list_filter = ["status", "gender", "blood_group", "created_at"]
     readonly_fields = [
         "id",
         "patient_number",

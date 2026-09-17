@@ -82,3 +82,13 @@ class AllergyVerificationStatusEnum(models.TextChoices):
     REFUTED = "refuted", "Réfutée / Erronée"
 
 
+class PatientStatusEnum(models.TextChoices):
+    """Statuts du cycle de vie clinique et administratif d'un patient (aligné FHIR/HL7)."""
+
+    ACTIVE = "active", "Actif (Suivi en cours)"
+    ARCHIVED = "archived", "Archivé (Dossier clos)"
+    DECEASED = "deceased", "Décédé"
+    TRANSFERRED = "transferred", "Transféré (Autre structure)"
+    SUSPENDED = "suspended", "Suspendu (Identitovigilance / Litige)"
+
+

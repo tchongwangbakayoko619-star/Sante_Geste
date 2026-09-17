@@ -20,6 +20,7 @@ from utils.enums import AllergyVerificationStatusEnum
 from utils.enums import AppointmentStatusEnum
 from utils.enums import BloodGroupEnum
 from utils.enums import GenderEnum
+from utils.enums import PatientStatusEnum
 from utils.phone import validate_phone_number
 
 
@@ -114,9 +115,19 @@ class Patient(SoftDeleteModel):
         help_text=_("Ex: Diabète type 2, HTA, Asthme, Drépanocytose, etc."),
     )
 
-    is_active = models.BooleanField(
-        default=True,
-        verbose_name=_("Dossier actif"),
+    status = models.CharField(
+        max_length=20,
+        choices=PatientStatusEnum.choices,
+        default=PatientStatusEnum.ACTIVE,
+        blank=True,
+        verbose_name=_("Statut du dossier"),
+        help_text=_("Cycle de vie clinique et administratif du dossier patient (aligné FHIR/HL7)."),
+    )
+    deceased_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name=_("Date et heure du décès"),
+        help_text=_("Renseigné obligatoirement si le patient est déclaré décédé."),
     )
 
     class Meta(SoftDeleteModel.Meta):
@@ -128,10 +139,45 @@ class Patient(SoftDeleteModel):
             *SoftDeleteModel.Meta.indexes,
             models.Index(fields=["last_name", "first_name"], name="patient_name_idx"),
             models.Index(fields=["phone_number"], name="patient_phone_idx"),
+            models.Index(fields=["status"], name="patient_status_idx"),
         ]
 
     def __str__(self) -> str:
         return f"{self.patient_number} - {self.full_name}"
+
+    def clean(self) -> None:
+        """Validation et cohérence du statut vital (identitovigilance)."""
+        super().clean()
+        if not self.status:
+            self.status = PatientStatusEnum.ACTIVE
+        if self.status == PatientStatusEnum.DECEASED and not self.deceased_at:
+            self.deceased_at = timezone.now()
+        elif self.status != PatientStatusEnum.DECEASED and self.deceased_at:
+            self.deceased_at = None
+
+    def save(self, *args, **kwargs):
+        self.clean()
+        super().save(*args, **kwargs)
+
+    @property
+    def is_active(self) -> bool:
+        """Indique si le dossier est actif pour les soins et rendez-vous courants.
+
+        Rétrocompatibilité : Vrai ssi le dossier n'est pas soft-deleted et a le statut ACTIVE.
+        """
+        return not self.is_deleted and self.status == PatientStatusEnum.ACTIVE
+
+    @property
+    def status_badge_class(self) -> str:
+        """Classes Tailwind CSS pour le badge de statut du dossier patient."""
+        mapping = {
+            PatientStatusEnum.ACTIVE: "bg-emerald-50 text-emerald-700 border-emerald-200 ring-emerald-600/20",
+            PatientStatusEnum.ARCHIVED: "bg-neutral-100 text-neutral-600 border-neutral-200 ring-neutral-500/20",
+            PatientStatusEnum.DECEASED: "bg-rose-50 text-rose-700 border-rose-200 ring-rose-600/20",
+            PatientStatusEnum.TRANSFERRED: "bg-amber-50 text-amber-700 border-amber-200 ring-amber-600/20",
+            PatientStatusEnum.SUSPENDED: "bg-purple-50 text-purple-700 border-purple-200 ring-purple-600/20",
+        }
+        return mapping.get(self.status, "bg-neutral-100 text-neutral-700 border-neutral-200")
 
     @property
     def full_name(self) -> str:
@@ -366,8 +412,27 @@ class Appointment(SoftDeleteModel):
         return mapping.get(self.status, "bg-neutral-100 text-neutral-700 border-neutral-200")
 
     def clean(self) -> None:
-        """Vérifie l'absence de chevauchement d'agenda pour le médecin (anti double-booking)."""
+        """Vérifie l'éligibilité du patient et l'absence de conflit d'agenda pour le médecin."""
         super().clean()
+
+        # Contrôle du cycle de vie du patient (identitovigilance)
+        if self.patient_id:
+            pat = getattr(self, "patient", None) or Patient.all_objects.filter(pk=self.patient_id).first()
+            if pat:
+                if pat.status == PatientStatusEnum.DECEASED:
+                    raise ValidationError(
+                        {"patient": _("Impossible de planifier un rendez-vous pour un patient déclaré décédé.")}
+                    )
+                if pat.status in (PatientStatusEnum.ARCHIVED, PatientStatusEnum.SUSPENDED):
+                    raise ValidationError(
+                        {
+                            "patient": _(
+                                "Le dossier de ce patient est %(status)s. Veuillez réactiver le dossier avant de programmer un rendez-vous."
+                            )
+                            % {"status": pat.get_status_display().lower()}
+                        }
+                    )
+
         if not self.doctor_id or not self.scheduled_at:
             return
 
@@ -421,6 +486,7 @@ class Appointment(SoftDeleteModel):
             update_fields is None
             or "scheduled_at" in update_fields
             or "doctor" in update_fields
+            or "patient" in update_fields
             or "estimated_duration_minutes" in update_fields
             or "status" in update_fields
         ):

@@ -16,10 +16,17 @@
     </a>
 
     <!-- Status indicator -->
-    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold {% if patient.is_active %}bg-emerald-50 text-emerald-700 border border-emerald-200{% else %}bg-neutral-100 text-neutral-600{% endif %}">
-      <span class="w-1.5 h-1.5 rounded-full {% if patient.is_active %}bg-emerald-500{% else %}bg-neutral-400{% endif %}"></span>
-      {% if patient.is_active %}{% trans "Dossier Actif" %}{% else %}{% trans "Dossier Inactif" %}{% endif %}
-    </span>
+    <div class="flex items-center gap-2">
+      <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border {{ patient.status_badge_class }}">
+        <span class="w-1.5 h-1.5 rounded-full {% if patient.status == 'active' %}bg-emerald-500{% elif patient.status == 'deceased' %}bg-rose-500{% elif patient.status == 'transferred' %}bg-amber-500{% elif patient.status == 'suspended' %}bg-purple-500{% else %}bg-neutral-400{% endif %}"></span>
+        {{ patient.get_status_display }}
+      </span>
+      {% if patient.status == 'deceased' and patient.deceased_at %}
+        <span class="text-xs font-medium text-rose-600 bg-rose-50 border border-rose-200 px-2.5 py-0.5 rounded-lg">
+          {% trans "Décédé le" %} {{ patient.deceased_at|date:"d/m/Y H:i" }}
+        </span>
+      {% endif %}
+    </div>
   </div>
 
   <!-- Hero Header Patient Card -->
@@ -72,12 +79,25 @@
 
       <!-- Right: Quick actions -->
       <div class="flex flex-wrap items-center gap-3 shrink-0">
-        <a href="{% url 'patients:appointment_create' %}?patient={{ patient.pk }}" class="btn btn-primary py-2.5 px-4 text-xs sm:text-sm inline-flex items-center gap-2 shadow-xs font-bold">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-          </svg>
-          {% trans "Planifier un RDV" %}
-        </a>
+        {% if patient.is_active %}
+          <a href="{% url 'patients:appointment_create' %}?patient={{ patient.pk }}" class="btn btn-primary py-2.5 px-4 text-xs sm:text-sm inline-flex items-center gap-2 shadow-xs font-bold">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            </svg>
+            {% trans "Planifier un RDV" %}
+          </a>
+        {% elif patient.status == 'deceased' %}
+          <span class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-rose-50 text-rose-800 border border-rose-200">
+            <svg class="w-4 h-4 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+            </svg>
+            {% trans "Dossier clos (Patient décédé)" %}
+          </span>
+        {% else %}
+          <span class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium bg-neutral-100 text-neutral-600 border border-neutral-200">
+            {% trans "Dossier" %} {{ patient.get_status_display }}
+          </span>
+        {% endif %}
         {% if request.user.is_agent_accueil or request.user.is_superuser %}
           <a href="{% url 'patients:patient_update' patient.pk %}" class="btn btn-outline py-2.5 px-4 text-xs sm:text-sm inline-flex items-center gap-2">
             <svg class="w-4 h-4 text-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">

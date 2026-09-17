@@ -34,6 +34,7 @@ from utils.enums import AllergyVerificationStatusEnum
 from utils.enums import AppointmentStatusEnum
 from utils.enums import BloodGroupEnum
 from utils.enums import GenderEnum
+from utils.enums import PatientStatusEnum
 
 User = get_user_model()
 
@@ -741,5 +742,71 @@ def test_patient_allergy_views_rbac(client, agent_accueil, doctor_user, sample_p
     resp_del = client.post(url_del)
     assert resp_del.status_code == 302
     assert not PatientAllergy.objects.filter(pk=created_allergy.pk).exists()
+
+
+# ==============================================================================
+# 5. Tests du Cycle de Vie Patient (PatientStatusEnum vs SoftDelete)
+# ==============================================================================
+
+@pytest.mark.django_db
+def test_patient_status_lifecycle_and_appointment_blocking(sample_patient, doctor_user):
+    """Vérifie le cycle de vie du patient (Actif, Décédé, Archivé) et l'interdiction de prise de RDV."""
+    # 1. Par défaut, un patient créé est ACTIVE et is_active est True
+    assert sample_patient.status == PatientStatusEnum.ACTIVE
+    assert sample_patient.is_active is True
+    assert sample_patient.deceased_at is None
+
+    # 2. Déclaration du décès : status=DECEASED auto-remplit deceased_at
+    sample_patient.status = PatientStatusEnum.DECEASED
+    sample_patient.save()
+    sample_patient.refresh_from_db()
+    assert sample_patient.status == PatientStatusEnum.DECEASED
+    assert sample_patient.is_active is False
+    assert sample_patient.deceased_at is not None
+
+    # 3. Tentative de programmation d'un RDV pour un patient décédé -> Rejeté par Appointment.clean()
+    base_time = timezone.now() + timedelta(days=3)
+    apt_deceased = Appointment(
+        patient=sample_patient,
+        doctor=doctor_user,
+        scheduled_at=base_time,
+        reason="Consultation interdite",
+    )
+    with pytest.raises(ValidationError) as exc_info:
+        apt_deceased.save()
+    assert "patient" in exc_info.value.message_dict
+    assert "décédé" in str(exc_info.value.message_dict["patient"][0]).lower()
+
+    # 4. Patient Archivé / Transféré -> RDV également rejeté tant que non réactivé
+    sample_patient.status = PatientStatusEnum.ARCHIVED
+    sample_patient.save()
+    sample_patient.refresh_from_db()
+    assert sample_patient.is_active is False
+    assert sample_patient.deceased_at is None  # deceased_at automatiquement nettoyé quand réactivé/changé
+
+    apt_archived = Appointment(
+        patient=sample_patient,
+        doctor=doctor_user,
+        scheduled_at=base_time,
+        reason="Consultation patient archivé",
+    )
+    with pytest.raises(ValidationError) as exc_archived:
+        apt_archived.save()
+    assert "patient" in exc_archived.value.message_dict
+    assert "réactiver" in str(exc_archived.value.message_dict["patient"][0]).lower()
+
+    # 5. Réactivation du dossier -> La prise de RDV redevient autorisée
+    sample_patient.status = PatientStatusEnum.ACTIVE
+    sample_patient.save()
+    sample_patient.refresh_from_db()
+    assert sample_patient.is_active is True
+
+    valid_apt = Appointment.objects.create(
+        patient=sample_patient,
+        doctor=doctor_user,
+        scheduled_at=base_time,
+        reason="Consultation valide après réactivation",
+    )
+    assert valid_apt.pk is not None
 
 

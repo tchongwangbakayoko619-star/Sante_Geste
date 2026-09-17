@@ -134,9 +134,16 @@
                       {{ patient.first_name|first|upper }}{{ patient.last_name|first|upper }}
                     </div>
                     <div>
-                      <a href="{{ patient.get_absolute_url }}" class="font-bold text-neutral-900 group-hover:text-[#14967F] transition-colors block">
-                        {{ patient.full_name }}
-                      </a>
+                      <div class="flex items-center gap-2">
+                        <a href="{{ patient.get_absolute_url }}" class="font-bold text-neutral-900 group-hover:text-[#14967F] transition-colors block">
+                          {{ patient.full_name }}
+                        </a>
+                        {% if patient.status != 'active' %}
+                          <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold border {{ patient.status_badge_class }}">
+                            {{ patient.get_status_display }}
+                          </span>
+                        {% endif %}
+                      </div>
                       <span class="text-xs text-neutral-400 block sm:hidden">
                         {% if patient.age %}{{ patient.age }} ans, {% endif %}{{ patient.get_gender_display }}
                       </span>

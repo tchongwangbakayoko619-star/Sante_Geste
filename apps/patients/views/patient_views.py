@@ -33,6 +33,7 @@ from apps.patients.services import update_patient_medical_record
 from apps.users.mixins import AgentAccueilRequiredMixin
 from apps.users.mixins import PatientManagementRequiredMixin
 from apps.users.mixins import PersonnelMedicalRequiredMixin
+from utils.enums import PatientStatusEnum
 
 
 class PatientListView(PatientManagementRequiredMixin, ListView):
@@ -59,7 +60,7 @@ class PatientListView(PatientManagementRequiredMixin, ListView):
         now = timezone.now()
         thirty_days_ago = now - timezone.timedelta(days=30)
         context["total_patients"] = Patient.objects.count()
-        context["active_patients"] = Patient.objects.filter(is_active=True).count()
+        context["active_patients"] = Patient.objects.filter(status=PatientStatusEnum.ACTIVE).count()
         context["new_this_month"] = Patient.objects.filter(created_at__gte=thirty_days_ago).count()
         return context
 
@@ -73,6 +74,8 @@ class PatientListView(PatientManagementRequiredMixin, ListView):
                     "full_name": p.full_name,
                     "age": p.age,
                     "gender": p.get_gender_display(),
+                    "status": p.status,
+                    "status_display": p.get_status_display(),
                     "blood_group": p.blood_group,
                     "phone_number": p.phone_number,
                     "url": p.get_absolute_url(),
