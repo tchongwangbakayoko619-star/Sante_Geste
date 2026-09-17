@@ -6,6 +6,7 @@ from datetime import datetime
 from datetime import timedelta
 
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
@@ -448,6 +449,30 @@ class Appointment(SoftDeleteModel):
                                 "Le dossier de ce patient est %(status)s. Veuillez réactiver le dossier avant de programmer un rendez-vous."
                             )
                             % {"status": pat.get_status_display().lower()}
+                        }
+                    )
+
+        # Contrôle du praticien (éligibilité et statut actif au sein de l'établissement)
+        if self.doctor_id:
+            user_model = get_user_model()
+            doc = getattr(self, "doctor", None) or user_model.objects.filter(pk=self.doctor_id).first()
+            if doc and not doc.is_active:
+                is_new = not self.pk
+                doctor_changed = False
+                if not is_new:
+                    old_doc_id = (
+                        Appointment.objects.filter(pk=self.pk)
+                        .values_list("doctor_id", flat=True)
+                        .first()
+                    )
+                    doctor_changed = old_doc_id != self.doctor_id
+                if is_new or doctor_changed:
+                    raise ValidationError(
+                        {
+                            "doctor": _(
+                                "Ce praticien n'est plus en activité au sein de l'établissement. "
+                                "Impossible de lui assigner un rendez-vous."
+                            )
                         }
                     )
 

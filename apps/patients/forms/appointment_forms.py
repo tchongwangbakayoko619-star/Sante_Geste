@@ -6,6 +6,7 @@ from typing import Any
 
 from django import forms
 from django.contrib.auth import get_user_model
+from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
@@ -77,13 +78,15 @@ class AppointmentForm(forms.ModelForm):
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
-        # Limite la liste des praticiens aux membres du personnel médical actifs
-        self.fields["doctor"].queryset = User.objects.filter(
-            is_personnel_medical=True,
-            is_active=True,
-        ).order_by("last_name", "first_name")
+        # Limite la liste des praticiens aux membres du personnel médical actifs,
+        # en préservant le praticien assigné pour consultation/édition d'un historique.
+        doctor_filter = models.Q(is_personnel_medical=True, is_active=True)
+        if self.instance and self.instance.pk and self.instance.doctor_id:
+            doctor_filter |= models.Q(pk=self.instance.doctor_id)
+
+        self.fields["doctor"].queryset = User.objects.filter(doctor_filter).order_by("last_name", "first_name")
         self.fields["doctor"].label_from_instance = (
-            lambda u: f"Dr. {u.full_name}" if u.full_name else u.email
+            lambda u: f"Dr. {u.full_name}{' (Inactif)' if not u.is_active else ''}" if u.full_name else u.email
         )
 
         # Limite aux patients avec dossier actif (suivi régulier)
@@ -99,6 +102,15 @@ class AppointmentForm(forms.ModelForm):
         doctor = cleaned_data.get("doctor")
         scheduled_at = cleaned_data.get("scheduled_at")
         duration = cleaned_data.get("estimated_duration_minutes") or 30
+
+        if doctor:
+            if not doctor.is_active:
+                is_new = not self.instance or not self.instance.pk
+                if is_new or self.instance.doctor_id != doctor.id:
+                    self.add_error(
+                        "doctor",
+                        _("Ce praticien n'est plus en activité au sein de l'établissement. Impossible de lui assigner un rendez-vous."),
+                    )
 
         if doctor and scheduled_at:
             exclude_id = self.instance.pk if self.instance and self.instance.pk else None

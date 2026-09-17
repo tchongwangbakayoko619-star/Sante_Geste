@@ -28,6 +28,9 @@ def check_doctor_availability(
     exclude_appointment_id: uuid.UUID | str | None = None,
 ) -> bool:
     """Vérifie si un praticien est disponible sans chevauchement de rendez-vous."""
+    if not doctor.is_active:
+        return False
+
     new_start = scheduled_at
     new_end = new_start + timedelta(minutes=duration_minutes)
 
@@ -63,6 +66,11 @@ def create_appointment(
     created_by: User | None = None,
 ) -> Appointment:
     """Crée un rendez-vous médical en vérifiant l'absence de conflit d'agenda avec verrou pessimiste."""
+    if not doctor.is_active:
+        raise ValidationError(
+            _("Impossible de planifier un rendez-vous avec un praticien inactif ou ayant quitté l'établissement.")
+        )
+
     user_model = get_user_model()
     with transaction.atomic():
         # Verrouillage pessimiste sur la ligne du praticien pour sérialiser

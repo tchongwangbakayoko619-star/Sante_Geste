@@ -207,6 +207,25 @@ class User(AbstractBaseUser, PermissionsMixin, BaseModel):
 
         return rbac_service.can_validate_sensitive_ops(self)
 
+    def deactivate(self) -> None:
+        """Désactive le compte utilisateur (départ, suspension) tout en préservant l'intégrité clinique."""
+        self.is_active = False
+        self.save(update_fields=["is_active", "updated_at"])
+
+    def delete(self, using=None, keep_parents=False):
+        """Empêche la suppression physique des praticiens et utilisateurs avec historique clinique."""
+        if hasattr(self, "doctor_appointments") and self.doctor_appointments.exists():
+            raise models.ProtectedError(
+                _(
+                    "Suppression impossible : Ce praticien est lié à un historique de consultations et rendez-vous cliniques. "
+                    "Conformément aux exigences médico-légales de non-altération des données de santé, "
+                    "le départ d'un praticien doit être géré en désactivant son compte (is_active = False)."
+                ),
+                self.doctor_appointments.all(),
+            )
+        return super().delete(using=using, keep_parents=keep_parents)
+
+
 
 class MedicalProfile(BaseModel):
     """Profil spécifique réservé aux membres du personnel médical."""

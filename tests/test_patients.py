@@ -10,9 +10,11 @@ from django.core.exceptions import PermissionDenied
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from django.db import transaction
+from django.db.models import ProtectedError
 from django.urls import reverse
 from django.utils import timezone
 
+from apps.patients.forms import AppointmentForm
 from apps.patients.forms import PatientForm
 from apps.patients.models import Allergen
 from apps.patients.models import Appointment
@@ -874,5 +876,109 @@ def test_search_patients_by_various_phone_formats():
     # 4. Recherche par contact d'urgence avec espaces
     res_emergency = search_patients("671 23 45 67")
     assert patient in res_emergency
+
+
+# ==============================================================================
+# 7. Tests Gestion du Départ Praticien & Intégrité Médico-Légale (models.PROTECT)
+# ==============================================================================
+
+@pytest.mark.django_db
+def test_practitioner_hard_deletion_blocked_by_protect(sample_patient, doctor_user):
+    """Vérifie qu'un praticien ayant un historique de RDV ne peut JAMAIS être supprimé physiquement de la base."""
+    # 1. Création d'un RDV associé au médecin
+    apt = Appointment.objects.create(
+        patient=sample_patient,
+        doctor=doctor_user,
+        scheduled_at=timezone.now() + timedelta(days=2),
+        reason="Consultation initiale",
+    )
+    assert apt.doctor == doctor_user
+
+    # 2. Tentative de suppression physique directe de l'instance User -> Levée de ProtectedError
+    with pytest.raises(ProtectedError) as exc_info:
+        doctor_user.delete()
+
+    assert "historique de consultations" in str(exc_info.value) or "protected foreign keys" in str(exc_info.value)
+    assert apt in exc_info.value.protected_objects
+
+    # 3. Tentative de suppression via QuerySet bulk delete -> Bloquée également
+    with pytest.raises(ProtectedError):
+        User.objects.filter(pk=doctor_user.pk).delete()
+
+    # Le praticien et son rendez-vous existent toujours intacts en base
+    doctor_user.refresh_from_db()
+    assert doctor_user.pk is not None
+    assert Appointment.objects.filter(pk=apt.pk).exists()
+
+
+@pytest.mark.django_db
+def test_practitioner_departure_via_is_active_false_blocks_new_appointments(sample_patient, doctor_user):
+    """Vérifie que le départ d'un praticien se gère via is_active=False et bloque toute nouvelle prise de RDV."""
+    # 1. Historique préalable valide
+    past_time = timezone.now() - timedelta(days=10)
+    historic_apt = Appointment.objects.create(
+        patient=sample_patient,
+        doctor=doctor_user,
+        scheduled_at=past_time,
+        reason="Consultation historique",
+        status=AppointmentStatusEnum.COMPLETED,
+    )
+
+    # 2. Départ du médecin : désactivation du compte
+    doctor_user.deactivate()
+    doctor_user.refresh_from_db()
+    assert doctor_user.is_active is False
+
+    # 3. check_doctor_availability retourne False pour un médecin inactif
+    future_time = timezone.now() + timedelta(days=3)
+    assert check_doctor_availability(doctor_user, future_time) is False
+
+    # 4. create_appointment service refuse la prise de rendez-vous
+    with pytest.raises(ValidationError) as exc_service:
+        create_appointment(
+            patient=sample_patient,
+            doctor=doctor_user,
+            scheduled_at=future_time,
+            reason="Tentative RDV praticien parti",
+        )
+    assert "inactif ou ayant quitté" in str(exc_service.value).lower()
+
+    # 5. Modèle Appointment.clean() bloque également au niveau ORM
+    apt_invalid = Appointment(
+        patient=sample_patient,
+        doctor=doctor_user,
+        scheduled_at=future_time,
+        reason="Tentative ORM direct",
+    )
+    with pytest.raises(ValidationError) as exc_clean:
+        apt_invalid.clean()
+    assert "doctor" in exc_clean.value.message_dict
+    assert "n'est plus en activité" in str(exc_clean.value.message_dict["doctor"][0]).lower()
+
+    # 6. Formulaire AppointmentForm : rejet à la validation
+    form = AppointmentForm(
+        data={
+            "patient": sample_patient.pk,
+            "doctor": doctor_user.pk,
+            "scheduled_at": future_time.strftime("%Y-%m-%dT%H:%M"),
+            "estimated_duration_minutes": 30,
+            "reason": "Consultation formulaire",
+        }
+    )
+    assert not form.is_valid()
+    assert "doctor" in form.errors
+
+    # 7. L'historique clinique passé reste 100% accessible et consultable
+    historic_apt.refresh_from_db()
+    assert historic_apt.doctor == doctor_user
+    assert historic_apt.doctor.full_name == doctor_user.full_name
+    assert historic_apt.status == AppointmentStatusEnum.COMPLETED
+
+    # 8. Mise à jour de notes sur un RDV existant reste autorisée sans bloquer
+    historic_apt.notes = "Dossier archivé suite au départ du Dr."
+    historic_apt.save(update_fields=["notes", "updated_at"])
+    historic_apt.refresh_from_db()
+    assert historic_apt.notes == "Dossier archivé suite au départ du Dr."
+
 
 
