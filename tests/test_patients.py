@@ -20,6 +20,8 @@ from apps.patients.models import Allergen
 from apps.patients.models import Appointment
 from apps.patients.models import Patient
 from apps.patients.models import PatientAllergy
+from apps.patients.presenters import AppointmentPresenter
+from apps.patients.presenters import PatientPresenter
 from apps.patients.services import add_patient_allergy
 from apps.patients.services import check_allergy_contraindication
 from apps.patients.services import check_doctor_availability
@@ -191,7 +193,8 @@ def test_appointment_model_properties(sample_patient, doctor_user):
 
     assert apt.end_time == apt.scheduled_at + timedelta(minutes=45)
     assert apt.is_past is False
-    assert "bg-blue-50" in apt.status_badge_class
+    assert not hasattr(apt, "status_badge_class")
+    assert not hasattr(sample_patient, "status_badge_class")
     assert "RDV:" in str(apt)
 
 
@@ -979,6 +982,73 @@ def test_practitioner_departure_via_is_active_false_blocks_new_appointments(samp
     historic_apt.save(update_fields=["notes", "updated_at"])
     historic_apt.refresh_from_db()
     assert historic_apt.notes == "Dossier archivé suite au départ du Dr."
+
+
+# ==============================================================================
+# 8. Tests de la Couche Présentation (Presenters & Template Tags)
+# ==============================================================================
+
+@pytest.mark.django_db
+def test_presenters_and_template_tags_separation(sample_patient, doctor_user):
+    """Vérifie la stricte séparation entre le domaine et la présentation (Tailwind CSS)."""
+    from django.template import Context, Template
+    from apps.patients.presenters import (
+        AppointmentPresenter,
+        PatientPresenter,
+        get_appointment_status_badge_class,
+        get_patient_status_badge_class,
+        get_patient_status_dot_class,
+    )
+
+    # 1. Vérification que les modèles de domaine n'ont AUCUNE classe de style Tailwind
+    apt = Appointment.objects.create(
+        patient=sample_patient,
+        doctor=doctor_user,
+        scheduled_at=timezone.now() + timedelta(hours=4),
+        reason="Consultation présentation",
+        status=AppointmentStatusEnum.SCHEDULED,
+    )
+    assert not hasattr(apt, "status_badge_class")
+    assert not hasattr(sample_patient, "status_badge_class")
+
+    # 2. AppointmentPresenter
+    apt_presenter = AppointmentPresenter(apt)
+    assert "bg-blue-50" in apt_presenter.status_badge_class
+    assert "text-blue-700" in apt_presenter.status_badge_class
+
+    # Vérification des autres statuts de RDV
+    apt.status = AppointmentStatusEnum.WAITING
+    assert "bg-amber-50" in apt_presenter.status_badge_class
+    apt.status = AppointmentStatusEnum.IN_CONSULTATION
+    assert "bg-purple-50" in apt_presenter.status_badge_class
+    apt.status = AppointmentStatusEnum.COMPLETED
+    assert "bg-emerald-50" in apt_presenter.status_badge_class
+    apt.status = AppointmentStatusEnum.CANCELLED
+    assert "bg-rose-50" in apt_presenter.status_badge_class
+
+    # 3. PatientPresenter
+    pat_presenter = PatientPresenter(sample_patient)
+    assert "bg-emerald-50" in pat_presenter.status_badge_class
+    assert pat_presenter.status_dot_class == "bg-emerald-500"
+
+    sample_patient.status = PatientStatusEnum.DECEASED
+    assert "bg-rose-50" in pat_presenter.status_badge_class
+    assert pat_presenter.status_dot_class == "bg-rose-500"
+
+    # 4. Rendu dans les templates Django via le template tag library patient_tags
+    template_str = (
+        "{% load patient_tags %}"
+        "badge_apt:{{ apt|appointment_status_badge_class }}|"
+        "badge_pat:{{ patient|patient_status_badge_class }}|"
+        "dot_pat:{{ patient|patient_status_dot_class }}"
+    )
+    template = Template(template_str)
+    rendered = template.render(Context({"apt": apt, "patient": sample_patient}))
+
+    assert "badge_apt:bg-rose-50 text-rose-700" in rendered
+    assert "badge_pat:bg-rose-50 text-rose-700" in rendered
+    assert "dot_pat:bg-rose-500" in rendered
+
 
 
 

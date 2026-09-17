@@ -187,18 +187,6 @@ class Patient(SoftDeleteModel):
         return not self.is_deleted and self.status == PatientStatusEnum.ACTIVE
 
     @property
-    def status_badge_class(self) -> str:
-        """Classes Tailwind CSS pour le badge de statut du dossier patient."""
-        mapping = {
-            PatientStatusEnum.ACTIVE: "bg-emerald-50 text-emerald-700 border-emerald-200 ring-emerald-600/20",
-            PatientStatusEnum.ARCHIVED: "bg-neutral-100 text-neutral-600 border-neutral-200 ring-neutral-500/20",
-            PatientStatusEnum.DECEASED: "bg-rose-50 text-rose-700 border-rose-200 ring-rose-600/20",
-            PatientStatusEnum.TRANSFERRED: "bg-amber-50 text-amber-700 border-amber-200 ring-amber-600/20",
-            PatientStatusEnum.SUSPENDED: "bg-purple-50 text-purple-700 border-purple-200 ring-purple-600/20",
-        }
-        return mapping.get(self.status, "bg-neutral-100 text-neutral-700 border-neutral-200")
-
-    @property
     def full_name(self) -> str:
         """Retourne le nom complet formaté (NOM Prénom)."""
         return f"{self.last_name.upper()} {self.first_name.title()}".strip()
@@ -416,19 +404,6 @@ class Appointment(SoftDeleteModel):
     def is_past(self) -> bool:
         """Indique si le rendez-vous est déjà passé."""
         return timezone.now() > self.end_time
-
-    @property
-    def status_badge_class(self) -> str:
-        """Classes Tailwind CSS pour le badge de statut CS² Health."""
-        mapping = {
-            AppointmentStatusEnum.SCHEDULED: "bg-blue-50 text-blue-700 border-blue-200 ring-blue-600/20",
-            AppointmentStatusEnum.WAITING: "bg-amber-50 text-amber-700 border-amber-200 ring-amber-600/20",
-            AppointmentStatusEnum.IN_CONSULTATION: "bg-purple-50 text-purple-700 border-purple-200 ring-purple-600/20",
-            AppointmentStatusEnum.COMPLETED: "bg-emerald-50 text-emerald-700 border-emerald-200 ring-emerald-600/20",
-            AppointmentStatusEnum.CANCELLED: "bg-rose-50 text-rose-700 border-rose-200 ring-rose-600/20",
-            AppointmentStatusEnum.MISSED: "bg-neutral-100 text-neutral-600 border-neutral-200 ring-neutral-500/20",
-        }
-        return mapping.get(self.status, "bg-neutral-100 text-neutral-700 border-neutral-200")
 
     def clean(self) -> None:
         """Vérifie l'éligibilité du patient et l'absence de conflit d'agenda pour le médecin."""

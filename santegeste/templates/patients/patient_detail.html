@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static i18n %}
+{% load static i18n patient_tags %}
 
 {% block title %}{{ patient.full_name }} ({{ patient.patient_number }}) - Fiche 360° - CS² Health{% endblock title %}
 
@@ -17,8 +17,8 @@
 
     <!-- Status indicator -->
     <div class="flex items-center gap-2">
-      <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border {{ patient.status_badge_class }}">
-        <span class="w-1.5 h-1.5 rounded-full {% if patient.status == 'active' %}bg-emerald-500{% elif patient.status == 'deceased' %}bg-rose-500{% elif patient.status == 'transferred' %}bg-amber-500{% elif patient.status == 'suspended' %}bg-purple-500{% else %}bg-neutral-400{% endif %}"></span>
+      <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border {{ patient|patient_status_badge_class }}">
+        <span class="w-1.5 h-1.5 rounded-full {{ patient|patient_status_dot_class }}"></span>
         {{ patient.get_status_display }}
       </span>
       {% if patient.status == 'deceased' and patient.deceased_at %}
@@ -341,7 +341,7 @@
               <div class="p-4 rounded-2xl border border-neutral-200/80 hover:border-neutral-300 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-neutral-50/30">
                 <div class="space-y-1">
                   <div class="flex items-center gap-2">
-                    <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold {{ rdv.status_badge_class }}">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold {{ rdv|appointment_status_badge_class }}">
                       {{ rdv.get_status_display }}
                     </span>
                     <span class="text-xs font-bold text-neutral-900">

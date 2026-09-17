@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static i18n %}
+{% load static i18n patient_tags %}
 
 {% block title %}{% translate "Agenda des Rendez-vous" %} - CS² Health{% endblock title %}
 
@@ -142,7 +142,7 @@
 
                 <!-- Statut -->
                 <td class="py-4 px-4 sm:px-6">
-                  <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold border {{ rdv.status_badge_class }}">
+                  <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold border {{ rdv|appointment_status_badge_class }}">
                     {{ rdv.get_status_display }}
                   </span>
                 </td>

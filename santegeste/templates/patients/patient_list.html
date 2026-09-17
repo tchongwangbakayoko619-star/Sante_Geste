@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static i18n %}
+{% load static i18n patient_tags %}
 
 {% block title %}{% translate "Gestion des Patients" %} - CS² Health{% endblock title %}
 
@@ -139,7 +139,7 @@
                           {{ patient.full_name }}
                         </a>
                         {% if patient.status != 'active' %}
-                          <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold border {{ patient.status_badge_class }}">
+                          <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold border {{ patient|patient_status_badge_class }}">
                             {{ patient.get_status_display }}
                           </span>
                         {% endif %}
