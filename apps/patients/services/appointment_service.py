@@ -29,30 +29,48 @@ def find_conflicting_appointment(
     duration_minutes: int = 30,
     exclude_appointment_id: uuid.UUID | str | None = None,
 ) -> Appointment | None:
-    """Recherche et retourne un rendez-vous entrant en conflit d'agenda avec le créneau spécifié."""
+    """Recherche et retourne un rendez-vous entrant en conflit d'agenda via filtrage purement SQL.
+
+    Règle d'intersection d'intervalles :
+    Deux consultations [start_A, end_A[ et [start_B, end_B[ se chevauchent ssi :
+    (start_A < end_B) ET (end_A > start_B).
+
+    L'optimisation SQL calcule la fin de consultation (`calculated_end`) directement au niveau du moteur
+    relationnel (F("scheduled_at") + DurationField) sans charger ni itérer sur des créneaux en mémoire Python.
+    """
+    from django.db.models import DateTimeField
+    from django.db.models import DurationField
+    from django.db.models import ExpressionWrapper
+    from django.db.models import F
+
     doctor_id = getattr(doctor, "pk", doctor)
     new_start = scheduled_at
     new_end = new_start + timedelta(minutes=duration_minutes)
 
-    # Fenêtre temporelle d'exploration pour la détection
-    window_start = new_start - timedelta(hours=8)
-    window_end = new_end + timedelta(hours=8)
+    # Expression SQL calculant l'heure prévisionnelle de fin de chaque consultation
+    duration_expr = ExpressionWrapper(
+        F("estimated_duration_minutes") * 60 * 1000000,
+        output_field=DurationField(),
+    )
+    end_expr = ExpressionWrapper(
+        F("scheduled_at") + duration_expr,
+        output_field=DateTimeField(),
+    )
 
-    qs = Appointment.objects.filter(
-        doctor_id=doctor_id,
-        scheduled_at__gte=window_start,
-        scheduled_at__lte=window_end,
-    ).exclude(status=AppointmentStatusEnum.CANCELLED)
+    qs = (
+        Appointment.objects.annotate(calculated_end=end_expr)
+        .filter(
+            doctor_id=doctor_id,
+            scheduled_at__lt=new_end,
+            calculated_end__gt=new_start,
+        )
+        .exclude(status=AppointmentStatusEnum.CANCELLED)
+    )
 
     if exclude_appointment_id:
         qs = qs.exclude(id=exclude_appointment_id)
 
-    for apt in qs:
-        # Chevauchement ssi (apt.start < new_end) et (apt.end > new_start)
-        if apt.scheduled_at < new_end and apt.end_time > new_start:
-            return apt
-
-    return None
+    return qs.select_related("doctor").first()
 
 
 def check_doctor_availability(

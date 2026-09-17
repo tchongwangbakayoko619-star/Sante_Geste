@@ -26,7 +26,9 @@ from apps.patients.forms import PatientSearchForm
 from apps.patients.models import Allergen
 from apps.patients.models import Patient
 from apps.patients.models import PatientAllergy
+from apps.patients.services import add_patient_allergy
 from apps.patients.services import create_patient
+from apps.patients.services import remove_patient_allergy
 from apps.patients.services import search_patients
 from apps.patients.services import update_patient
 from apps.patients.services import update_patient_medical_record
@@ -219,17 +221,23 @@ class PatientMedicalUpdateView(PersonnelMedicalRequiredMixin, SuccessMessageMixi
 
 
 class PatientAllergyCreateView(PersonnelMedicalRequiredMixin, View):
-    """Ajout d'une allergie codifiée au dossier patient par le soignant."""
+    """Ajout d'une allergie codifiée au dossier patient via le service métier."""
 
     def post(self, request, pk, *args, **kwargs):
         patient = get_object_or_404(Patient, pk=pk)
         form = PatientAllergyForm(request.POST)
         if form.is_valid():
-            allergy = form.save(commit=False)
-            allergy.patient = patient
-            allergy.set_created_by(request.user)
-            allergy.set_updated_by(request.user)
-            allergy.save()
+            cleaned = form.cleaned_data
+            allergy = add_patient_allergy(
+                patient=patient,
+                allergen=cleaned["allergen"],
+                criticality=cleaned["criticality"],
+                verification_status=cleaned["verification_status"],
+                reaction=cleaned.get("reaction", ""),
+                diagnosed_date=cleaned.get("diagnosed_date"),
+                notes=cleaned.get("notes", ""),
+                created_by=request.user,
+            )
             messages.success(
                 request,
                 _("L'allergie codifiée '%(allergen)s' a été ajoutée avec succès.")
@@ -245,13 +253,13 @@ class PatientAllergyCreateView(PersonnelMedicalRequiredMixin, View):
 
 
 class PatientAllergyDeleteView(PersonnelMedicalRequiredMixin, View):
-    """Retrait d'une allergie codifiée du dossier patient."""
+    """Retrait d'une allergie codifiée du dossier patient via le service métier."""
 
     def post(self, request, pk, allergy_id, *args, **kwargs):
         patient = get_object_or_404(Patient, pk=pk)
         allergy = get_object_or_404(PatientAllergy, pk=allergy_id, patient=patient)
         allergen_name = allergy.allergen.name
-        allergy.delete()
+        remove_patient_allergy(patient=patient, allergy_id=allergy_id)
         messages.success(
             request,
             _("L'allergie codifiée '%(allergen)s' a été supprimée du dossier.")

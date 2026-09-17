@@ -104,11 +104,22 @@ class Patient(SoftDeleteModel):
     )
 
     # Données médicales critiques / alertes
+    # Note d'architecture sur la dualité de gestion des allergies :
+    # ------------------------------------------------------------
+    # 1. `allergies` (texte libre ci-dessous) : Utilisé pour la saisie déclarative rapide
+    #    à l'admission administrative (Agent d'accueil). Rôle purement informatif sans qualification pharmacologique.
+    # 2. `PatientAllergy` (modèle relationnel ci-après) : Renseigné exclusivement par le personnel médical
+    #    pour codifier les substances (OMS / ATC), évaluer la criticité FHIR et alimenter le CDSS
+    #    (Clinical Decision Support System) afin de bloquer automatiquement les prescriptions contre-indiquées.
     allergies = models.TextField(
         blank=True,
         default="",
-        verbose_name=_("Allergies connues"),
-        help_text=_("Mentionner toutes les allergies médicamenteuses, alimentaires ou respiratoires."),
+        verbose_name=_("Allergies connues (déclaration libre)"),
+        help_text=_(
+            "Saisie déclarative initiale lors de l'admission administrative (Agent d'accueil). "
+            "Rôle informatif rapide, complété par les allergies codifiées (PatientAllergy) "
+            "renseignées par le personnel médical pour la sécurisation active des prescriptions."
+        ),
     )
     chronic_diseases = models.TextField(
         blank=True,
@@ -207,7 +218,12 @@ class Patient(SoftDeleteModel):
 
     @property
     def has_critical_alerts(self) -> bool:
-        """Vrai si le patient a des allergies ou pathologies chroniques signalées."""
+        """Indique si le dossier présente des alertes médicales critiques.
+
+        Consolide la dualité de gestion des allergies :
+        - Déclarative (texte libre) : saisie informelle dans `allergies` ou `chronic_diseases`.
+        - Structurée (relationnelle) : présence d'au moins une allergie codifiée dans `patient_allergies`.
+        """
         has_text_alerts = bool(
             (self.allergies and self.allergies.strip())
             or (self.chronic_diseases and self.chronic_diseases.strip())
@@ -277,7 +293,23 @@ class Allergen(BaseModel):
 
 
 class PatientAllergy(BaseModel):
-    """Allergie codifiée et documentée pour un patient."""
+    """Allergie codifiée et documentée pour un patient (Sécurisation des prescriptions).
+
+    Architecture clinique à deux niveaux (Dualité) :
+    -------------------------------------------------
+    1. Niveau 1 (Admission administrative - Agent d'accueil) :
+       `Patient.allergies` est un champ texte libre permettant de consigner instantanément
+       les déclarations du patient sans barrière lexicale ni formation pharmacologique.
+       Rôle purement informatif et d'alerte visuelle.
+
+    2. Niveau 2 (Prescription sécurisée & CDSS - Personnel médical) :
+       `PatientAllergy` est le modèle relationnel strict liant le patient à un `Allergen`.
+       Chaque substance dispose d'une codification OMS/ATC (`atc_code`), d'une famille de réactivité
+       croisée (`cross_reactivity_group`), d'un niveau de criticité FHIR (`criticality`) et d'un
+       statut de vérification clinique (`verification_status`).
+       C'est ce modèle qui alimente le moteur d'aide à la décision clinique (CDSS)
+       via `check_allergy_contraindication()` pour sécuriser et bloquer les prescriptions à risque.
+    """
 
     patient = models.ForeignKey(
         Patient,

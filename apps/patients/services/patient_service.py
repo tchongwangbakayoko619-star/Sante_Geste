@@ -155,13 +155,20 @@ def add_patient_allergy(
 def remove_patient_allergy(
     *,
     patient: Patient,
-    allergen: Allergen,
+    allergen: Allergen | None = None,
+    allergy_id: Any | None = None,
 ) -> bool:
-    """Supprime une allergie codifiée du dossier patient."""
-    deleted_count, _ = PatientAllergy.objects.filter(
-        patient=patient,
-        allergen=allergen,
-    ).delete()
+    """Supprime une allergie codifiée du dossier patient.
+
+    Supporte la suppression par instance d'Allergen ou par identifiant direct `allergy_id`.
+    """
+    filters: dict[str, Any] = {"patient": patient}
+    if allergen is not None:
+        filters["allergen"] = allergen
+    if allergy_id is not None:
+        filters["pk"] = allergy_id
+
+    deleted_count, _ = PatientAllergy.objects.filter(**filters).delete()
     return deleted_count > 0
 
 
