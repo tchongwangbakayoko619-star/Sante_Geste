@@ -29,7 +29,6 @@ class Patient(SoftDeleteModel):
     patient_number = models.CharField(
         max_length=32,
         unique=True,
-        db_index=True,
         verbose_name=_("Matricule / Identifiant patient"),
         help_text=_("Numéro unique généré automatiquement au format PAT-YYYY-XXXX."),
     )
@@ -60,7 +59,6 @@ class Patient(SoftDeleteModel):
     )
     phone_number = models.CharField(
         max_length=20,
-        db_index=True,
         validators=[validate_phone_number],
         verbose_name=_("Numéro de téléphone"),
     )
@@ -130,7 +128,6 @@ class Patient(SoftDeleteModel):
             *SoftDeleteModel.Meta.indexes,
             models.Index(fields=["last_name", "first_name"], name="patient_name_idx"),
             models.Index(fields=["phone_number"], name="patient_phone_idx"),
-            models.Index(fields=["patient_number"], name="patient_num_idx"),
         ]
 
     def __str__(self) -> str:
@@ -177,21 +174,18 @@ class Allergen(BaseModel):
     name = models.CharField(
         max_length=150,
         unique=True,
-        db_index=True,
         verbose_name=_("Nom de la substance"),
     )
     category = models.CharField(
         max_length=30,
         choices=AllergenCategoryEnum.choices,
         default=AllergenCategoryEnum.MEDICATION,
-        db_index=True,
         verbose_name=_("Catégorie"),
     )
     atc_code = models.CharField(
         max_length=20,
         blank=True,
         default="",
-        db_index=True,
         verbose_name=_("Code ATC"),
         help_text=_("Code de classification anatomique, thérapeutique et chimique de l'OMS (ex: J01C)."),
     )
@@ -199,7 +193,6 @@ class Allergen(BaseModel):
         max_length=100,
         blank=True,
         default="",
-        db_index=True,
         verbose_name=_("Groupe de réactivité croisée"),
         help_text=_("Ex: Bêta-lactamines, Sulfamides, AINS."),
     )
@@ -215,9 +208,9 @@ class Allergen(BaseModel):
         verbose_name_plural = _("Allergènes")
         ordering = ["name"]
         indexes = [
-            models.Index(fields=["name"], name="allergen_name_idx"),
             models.Index(fields=["atc_code"], name="allergen_atc_idx"),
             models.Index(fields=["category"], name="allergen_cat_idx"),
+            models.Index(fields=["cross_reactivity_group"], name="allergen_cross_idx"),
         ]
 
     def __str__(self) -> str:
@@ -245,7 +238,6 @@ class PatientAllergy(BaseModel):
         max_length=25,
         choices=AllergyCriticalityEnum.choices,
         default=AllergyCriticalityEnum.HIGH,
-        db_index=True,
         verbose_name=_("Niveau de criticité"),
     )
     verification_status = models.CharField(
@@ -327,7 +319,6 @@ class Appointment(SoftDeleteModel):
         max_length=20,
         choices=AppointmentStatusEnum.choices,
         default=AppointmentStatusEnum.SCHEDULED,
-        db_index=True,
         verbose_name=_("Statut du rendez-vous"),
     )
     notes = models.TextField(
