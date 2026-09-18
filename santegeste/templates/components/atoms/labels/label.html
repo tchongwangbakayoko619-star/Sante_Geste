@@ -1,0 +1,12 @@
+{# Atom: Label (CS² Health Design System) #}
+{% load i18n %}
+<label
+  for="{{ for_id|default:for }}"
+  class="label-base block text-xs sm:text-sm font-semibold text-neutral-700 mb-1.5 {{ class|default:'' }} {{ custom_classes|default:'' }}"
+>
+  {{ text }}
+  {% if required %}
+    <span class="text-rose-500 font-bold ml-0.5" aria-hidden="true">*</span>
+    <span class="sr-only">({% trans "obligatoire" %})</span>
+  {% endif %}
+</label>

@@ -1,0 +1,13 @@
+{# Atom: Select (CS² Health Design System) #}
+{% with select_id=id|default:name %}
+  <select
+    name="{{ name }}"
+    id="{{ select_id }}"
+    {% if required %}required aria-required="true"{% endif %}
+    {% if aria_describedby %}aria-describedby="{{ aria_describedby }}"{% endif %}
+    aria-invalid="{% if has_error or aria_invalid %}true{% else %}false{% endif %}"
+    class="select-base min-h-[44px] bg-white cursor-pointer {% if has_error or aria_invalid %}input-error{% endif %} {{ class|default:'' }} {{ custom_classes|default:'' }}"
+  >
+    {{ options|safe }}
+  </select>
+{% endwith %}

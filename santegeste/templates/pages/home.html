@@ -29,41 +29,28 @@
         </p>
 
         <div class="pt-2 flex flex-wrap gap-3">
-          <a href="{% url 'users:profile' %}" class="btn btn-primary bg-emerald-500 hover:bg-emerald-600 text-white text-xs sm:text-sm py-2.5 px-5 shadow-md">
+          <a href="{% url "users:profile" %}" class="btn btn-primary bg-emerald-500 hover:bg-emerald-600 text-white text-xs sm:text-sm py-2.5 px-5 shadow-md">
             {% trans "Mon profil soignant" %}
           </a>
         </div>
       </div>
     </div>
 
-    <!-- Quick Action Cards Grid -->
+    <!-- Quick Action Cards Grid (Molecules) -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-      <!-- Card 1: Consultations -->
-      <div class="p-6 bg-white border border-neutral-200/80 rounded-2xl shadow-xs hover:shadow-md transition-all duration-200 group">
-        <div class="w-12 h-12 rounded-xl bg-health-50 border border-health-200 text-[#14967F] flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
-          {% include "components/atoms/icon.html" with name="cross-heartbeat" size="w-6 h-6" %}
-        </div>
-        <h3 class="font-title font-bold text-lg text-neutral-900 mb-1">{% trans "Consultations" %}</h3>
-        <p class="text-xs sm:text-sm text-neutral-500 leading-relaxed">{% trans "Planification et suivi des RDV médicaux de votre centre de santé." %}</p>
-      </div>
+      {% trans "Consultations" as title_consultations %}
+      {% trans "Planification et suivi des RDV médicaux de votre centre de santé." as desc_consultations %}
+      {% url "patients:appointment_list" as url_consultations %}
+      {% include "components/molecules/cards/feature_card.html" with icon_name="calendar" title=title_consultations description=desc_consultations href=url_consultations %}
 
-      <!-- Card 2: Dossiers Patients -->
-      <div class="p-6 bg-white border border-neutral-200/80 rounded-2xl shadow-xs hover:shadow-md transition-all duration-200 group">
-        <div class="w-12 h-12 rounded-xl bg-health-50 border border-health-200 text-[#14967F] flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
-          {% include "components/atoms/icon.html" with name="briefcase" size="w-6 h-6" %}
-        </div>
-        <h3 class="font-title font-bold text-lg text-neutral-900 mb-1">{% trans "Dossiers Patients" %}</h3>
-        <p class="text-xs sm:text-sm text-neutral-500 leading-relaxed">{% trans "Gestion centralisée et sécurisée des données médicales." %}</p>
-      </div>
+      {% trans "Dossiers Patients" as title_patients %}
+      {% trans "Gestion centralisée et sécurisée des données médicales." as desc_patients %}
+      {% url "patients:patient_list" as url_patients %}
+      {% include "components/molecules/cards/feature_card.html" with icon_name="users" title=title_patients description=desc_patients href=url_patients %}
 
-      <!-- Card 3: Sécurité & Secret Médical -->
-      <div class="p-6 bg-white border border-neutral-200/80 rounded-2xl shadow-xs hover:shadow-md transition-all duration-200 group">
-        <div class="w-12 h-12 rounded-xl bg-health-50 border border-health-200 text-[#14967F] flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
-          {% include "components/atoms/icon.html" with name="shield-check" size="w-6 h-6" %}
-        </div>
-        <h3 class="font-title font-bold text-lg text-neutral-900 mb-1">{% trans "Sécurité & Secret" %}</h3>
-        <p class="text-xs sm:text-sm text-neutral-500 leading-relaxed">{% trans "Authentification renforcée OTP et chiffrement des données." %}</p>
-      </div>
+      {% trans "Sécurité & Secret" as title_security %}
+      {% trans "Authentification renforcée OTP et chiffrement des données." as desc_security %}
+      {% include "components/molecules/cards/feature_card.html" with icon_name="shield-check" title=title_security description=desc_security %}
     </div>
 
   {% else %}
@@ -86,10 +73,10 @@
         </p>
 
         <div class="pt-4 flex items-center justify-center gap-4">
-          <a href="{% url 'users:login' %}" class="btn btn-primary text-sm py-3 px-6 shadow-lg">
+          <a href="{% url "users:login" %}" class="btn btn-primary text-sm py-3 px-6 shadow-lg">
             {% trans "Se connecter à mon espace" %}
           </a>
-          <a href="{% url 'users:register' %}" class="btn btn-outline bg-white/10 hover:bg-white/20 border-white/30 text-white text-sm py-3 px-6">
+          <a href="{% url "users:register" %}" class="btn btn-outline bg-white/10 hover:bg-white/20 border-white/30 text-white text-sm py-3 px-6">
             {% trans "Créer un compte soignant" %}
           </a>
         </div>
@@ -99,4 +86,3 @@
 
 </div>
 {% endblock content_inner %}
-

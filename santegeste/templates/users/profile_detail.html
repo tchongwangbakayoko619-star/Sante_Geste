@@ -14,11 +14,9 @@
     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-neutral-100">
       <div class="flex items-center gap-4">
         {% if user.avatar %}
-          <img src="{{ user.avatar.url }}" alt="{{ user.full_name }}" class="w-16 h-16 rounded-full object-cover border-2 border-[#14967F]">
+          {% include "components/atoms/avatars/avatar.html" with image_url=user.avatar.url name=user.full_name size="xl" %}
         {% else %}
-          <div class="w-16 h-16 rounded-full bg-[#14967F]/15 text-[#14967F] font-extrabold text-2xl flex items-center justify-center">
-            {{ user.email|first|upper }}
-          </div>
+          {% include "components/atoms/avatars/avatar.html" with name=user.full_name|default:user.email size="xl" %}
         {% endif %}
         <div>
           <h1 class="font-title font-extrabold text-xl sm:text-2xl text-neutral-900">
@@ -35,7 +33,7 @@
     <div class="space-y-4">
       <div class="flex items-center justify-between">
         <h3 class="font-title font-bold text-base text-neutral-900">{% trans "Informations personnelles" %}</h3>
-        <a href="{% url 'users:profile-edit' %}" class="btn btn-outline text-xs py-1.5 px-3">
+        <a href="{% url "users:profile-edit" %}" class="btn btn-outline text-xs py-1.5 px-3">
           {% trans "Modifier" %}
         </a>
       </div>
@@ -67,7 +65,7 @@
       <div class="pt-4 border-t border-neutral-100 space-y-4">
         <div class="flex items-center justify-between">
           <h3 class="font-title font-bold text-base text-neutral-900">{% trans "Profil Médical" %}</h3>
-          <a href="{% url 'users:medical-profile-edit' %}" class="btn btn-outline text-xs py-1.5 px-3">
+          <a href="{% url "users:medical-profile-edit" %}" class="btn btn-outline text-xs py-1.5 px-3">
             {% trans "Modifier" %}
           </a>
         </div>
@@ -87,4 +85,3 @@
   </div>
 </div>
 {% endblock content_inner %}
-

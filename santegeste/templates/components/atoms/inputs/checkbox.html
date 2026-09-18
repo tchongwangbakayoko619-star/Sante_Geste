@@ -1,0 +1,11 @@
+{# Atom: Checkbox (CS² Health Design System) #}
+{% with checkbox_id=id|default:name %}
+  <input
+    type="checkbox"
+    name="{{ name }}"
+    id="{{ checkbox_id }}"
+    {% if checked %}checked{% endif %}
+    {% if required %}required aria-required="true"{% endif %}
+    class="checkbox-base h-4 w-4 rounded-md border-neutral-300 text-[#14967F] focus:ring-[#14967F] transition-colors cursor-pointer {{ class|default:'' }} {{ custom_classes|default:'' }}"
+  >
+{% endwith %}

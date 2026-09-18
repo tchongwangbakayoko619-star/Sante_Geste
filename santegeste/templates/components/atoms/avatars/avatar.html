@@ -1,0 +1,25 @@
+{# Atom: Avatar (Photo or Initials) #}
+{# Props: image_url, name, size (sm|md|lg|xl), custom_classes #}
+{% with avatar_size=size|default:"md" %}
+  {% if image_url %}
+    <img
+      src="{{ image_url }}"
+      alt="{{ name|default:'' }}"
+      class="rounded-full object-cover border border-neutral-200
+        {% if avatar_size == 'sm' %}w-7 h-7
+        {% elif avatar_size == 'lg' %}w-12 h-12
+        {% elif avatar_size == 'xl' %}w-16 h-16 sm:w-20 sm:h-20
+        {% else %}w-9 h-9{% endif %} {{ custom_classes|default:'' }}"
+    >
+  {% else %}
+    <div
+      class="rounded-2xl font-black flex items-center justify-center select-none bg-gradient-to-br from-[#14967F] to-emerald-800 text-white shadow-xs
+        {% if avatar_size == 'sm' %}w-7 h-7 text-xs rounded-lg
+        {% elif avatar_size == 'lg' %}w-12 h-12 text-base
+        {% elif avatar_size == 'xl' %}w-16 h-16 sm:w-20 sm:h-20 text-xl sm:text-2xl rounded-2xl
+        {% else %}w-9 h-9 text-sm rounded-xl{% endif %} {{ custom_classes|default:'' }}"
+    >
+      {{ name|default:'?'|slice:':2'|upper }}
+    </div>
+  {% endif %}
+{% endwith %}

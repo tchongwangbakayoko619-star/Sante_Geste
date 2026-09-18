@@ -1,0 +1,87 @@
+{# Organism: Patient Hero Card (Fiche 360°) #}
+{% load i18n %}
+<div class="bg-white border border-neutral-200/80 rounded-3xl p-6 sm:p-8 shadow-xs relative overflow-hidden">
+  <div class="absolute top-0 right-0 w-64 h-64 bg-[#14967F]/5 rounded-full blur-3xl -z-0 pointer-events-none"></div>
+
+  <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6 relative z-10">
+    <!-- Left: Identity & Core attributes -->
+    <div class="flex items-start sm:items-center gap-4 sm:gap-5">
+      {% include "components/atoms/avatars/avatar.html" with name=patient.full_name size="xl" %}
+
+      <div class="space-y-1">
+        <div class="flex flex-wrap items-center gap-2.5">
+          <h1 class="text-xl sm:text-2xl font-extrabold text-neutral-900 tracking-tight font-title">
+            {{ patient.full_name }}
+          </h1>
+          <span class="font-mono text-xs font-bold px-2.5 py-1 rounded-lg bg-neutral-100 text-neutral-700 border border-neutral-200">
+            {{ patient.patient_number }}
+          </span>
+          {% include "components/molecules/badges/status_badge.html" with status=patient.status text=patient.get_status_display type="patient" size="sm" %}
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3 text-xs sm:text-sm text-neutral-600">
+          {% if patient.age %}
+            <span class="font-semibold text-neutral-800">{{ patient.age }} ans</span>
+            {% if patient.date_of_birth %}
+              <span class="text-neutral-400 font-normal">({{ patient.date_of_birth|date:"d/m/Y" }})</span>
+            {% endif %}
+            <span class="text-neutral-300">•</span>
+          {% endif %}
+
+          <span>{{ patient.get_gender_display }}</span>
+
+          {% if patient.blood_group and patient.blood_group != "UNKNOWN" %}
+            <span class="text-neutral-300">•</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-black bg-rose-50 text-rose-700 border border-rose-200">
+              {{ patient.blood_group }}
+            </span>
+          {% endif %}
+
+          {% if patient.profession %}
+            <span class="text-neutral-300 hidden sm:inline">•</span>
+            <span class="text-neutral-500 hidden sm:inline">{{ patient.profession }}</span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Quick actions -->
+    <div class="flex flex-wrap items-center gap-2.5 shrink-0">
+      {% if patient.is_active %}
+        <a href="{% url 'patients:appointment_create' %}?patient={{ patient.pk }}" class="btn btn-primary py-2.5 px-4 text-xs sm:text-sm inline-flex items-center gap-2 shadow-xs font-bold">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+          </svg>
+          <span>{% trans "Planifier un RDV" %}</span>
+        </a>
+      {% elif patient.status == 'deceased' %}
+        <span class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-rose-50 text-rose-800 border border-rose-200">
+          <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+          <span>{% trans "Dossier clos (Patient décédé)" %}</span>
+        </span>
+      {% else %}
+        <span class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium bg-neutral-100 text-neutral-600 border border-neutral-200">
+          <span>{% trans "Dossier" %} {{ patient.get_status_display }}</span>
+        </span>
+      {% endif %}
+
+      {% if request.user.is_agent_accueil or request.user.is_superuser %}
+        <a href="{% url 'patients:patient_update' patient.pk %}" class="btn btn-outline py-2.5 px-4 text-xs sm:text-sm inline-flex items-center gap-2">
+          <svg class="w-4 h-4 text-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+          </svg>
+          <span>{% trans "Modifier la fiche" %}</span>
+        </a>
+      {% endif %}
+
+      {% if request.user.is_personnel_medical or request.user.is_superuser %}
+        <a href="{% url 'patients:patient_medical_update' patient.pk %}" class="btn btn-outline py-2.5 px-4 text-xs sm:text-sm inline-flex items-center gap-2 border-purple-200 text-purple-700 hover:bg-purple-50 transition-colors">
+          <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+          <span>{% trans "Profil clinique" %}</span>
+        </a>
+      {% endif %}
+    </div>
+  </div>
+</div>

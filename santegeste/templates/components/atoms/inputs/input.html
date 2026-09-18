@@ -1,0 +1,39 @@
+{# Atom: Input (CS² Health Design System) #}
+{% with input_id=id|default:name %}
+  {% if icon_left %}
+    <div class="relative flex items-center w-full">
+      <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-neutral-400">
+        {% include "components/atoms/icons/icon.html" with name=icon_left size="w-5 h-5" %}
+      </div>
+      <input
+        type="{{ type|default:'text' }}"
+        name="{{ name }}"
+        id="{{ input_id }}"
+        {% if value is not None %}value="{{ value }}"{% endif %}
+        placeholder="{{ placeholder|default:'' }}"
+        {% if required %}required aria-required="true"{% endif %}
+        {% if autocomplete %}autocomplete="{{ autocomplete }}"{% endif %}
+        {% if pattern %}pattern="{{ pattern }}"{% endif %}
+        {% if inputmode %}inputmode="{{ inputmode }}"{% endif %}
+        {% if aria_describedby %}aria-describedby="{{ aria_describedby }}"{% endif %}
+        aria-invalid="{% if has_error or aria_invalid %}true{% else %}false{% endif %}"
+        class="input-base input-with-icon min-h-[44px] {% if has_error or aria_invalid %}input-error{% endif %} {{ class|default:'' }} {{ custom_classes|default:'' }}"
+      >
+    </div>
+  {% else %}
+    <input
+      type="{{ type|default:'text' }}"
+      name="{{ name }}"
+      id="{{ input_id }}"
+      {% if value is not None %}value="{{ value }}"{% endif %}
+      placeholder="{{ placeholder|default:'' }}"
+      {% if required %}required aria-required="true"{% endif %}
+      {% if autocomplete %}autocomplete="{{ autocomplete }}"{% endif %}
+      {% if pattern %}pattern="{{ pattern }}"{% endif %}
+      {% if inputmode %}inputmode="{{ inputmode }}"{% endif %}
+      {% if aria_describedby %}aria-describedby="{{ aria_describedby }}"{% endif %}
+      aria-invalid="{% if has_error or aria_invalid %}true{% else %}false{% endif %}"
+      class="input-base input-without-icon min-h-[44px] {% if has_error or aria_invalid %}input-error{% endif %} {{ class|default:'' }} {{ custom_classes|default:'' }}"
+    >
+  {% endif %}
+{% endwith %}

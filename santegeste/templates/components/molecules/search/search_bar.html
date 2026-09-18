@@ -1,0 +1,23 @@
+{# Molecule: Search Bar #}
+{# Props: form_action, query_value, placeholder, clear_url #}
+{% load i18n %}
+<form method="get" action="{{ form_action|default:'' }}" class="relative max-w-2xl w-full" id="search-form">
+  <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-neutral-400">
+    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+    </svg>
+  </div>
+  <input
+    type="search"
+    name="q"
+    value="{{ query_value|default:'' }}"
+    placeholder="{{ placeholder|default:'Rechercher...' }}"
+    class="w-full pl-10 pr-16 py-2.5 rounded-2xl border border-neutral-200 bg-white focus:outline-none focus:ring-2 focus:ring-[#14967F] focus:border-[#14967F] text-sm text-neutral-800 transition-colors shadow-2xs"
+    autocomplete="off"
+  >
+  {% if query_value %}
+    <a href="{{ clear_url|default:'?' }}" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-neutral-400 hover:text-neutral-700 text-xs font-semibold">
+      {% trans "Effacer" %}
+    </a>
+  {% endif %}
+</form>

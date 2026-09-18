@@ -1,0 +1,31 @@
+{# Molecule: Stat Card (KPI Metric) #}
+{# Props: title, value, variant (neutral|primary|blue|amber|rose|purple), icon_name, custom_classes #}
+{% with card_variant=variant|default:"neutral" %}
+<div class="bg-white border border-neutral-200/80 rounded-2xl p-4 sm:p-5 shadow-2xs flex items-center justify-between {{ custom_classes|default:'' }}">
+  <div>
+    <p class="text-[11px] sm:text-xs font-bold uppercase tracking-wider
+      {% if card_variant == 'primary' %}text-[#14967F]
+      {% elif card_variant == 'blue' %}text-blue-700
+      {% elif card_variant == 'amber' %}text-amber-700
+      {% elif card_variant == 'rose' %}text-rose-700
+      {% elif card_variant == 'purple' %}text-purple-700
+      {% else %}text-neutral-500{% endif %}">
+      {{ title }}
+    </p>
+    <p class="text-2xl sm:text-3xl font-black text-neutral-900 mt-1">
+      {{ value }}
+    </p>
+  </div>
+  {% if icon_name %}
+    <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center shrink-0
+      {% if card_variant == 'primary' %}bg-[#14967F]/10 text-[#14967F]
+      {% elif card_variant == 'blue' %}bg-blue-50 text-blue-600
+      {% elif card_variant == 'amber' %}bg-amber-50 text-amber-600
+      {% elif card_variant == 'rose' %}bg-rose-50 text-rose-600
+      {% elif card_variant == 'purple' %}bg-purple-50 text-purple-600
+      {% else %}bg-neutral-100 text-neutral-600{% endif %}">
+      {% include "components/atoms/icons/icon.html" with name=icon_name size="w-5 h-5 sm:w-6 sm:h-6" %}
+    </div>
+  {% endif %}
+</div>
+{% endwith %}

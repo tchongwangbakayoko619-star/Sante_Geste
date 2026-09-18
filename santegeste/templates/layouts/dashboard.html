@@ -1,0 +1,22 @@
+{# Layout: Dashboard (CS² Health Design System - Atomic Design) #}
+{% extends "layouts/base.html" %}
+{% load static i18n %}
+
+{% block content %}
+<div class="min-h-screen flex flex-col bg-neutral-50/50 text-neutral-800">
+  <!-- Organism: Navbar Header -->
+  {% include "components/organisms/navbar/navbar.html" %}
+
+  <!-- Main Content Container with Flash Messages -->
+  <main id="main-content" class="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" tabindex="-1">
+    {% include "components/molecules/flash-messages.html" %}
+    {% block main %}
+      {% block content_inner %}
+      {% endblock content_inner %}
+    {% endblock main %}
+  </main>
+
+  <!-- Organism: Footer -->
+  {% include "components/organisms/footer/footer.html" %}
+</div>
+{% endblock content %}

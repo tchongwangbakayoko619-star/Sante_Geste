@@ -1,0 +1,48 @@
+{# Molecule: Status Badge (CS² Health Design System - Atomic Design) #}
+{# Props: status, text, type (appointment|patient|general), size (sm|md), custom_classes #}
+{% with badge_type=type|default:"appointment" badge_size=size|default:"md" %}
+<span class="inline-flex items-center select-none font-bold transition-all duration-150
+  {% if badge_size == 'sm' %}px-2 py-0.5 rounded-md text-[10px]{% else %}px-2.5 py-1 rounded-full text-xs{% endif %}
+  border
+  {% if badge_type == "appointment" %}
+    {% if status == "scheduled" %}
+      bg-blue-50 text-blue-700 border-blue-200 ring-1 ring-blue-600/10
+    {% elif status == "waiting" %}
+      bg-amber-50 text-amber-700 border-amber-200 ring-1 ring-amber-600/10
+    {% elif status == "in_consultation" %}
+      bg-purple-50 text-purple-700 border-purple-200 ring-1 ring-purple-600/10
+    {% elif status == "completed" %}
+      bg-emerald-50 text-emerald-700 border-emerald-200 ring-1 ring-emerald-600/10
+    {% elif status == "cancelled" %}
+      bg-rose-50 text-rose-700 border-rose-200 ring-1 ring-rose-600/10
+    {% else %}
+      bg-neutral-100 text-neutral-600 border-neutral-200 ring-1 ring-neutral-500/10
+    {% endif %}
+  {% elif badge_type == "patient" %}
+    {% if status == "active" %}
+      bg-emerald-50 text-emerald-700 border-emerald-200 ring-1 ring-emerald-600/10
+    {% elif status == "deceased" %}
+      bg-rose-50 text-rose-700 border-rose-200 ring-1 ring-rose-600/10
+    {% elif status == "transferred" %}
+      bg-amber-50 text-amber-700 border-amber-200 ring-1 ring-amber-600/10
+    {% elif status == "suspended" %}
+      bg-purple-50 text-purple-700 border-purple-200 ring-1 ring-purple-600/10
+    {% else %}
+      bg-neutral-100 text-neutral-600 border-neutral-200 ring-1 ring-neutral-500/10
+    {% endif %}
+  {% endif %}
+  {{ custom_classes|default:'' }}">
+
+  {% if badge_type == "patient" %}
+    <span class="w-1.5 h-1.5 rounded-full mr-1.5 shrink-0
+      {% if status == 'active' %}bg-emerald-500
+      {% elif status == 'deceased' %}bg-rose-500
+      {% elif status == 'transferred' %}bg-amber-500
+      {% elif status == 'suspended' %}bg-purple-500
+      {% else %}bg-neutral-400{% endif %}">
+    </span>
+  {% endif %}
+
+  <span>{{ text|default:status }}</span>
+</span>
+{% endwith %}

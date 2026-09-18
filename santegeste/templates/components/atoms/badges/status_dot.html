@@ -1,0 +1,10 @@
+{# Atom: Status Dot #}
+{# Props: status (active|deceased|transferred|suspended|waiting|in_consultation|completed|cancelled) #}
+<span class="w-2 h-2 rounded-full shrink-0
+  {% if status == 'active' or status == 'completed' %}bg-emerald-500
+  {% elif status == 'waiting' or status == 'transferred' %}bg-amber-500
+  {% elif status == 'in_consultation' or status == 'suspended' %}bg-purple-500
+  {% elif status == 'deceased' or status == 'cancelled' %}bg-rose-500
+  {% elif status == 'scheduled' %}bg-blue-500
+  {% else %}bg-neutral-400{% endif %} {{ class|default:'' }}">
+</span>

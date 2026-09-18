@@ -1,0 +1,34 @@
+{# Molecule: Form Field (Label + Input/Widget + Error + Hint) #}
+{# Props: id, name, label, type, value, placeholder, required, has_error, error_message, hint_text, icon_left, class, custom_classes #}
+{% load i18n %}
+{% with field_id=id|default:name %}
+  <div class="form-group space-y-1.5 {{ class|default:'' }} {{ custom_classes|default:'' }}">
+    {% if label %}
+      {% include "components/atoms/labels/label.html" with for_id=field_id text=label required=required %}
+    {% endif %}
+
+    {% if type == "select" %}
+      {% include "components/atoms/inputs/select.html" with id=field_id name=name required=required has_error=has_error options=options %}
+    {% elif type == "textarea" %}
+      {% include "components/atoms/inputs/textarea.html" with id=field_id name=name value=value placeholder=placeholder required=required rows=rows has_error=has_error %}
+    {% elif type == "checkbox" %}
+      <div class="flex items-center gap-2.5 pt-1">
+        {% include "components/atoms/inputs/checkbox.html" with id=field_id name=name checked=checked required=required has_error=has_error %}
+        <span class="text-sm font-medium text-neutral-700">{{ checkbox_label|default:label }}</span>
+      </div>
+    {% else %}
+      {% include "components/atoms/inputs/input.html" with id=field_id name=name type=type value=value placeholder=placeholder required=required has_error=has_error icon_left=icon_left %}
+    {% endif %}
+
+    {% if has_error and error_message %}
+      <p class="form-error-text flex items-center gap-1.5 text-xs text-rose-600 font-semibold mt-1" id="{{ field_id }}-error" role="alert" aria-live="assertive">
+        <svg class="w-3.5 h-3.5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+        </svg>
+        <span>{{ error_message }}</span>
+      </p>
+    {% elif hint_text %}
+      <p class="form-hint-text text-xs text-neutral-500 mt-1" id="{{ field_id }}-hint">{{ hint_text }}</p>
+    {% endif %}
+  </div>
+{% endwith %}
