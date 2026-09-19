@@ -139,9 +139,13 @@
       <!-- User info & Avatar -->
       <a href="{% url "users:profile" %}" class="flex items-center gap-2.5 truncate flex-1 focus:outline-none">
         <div class="relative shrink-0">
-          <div class="w-9 h-9 rounded-xl bg-emerald-200 text-[#0B4D3C] font-black flex items-center justify-center text-xs">
-            {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
-          </div>
+          {% if user.avatar %}
+            <img src="{{ user.avatar.url }}" alt="{{ user.full_name }}" class="w-9 h-9 rounded-xl object-cover border border-emerald-400">
+          {% else %}
+            <div class="w-9 h-9 rounded-xl bg-emerald-200 text-[#0B4D3C] font-black flex items-center justify-center text-xs">
+              {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+            </div>
+          {% endif %}
           <span class="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-400 ring-2 ring-[#0B4D3C]"></span>
         </div>
         <div class="text-left truncate">
