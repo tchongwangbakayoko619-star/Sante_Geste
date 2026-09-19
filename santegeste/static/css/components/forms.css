@@ -4,8 +4,16 @@
      -------------------------------------------------------------------------- */
 
   /* Input Base Atom */
-  .input-base {
-    @apply w-full py-3 text-base sm:text-sm text-neutral-900 bg-neutral-50/60 hover:bg-neutral-50 focus:bg-white border border-neutral-200 rounded-xl placeholder:text-neutral-400 transition-all duration-150 ease-in-out focus:outline-none focus:border-[#14967F] focus:ring-2 focus:ring-[#14967F]/20;
+  .input-base,
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="tel"],
+  input[type="number"],
+  input[type="date"],
+  input[type="datetime-local"],
+  textarea {
+    @apply w-full px-4 py-2.5 text-base sm:text-sm text-neutral-900 bg-neutral-50/60 hover:bg-neutral-50 focus:bg-white border border-neutral-300 rounded-xl placeholder:text-neutral-400 transition-all duration-150 ease-in-out focus:outline-none focus:border-[#14967F] focus:ring-2 focus:ring-[#14967F]/20;
   }
 
   .input-with-icon {
@@ -21,8 +29,9 @@
   }
 
   /* Select Base Atom */
-  .select-base {
-    @apply w-full py-3 text-base sm:text-sm text-neutral-900 bg-neutral-50/60 hover:bg-neutral-50 focus:bg-white border border-neutral-200 rounded-xl transition-all duration-150 ease-in-out focus:outline-none focus:border-[#14967F] focus:ring-2 focus:ring-[#14967F]/20 cursor-pointer;
+  .select-base,
+  select {
+    @apply w-full px-4 py-2.5 text-base sm:text-sm text-neutral-900 bg-white hover:bg-neutral-50 border border-neutral-300 rounded-xl transition-all duration-150 ease-in-out focus:outline-none focus:border-[#14967F] focus:ring-2 focus:ring-[#14967F]/20 cursor-pointer;
   }
 
   .select-with-icon {
