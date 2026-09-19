@@ -45,7 +45,6 @@ class PatientForm(forms.ModelForm):
             attrs={
                 "type": "tel",
                 "placeholder": "+225 07 00 00 00 00",
-                "class": "w-full px-4 py-2.5 rounded-xl border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-[#14967F] focus:border-[#14967F] text-sm text-neutral-800 transition-colors",
             }
         ),
     )
@@ -58,7 +57,6 @@ class PatientForm(forms.ModelForm):
             attrs={
                 "type": "tel",
                 "placeholder": _("Numéro joignable 24h/24"),
-                "class": "w-full px-4 py-2.5 rounded-xl border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-[#14967F] focus:border-[#14967F] text-sm text-neutral-800 transition-colors",
             }
         ),
     )
@@ -86,79 +84,60 @@ class PatientForm(forms.ModelForm):
             "first_name": forms.TextInput(
                 attrs={
                     "placeholder": _("Ex: Jean-Marc"),
-                    "class": "w-full px-4 py-2.5 rounded-xl border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-[#14967F] focus:border-[#14967F] text-sm text-neutral-800 transition-colors",
                 }
             ),
             "last_name": forms.TextInput(
                 attrs={
                     "placeholder": _("Ex: KOUASSI"),
-                    "class": "w-full px-4 py-2.5 rounded-xl border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-[#14967F] focus:border-[#14967F] text-sm text-neutral-800 transition-colors",
                 }
             ),
             "date_of_birth": forms.DateInput(
                 attrs={
                     "type": "date",
-                    "class": "w-full px-4 py-2.5 rounded-xl border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-[#14967F] focus:border-[#14967F] text-sm text-neutral-800 transition-colors",
                 }
             ),
-            "gender": forms.Select(
-                attrs={
-                    "class": "w-full px-4 py-2.5 rounded-xl border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-[#14967F] focus:border-[#14967F] text-sm text-neutral-800 transition-colors bg-white",
-                }
-            ),
-            "blood_group": forms.Select(
-                attrs={
-                    "class": "w-full px-4 py-2.5 rounded-xl border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-[#14967F] focus:border-[#14967F] text-sm text-neutral-800 transition-colors bg-white",
-                }
-            ),
-            "status": forms.Select(
-                attrs={
-                    "class": "w-full px-4 py-2.5 rounded-xl border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-[#14967F] focus:border-[#14967F] text-sm text-neutral-800 transition-colors bg-white",
-                }
-            ),
+            "gender": forms.Select(),
+            "blood_group": forms.Select(),
+            "status": forms.Select(),
             "email": forms.EmailInput(
                 attrs={
                     "placeholder": _("patient@example.com"),
-                    "class": "w-full px-4 py-2.5 rounded-xl border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-[#14967F] focus:border-[#14967F] text-sm text-neutral-800 transition-colors",
                 }
             ),
             "profession": forms.TextInput(
                 attrs={
                     "placeholder": _("Ex: Enseignant, Commerçant..."),
-                    "class": "w-full px-4 py-2.5 rounded-xl border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-[#14967F] focus:border-[#14967F] text-sm text-neutral-800 transition-colors",
                 }
             ),
             "address": forms.Textarea(
                 attrs={
                     "rows": 2,
                     "placeholder": _("Commune, quartier, repère..."),
-                    "class": "w-full px-4 py-2.5 rounded-xl border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-[#14967F] focus:border-[#14967F] text-sm text-neutral-800 transition-colors resize-none",
+                    "class": "resize-none",
                 }
             ),
             "emergency_contact_name": forms.TextInput(
                 attrs={
                     "placeholder": _("Nom et prénom du proche"),
-                    "class": "w-full px-4 py-2.5 rounded-xl border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-[#14967F] focus:border-[#14967F] text-sm text-neutral-800 transition-colors",
                 }
             ),
             "emergency_contact_relation": forms.TextInput(
                 attrs={
                     "placeholder": _("Ex: Époux/se, Parent, Frère..."),
-                    "class": "w-full px-4 py-2.5 rounded-xl border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-[#14967F] focus:border-[#14967F] text-sm text-neutral-800 transition-colors",
                 }
             ),
             "allergies": forms.Textarea(
                 attrs={
                     "rows": 3,
                     "placeholder": _("Ex: Pénicilline, Aspirine, Arachides... Laisser vide si aucune"),
-                    "class": "w-full px-4 py-2.5 rounded-xl border border-amber-300 bg-amber-50/20 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-sm text-neutral-800 transition-colors resize-none",
+                    "class": "border-amber-300 bg-amber-50/20 focus:ring-amber-500 focus:border-amber-500 resize-none",
                 }
             ),
             "chronic_diseases": forms.Textarea(
                 attrs={
                     "rows": 3,
                     "placeholder": _("Ex: Diabète type 2, HTA, Asthme... Laisser vide si aucune"),
-                    "class": "w-full px-4 py-2.5 rounded-xl border border-rose-300 bg-rose-50/20 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-rose-500 text-sm text-neutral-800 transition-colors resize-none",
+                    "class": "border-rose-300 bg-rose-50/20 focus:ring-rose-500 focus:border-rose-500 resize-none",
                 }
             ),
         }
