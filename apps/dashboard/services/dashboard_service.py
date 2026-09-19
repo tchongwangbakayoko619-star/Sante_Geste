@@ -108,6 +108,16 @@ class DashboardService:
         weekly_activity = cls._build_weekly_activity_chart(appointment_qs=appointment_qs, local_now=local_now)
         status_breakdown = cls._build_status_breakdown(stats=stats)
 
+        # 6. File d'attente du jour (Les 5 prochains RDV du jour ou en attente)
+        recent_appointments = (
+            appointment_qs.filter(scheduled_at__gte=start_date, scheduled_at__lte=end_date)
+            .select_related("patient", "doctor")
+            .order_by("scheduled_at")[:5]
+        )
+
+        # 7. Nouveaux patients récents (Les 5 derniers créés)
+        recent_patients = patient_qs.order_by("-created_at")[:5]
+
         greeting = "Bonsoir" if local_now.hour >= 18 else "Bonjour"
 
         return {
@@ -131,6 +141,9 @@ class DashboardService:
             # Graphiques
             "weekly_activity": weekly_activity,
             "status_breakdown": status_breakdown,
+            # Listes réelles
+            "recent_appointments": recent_appointments,
+            "recent_patients": recent_patients,
         }
 
     @classmethod

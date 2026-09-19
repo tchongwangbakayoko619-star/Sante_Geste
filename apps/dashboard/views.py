@@ -46,4 +46,28 @@ class DashboardApiView(View):
             period=period,
         )
 
-        return JsonResponse(data, status=200)
+        # Copie et sérialisation pour le format JSON API
+        api_data = dict(data)
+        api_data["recent_appointments"] = [
+            {
+                "id": str(rdv.pk),
+                "patient_name": rdv.patient.full_name,
+                "patient_number": rdv.patient.patient_number,
+                "doctor_name": rdv.doctor.full_name,
+                "scheduled_at": rdv.scheduled_at.isoformat(),
+                "status": rdv.status,
+            }
+            for rdv in data["recent_appointments"]
+        ]
+        api_data["recent_patients"] = [
+            {
+                "id": str(p.pk),
+                "full_name": p.full_name,
+                "patient_number": p.patient_number,
+                "phone_number": p.phone_number,
+                "created_at": p.created_at.isoformat(),
+            }
+            for p in data["recent_patients"]
+        ]
+
+        return JsonResponse(api_data, status=200)

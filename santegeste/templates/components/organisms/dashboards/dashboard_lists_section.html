@@ -1,0 +1,108 @@
+{# Organism: Dashboard Activity Lists Section (File d'attente du jour + Patients récents) #}
+{% load i18n %}
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+  <!-- Column 1: File d'Attente & RDV du Jour -->
+  <div class="bg-white rounded-3xl border border-neutral-200/80 p-6 shadow-2xs space-y-4 flex flex-col justify-between">
+    <div>
+      <div class="flex items-center justify-between border-b border-neutral-100 pb-4">
+        <div class="flex items-center gap-3">
+          <h3 class="text-base font-extrabold text-neutral-900 font-title flex items-center gap-2">
+            {% include "components/atoms/icon.html" with name="clock" size="w-5 h-5 text-[#14967F]" %}
+            <span>{% trans "File d'Attente & RDV du Jour" %}</span>
+          </h3>
+        </div>
+        <a href="{% url "patients:appointment_list" %}" class="text-xs font-bold text-[#14967F] hover:underline flex items-center gap-1">
+          <span>{% trans "Voir tout l'agenda" %}</span>
+          <span>&rarr;</span>
+        </a>
+      </div>
+
+      <!-- Appointments List -->
+      <div class="mt-4 space-y-3">
+        {% for rdv in recent_appointments %}
+          <div class="p-3.5 rounded-2xl border border-neutral-200/80 bg-white hover:border-[#14967F]/40 transition shadow-2xs flex items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+              <div class="px-3 py-1.5 rounded-xl bg-[#0B5746] text-white font-extrabold text-xs font-mono text-center shrink-0">
+                {{ rdv.scheduled_at|date:"H:i" }}
+              </div>
+              <div>
+                <h4 class="text-xs font-extrabold text-neutral-900">{{ rdv.patient.full_name }}</h4>
+                <p class="text-[11px] text-neutral-500">
+                  {{ rdv.patient.patient_number }} • Dr. {{ rdv.doctor.full_name }}
+                </p>
+              </div>
+            </div>
+            <div>
+              {% if rdv.status == "COMPLETED" or rdv.status == "IN_CONSULTATION" %}
+                <span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200">{% trans "Honoré" %}</span>
+              {% elif rdv.status == "WAITING" %}
+                <span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-amber-50 text-amber-700 border border-amber-200">{% trans "En attente" %}</span>
+              {% elif rdv.status == "CANCELLED" %}
+                <span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-rose-50 text-rose-700 border border-rose-200">{% trans "Annulé" %}</span>
+              {% else %}
+                <span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-blue-50 text-blue-700 border border-blue-200">{% trans "Planifié" %}</span>
+              {% endif %}
+            </div>
+          </div>
+        {% empty %}
+          <div class="py-8 text-center text-xs text-neutral-400 border-2 border-dashed border-neutral-200 rounded-2xl bg-neutral-50/50">
+            <p class="font-bold text-neutral-600">{% trans "Aucun rendez-vous sur cette période" %}</p>
+            <p class="mt-1">{% trans "Les prochains rendez-vous s'afficheront automatiquement ici." %}</p>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Column 2: Patients Récents & Admission -->
+  <div class="bg-white rounded-3xl border border-neutral-200/80 p-6 shadow-2xs space-y-4 flex flex-col justify-between">
+    <div>
+      <div class="flex items-center justify-between border-b border-neutral-100 pb-4">
+        <div class="flex items-center gap-2">
+          <h3 class="text-base font-extrabold text-neutral-900 font-title flex items-center gap-2">
+            {% include "components/atoms/icon.html" with name="users" size="w-5 h-5 text-[#14967F]" %}
+            <span>{% trans "Dossiers Patients Récents" %}</span>
+          </h3>
+        </div>
+        <div class="flex items-center gap-2">
+          <a href="{% url "patients:patient_create" %}" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-[#14967F] hover:bg-[#0B6B56] text-white text-xs font-bold transition">
+            <span>+ {% trans "Nouveau" %}</span>
+          </a>
+          <a href="{% url "patients:patient_list" %}" class="text-xs font-bold text-[#14967F] hover:underline flex items-center gap-1">
+            <span>{% trans "Registre" %}</span>
+            <span>&rarr;</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Patients List -->
+      <div class="mt-4 space-y-3">
+        {% for patient in recent_patients %}
+          <div class="p-3.5 rounded-2xl border border-neutral-200/80 bg-white hover:border-[#14967F]/40 transition flex items-center justify-between gap-3 shadow-2xs">
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-xl bg-emerald-50 text-[#0B6B56] font-extrabold text-xs flex items-center justify-center shrink-0 border border-emerald-100">
+                {{ patient.first_name|slice:":1" }}{{ patient.last_name|slice:":1" }}
+              </div>
+              <div>
+                <h4 class="text-xs font-extrabold text-neutral-900">{{ patient.full_name }}</h4>
+                <p class="text-[11px] text-neutral-500">
+                  {{ patient.patient_number }} • {{ patient.phone_number|default:"-" }}
+                </p>
+              </div>
+            </div>
+            <a href="{% url "patients:patient_detail" patient.pk %}" class="px-3 py-1.5 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-700 text-xs font-bold transition">
+              {% trans "Dossier" %}
+            </a>
+          </div>
+        {% empty %}
+          <div class="py-8 text-center text-xs text-neutral-400 border-2 border-dashed border-neutral-200 rounded-2xl bg-neutral-50/50">
+            <p class="font-bold text-neutral-600">{% trans "Aucun dossier patient enregistré" %}</p>
+            <p class="mt-1">{% trans "Les nouveaux dossiers créés s'afficheront ici." %}</p>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+</div>

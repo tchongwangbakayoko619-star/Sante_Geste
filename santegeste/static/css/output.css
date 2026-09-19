@@ -2133,8 +2133,14 @@
     color: var(--color-white);
   }
   @media (hover: hover) {
+    .hover\:border-\[\#14967F\]\/40:hover {
+      border-color: color-mix(in oklab, #14967F 40%, transparent);
+    }
     .hover\:border-neutral-300:hover {
       border-color: var(--color-neutral-300);
+    }
+    .hover\:bg-\[\#0B6B56\]:hover {
+      background-color: #0B6B56;
     }
     .hover\:bg-\[\#117F6C\]:hover {
       background-color: #117F6C;
@@ -2191,6 +2197,9 @@
     }
     .hover\:bg-neutral-100:hover {
       background-color: var(--color-neutral-100);
+    }
+    .hover\:bg-neutral-200:hover {
+      background-color: var(--color-neutral-200);
     }
     .hover\:bg-neutral-200\/80:hover {
       background-color: color-mix(in srgb, #e2e8f0 80%, transparent);
@@ -2655,6 +2664,9 @@
     .lg\:translate-x-0 {
       --tw-translate-x: 0px;
       translate: var(--tw-translate-x) var(--tw-translate-y);
+    }
+    .lg\:grid-cols-2 {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
     .lg\:grid-cols-3 {
       grid-template-columns: repeat(3, minmax(0, 1fr));
