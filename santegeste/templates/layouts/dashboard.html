@@ -1,22 +1,44 @@
-{# Layout: Dashboard (CS² Health Design System - Atomic Design) #}
+{# Layout: Dashboard (CS² Health Design System - Atomic Design Workspace) #}
 {% extends "layouts/base.html" %}
 {% load static i18n %}
 
 {% block content %}
-<div class="min-h-screen flex flex-col bg-neutral-50/50 text-neutral-800">
-  <!-- Organism: Navbar Header -->
-  {% include "components/organisms/navbar/navbar.html" %}
+<div class="min-h-screen bg-[#F8FAFC] text-neutral-800 {% if request.user.is_authenticated %}flex{% else %}flex flex-col bg-neutral-50/50{% endif %}">
 
-  <!-- Main Content Container with Flash Messages -->
-  <main id="main-content" class="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" tabindex="-1">
-    {% include "components/molecules/flash-messages.html" %}
-    {% block main %}
-      {% block content_inner %}
-      {% endblock content_inner %}
-    {% endblock main %}
-  </main>
+  {% if request.user.is_authenticated %}
+    <!-- Organism: Sidebar Navigation Latérale (Fixe / Tiroir mobile) -->
+    {% include "components/organisms/sidebar/dashboard_sidebar.html" %}
+  {% else %}
+    <!-- Organism: Public Navbar pour visiteurs anonymes -->
+    {% include "components/organisms/navbar/navbar.html" %}
+  {% endif %}
 
-  <!-- Organism: Footer -->
-  {% include "components/organisms/footer/footer.html" %}
+  <!-- Main Content Wrapper with Topbar (offset by sidebar width on lg when authenticated) -->
+  <div class="flex-1 {% if request.user.is_authenticated %}lg:pl-72 flex flex-col w-full min-h-screen transition-all{% endif %}">
+
+    {% if request.user.is_authenticated %}
+      <!-- Organism: Dashboard Topbar (Barre supérieure avec recherche ⌘K, notifications, langue, profil) -->
+      {% include "components/organisms/navbar/dashboard_topbar.html" %}
+    {% endif %}
+
+    <!-- Main Application Workspace (Single Block Definition) -->
+    <main id="main-content" class="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8" tabindex="-1">
+      {% include "components/molecules/flash-messages.html" %}
+      {% block main %}
+        {% block content_inner %}
+        {% endblock content_inner %}
+      {% endblock main %}
+    </main>
+
+    <!-- Organism: Footer -->
+    {% include "components/organisms/footer/footer.html" %}
+
+  </div>
+
 </div>
 {% endblock content %}
+
+{% block javascript %}
+  {{ block.super }}
+  <script src="{% static "js/components/dashboard-interactions.js" %}" defer></script>
+{% endblock javascript %}

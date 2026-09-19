@@ -1,0 +1,20 @@
+{# Molecule: Global Topbar Search Bar #}
+{% load i18n %}
+<form method="get" action="{% url "patients:patient_list" %}" class="relative w-full max-w-md sm:max-w-lg lg:max-w-xl group">
+  <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-neutral-400 group-focus-within:text-[#14967F] transition-colors">
+    {% include "components/atoms/icon.html" with name="search" size="w-4 h-4" %}
+  </div>
+  <input
+    type="search"
+    name="q"
+    id="global-search-input"
+    placeholder="{% trans "Rechercher un patient, RDV, NUP..." %}"
+    class="w-full pl-10 pr-14 py-2 text-xs sm:text-sm bg-neutral-100/80 hover:bg-neutral-100 focus:bg-white border border-neutral-200/80 focus:border-[#14967F] rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#14967F]/20 text-neutral-800 placeholder-neutral-400 transition-all shadow-2xs"
+    autocomplete="off"
+  >
+  <div class="absolute inset-y-0 right-0 pr-2.5 flex items-center pointer-events-none">
+    <kbd class="hidden sm:inline-flex items-center px-2 py-0.5 text-[10px] font-mono font-bold text-neutral-400 bg-white border border-neutral-200 rounded-md shadow-2xs">
+      ⌘K
+    </kbd>
+  </div>
+</form>

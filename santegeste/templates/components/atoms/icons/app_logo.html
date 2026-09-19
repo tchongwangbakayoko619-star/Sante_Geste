@@ -1,0 +1,20 @@
+{# Atom: App Logo (Medical Cross with Heartbeat Wave) #}
+{# Props: size (sm|md|lg|xl), custom_classes #}
+{% with logo_size=size|default:"md" %}
+<div class="inline-flex items-center justify-center select-none shadow-lg shrink-0
+  bg-gradient-to-br from-[#18A68C] via-[#14967F] to-[#0D7A65]
+  border border-white/20
+  {% if logo_size == "sm" %}w-10 h-10 rounded-xl
+  {% elif logo_size == "lg" %}w-16 h-16 rounded-3xl
+  {% elif logo_size == "xl" %}w-20 h-20 rounded-3xl
+  {% else %}w-14 h-14 rounded-2xl{% endif %}
+  {{ custom_classes|default:"" }}"
+  aria-label="SantéGeste Logo">
+  <svg class="{% if logo_size == "sm" %}w-6 h-6{% elif logo_size == "lg" %}w-10 h-10{% elif logo_size == "xl" %}w-12 h-12{% else %}w-8 h-8{% endif %} text-white" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- Medical Cross with Pulse Wave cutout -->
+    <path d="M19 6C19 4.89543 19.8954 4 21 4H27C28.1046 4 29 4.89543 29 6V18H41C42.1046 18 43 18.8954 43 20V26C43 27.1046 42.1046 28 41 28H29V42C29 43.1046 28.1046 44 27 44H21C19.8954 44 19 43.1046 19 42V28H7C5.89543 28 5 27.1046 5 26V20C5 18.8954 5.89543 18 7 18H19V6Z" fill="white"/>
+    <!-- ECG Heartbeat path cutout in teal/emerald matching background -->
+    <path d="M4 24H15L18 17L22 31L26 21L28 25L30 24H44" stroke="#0B4D3C" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+</div>
+{% endwith %}

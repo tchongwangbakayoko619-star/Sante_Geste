@@ -1,8 +1,9 @@
-"""Vues pour la gestion des patients et des rendez-vous."""
+"""Vues pour la gestion des patients, des rendez-vous et du tableau de bord."""
 
 from .appointment_views import AppointmentCreateView
 from .appointment_views import AppointmentListView
 from .appointment_views import AppointmentStatusUpdateView
+from .dashboard_views import DashboardHomeView
 from .patient_views import PatientAllergyCreateView
 from .patient_views import PatientAllergyDeleteView
 from .patient_views import PatientCreateView
@@ -15,6 +16,7 @@ __all__ = [
     "AppointmentCreateView",
     "AppointmentListView",
     "AppointmentStatusUpdateView",
+    "DashboardHomeView",
     "PatientAllergyCreateView",
     "PatientAllergyDeleteView",
     "PatientCreateView",
@@ -23,5 +25,3 @@ __all__ = [
     "PatientMedicalUpdateView",
     "PatientUpdateView",
 ]
-
-

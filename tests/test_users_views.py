@@ -241,3 +241,27 @@ def test_user_login_rate_limiting(client) -> None:
     rf = RequestFactory().get(url)
     reset_login_rate_limit(rf, "ratelimit-target@santegeste.com")
 
+
+
+@pytest.mark.django_db
+def test_authenticated_dashboard_home_view(client) -> None:
+    """Vérifie l'affichage du nouveau Dashboard médical (UI Workspace) pour l'utilisateur connecté."""
+    user = User.objects.create_user(
+        email="sarah.dashboard@santegeste.com",
+        password="ValidPassword123!",
+        first_name="Sarah",
+        last_name="Ngono",
+    )
+    client.force_login(user)
+    response = client.get(reverse("home"))
+    assert response.status_code == 200
+    html = response.content.decode("utf-8")
+    assert "Sarah" in html
+    assert "RDV DU JOUR" in html
+    assert "NOUVEAUX PATIENTS" in html
+    assert "RDV À VENIR" in html
+    assert "RDV ANNULÉS" in html
+    assert "Activité Hebdomadaire & Prise en Charge" in html
+    assert "Répartition des Statuts" in html
+    assert "Dashboard" in html
+    assert "Gestion Patients" in html

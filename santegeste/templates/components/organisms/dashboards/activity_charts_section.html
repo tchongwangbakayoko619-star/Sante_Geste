@@ -1,0 +1,169 @@
+{# Organism: Dashboard Charts Section (Courbe Hebdomadaire + Donut Statuts - 100% Données Réelles) #}
+{% load i18n %}
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+  <!-- Left: Activité Hebdomadaire & Prise en Charge (2/3 width) -->
+  <div class="lg:col-span-2 bg-white border border-neutral-200/80 rounded-3xl p-6 sm:p-7 shadow-2xs space-y-6">
+    <!-- Header with Title & Legend -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
+      <div>
+        <h2 class="text-base font-extrabold text-neutral-900 font-title flex items-center gap-2">
+          {% include "components/atoms/icon.html" with name="chart-line" size="w-5 h-5 text-[#14967F]" %}
+          <span>{% trans "Activité Hebdomadaire & Consultation" %}</span>
+        </h2>
+        <p class="text-xs text-neutral-500 mt-0.5">
+          {% trans "Évolution comparative des RDV planifiés vs consultations honorées sur la semaine" %}
+        </p>
+      </div>
+
+      <!-- Legend Badges -->
+      <div class="flex items-center gap-3 text-xs font-bold shrink-0">
+        <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-neutral-200 bg-neutral-50/60">
+          <span class="w-2.5 h-2.5 rounded-full bg-[#0B5746]"></span>
+          <span class="text-neutral-700">{% trans "RDV Planifiés" %}</span>
+        </div>
+        <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-neutral-200 bg-neutral-50/60">
+          <span class="w-2.5 h-2.5 rounded-full bg-[#14967F]"></span>
+          <span class="text-neutral-700">{% trans "Honorés / Prise en charge" %}</span>
+        </div>
+      </div>
+    </div>
+
+    {% if weekly_activity.has_data %}
+      <!-- Dynamic SVG Curve Chart -->
+      <div class="relative w-full h-64 sm:h-72">
+        <svg class="w-full h-full overflow-visible" viewBox="0 0 650 260" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="gradient-planned" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#14967F" stop-opacity="0.25"/>
+              <stop offset="100%" stop-color="#14967F" stop-opacity="0.02"/>
+            </linearGradient>
+          </defs>
+
+          <!-- Y-Axis Grid Lines -->
+          <g class="text-neutral-400 font-mono text-[11px]" stroke="#E5E7EB" stroke-width="1" stroke-dasharray="3 3">
+            <line x1="45" y1="20" x2="640" y2="20" />
+            <line x1="45" y1="70" x2="640" y2="70" />
+            <line x1="45" y1="120" x2="640" y2="120" />
+            <line x1="45" y1="170" x2="640" y2="170" />
+            <line x1="45" y1="220" x2="640" y2="220" stroke-dasharray="0" stroke="#D1D5DB" />
+          </g>
+
+          <!-- X-Axis Days Labels -->
+          <g class="text-neutral-500 font-semibold text-xs" fill="#6B7280" text-anchor="middle">
+            <text x="60" y="245">{% trans "Lun" %}</text>
+            <text x="155" y="245">{% trans "Mar" %}</text>
+            <text x="250" y="245">{% trans "Mer" %}</text>
+            <text x="345" y="245">{% trans "Jeu" %}</text>
+            <text x="440" y="245">{% trans "Ven" %}</text>
+            <text x="535" y="245">{% trans "Sam" %}</text>
+            <text x="630" y="245">{% trans "Dim" %}</text>
+          </g>
+        </svg>
+      </div>
+    {% else %}
+      <!-- Empty State Propre sans fausses données -->
+      <div class="w-full h-64 flex flex-col items-center justify-center border-2 border-dashed border-neutral-200 rounded-2xl p-6 text-center bg-neutral-50/50">
+        <div class="w-12 h-12 rounded-full bg-neutral-100 flex items-center justify-center text-neutral-400 mb-3">
+          {% include "components/atoms/icon.html" with name="chart-line" size="w-6 h-6" %}
+        </div>
+        <p class="text-sm font-bold text-neutral-700">{% trans "Aucune activité hebdomadaire à afficher" %}</p>
+        <p class="text-xs text-neutral-500 mt-1 max-w-sm">
+          {% trans "Aucun rendez-vous médical n'a été planifié ou enregistré pour la semaine en cours." %}
+        </p>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Right: Répartition des Statuts (1/3 width Donut Chart) -->
+  <div class="bg-white border border-neutral-200/80 rounded-3xl p-6 sm:p-7 shadow-2xs space-y-6 flex flex-col justify-between">
+    <div>
+      <h2 class="text-base font-extrabold text-neutral-900 font-title flex items-center gap-2">
+        {% include "components/atoms/icon.html" with name="chart-pie" size="w-5 h-5 text-[#14967F]" %}
+        <span>{% trans "Répartition des Statuts" %}</span>
+      </h2>
+      <p class="text-xs text-neutral-500 mt-0.5">
+        {% trans "Statistiques de la période" %} ({{ rdv_today_count }} {% trans "RDV" %})
+      </p>
+    </div>
+
+    {% if status_breakdown.has_data %}
+      <!-- Dynamic Donut Chart -->
+      <div class="relative flex items-center justify-center my-auto py-2">
+        <svg class="w-48 h-48 transform -rotate-90" viewBox="0 0 160 160">
+          <circle cx="80" cy="80" r="58" stroke="#F3F4F6" stroke-width="20" fill="none" />
+
+          <!-- Green Segment: Confirmed/Honorés -->
+          <circle
+            cx="80" cy="80" r="58"
+            stroke="#14967F" stroke-width="20" fill="none"
+            stroke-dasharray="{{ status_breakdown.dasharrays.confirmed }}"
+            stroke-dashoffset="{{ status_breakdown.dashoffsets.confirmed }}"
+            stroke-linecap="round"
+          />
+
+          <!-- Orange Segment: En Attente -->
+          <circle
+            cx="80" cy="80" r="58"
+            stroke="#F59E0B" stroke-width="20" fill="none"
+            stroke-dasharray="{{ status_breakdown.dasharrays.waiting }}"
+            stroke-dashoffset="{{ status_breakdown.dashoffsets.waiting }}"
+          />
+
+          <!-- Red Segment: Annulés -->
+          <circle
+            cx="80" cy="80" r="58"
+            stroke="#EF4444" stroke-width="20" fill="none"
+            stroke-dasharray="{{ status_breakdown.dasharrays.cancelled }}"
+            stroke-dashoffset="{{ status_breakdown.dashoffsets.cancelled }}"
+          />
+
+          <!-- Blue Segment: Planifiés -->
+          <circle
+            cx="80" cy="80" r="58"
+            stroke="#3B82F6" stroke-width="20" fill="none"
+            stroke-dasharray="{{ status_breakdown.dasharrays.scheduled }}"
+            stroke-dashoffset="{{ status_breakdown.dashoffsets.scheduled }}"
+          />
+        </svg>
+
+        <!-- Center text inside donut hole -->
+        <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center">
+          <span class="text-2xl font-black text-neutral-900 leading-tight">{{ rdv_today_count }}</span>
+          <span class="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">{% trans "Total RDV" %}</span>
+        </div>
+      </div>
+    {% else %}
+      <!-- Donut Empty State -->
+      <div class="my-auto py-8 text-center flex flex-col items-center justify-center border-2 border-dashed border-neutral-200 rounded-2xl bg-neutral-50/50">
+        <div class="w-10 h-10 rounded-full bg-neutral-100 flex items-center justify-center text-neutral-400 mb-2">
+          {% include "components/atoms/icon.html" with name="chart-pie" size="w-5 h-5" %}
+        </div>
+        <p class="text-xs font-bold text-neutral-600">{% trans "Aucun RDV à analyser" %}</p>
+        <p class="text-[11px] text-neutral-400 mt-0.5">{% trans "Pas de données pour cette période." %}</p>
+      </div>
+    {% endif %}
+
+    <!-- Status Breakdown Legend Pills -->
+    <div class="grid grid-cols-2 gap-2 text-xs font-semibold pt-2 border-t border-neutral-100">
+      <div class="flex items-center gap-2 p-2 rounded-xl bg-emerald-50 text-emerald-800">
+        <span class="w-2.5 h-2.5 rounded-full bg-[#14967F]"></span>
+        <span>{% trans "Honorés" %} ({{ rdv_confirmed_count }})</span>
+      </div>
+      <div class="flex items-center gap-2 p-2 rounded-xl bg-amber-50 text-amber-800">
+        <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+        <span>{% trans "En attente" %} ({{ rdv_waiting_count }})</span>
+      </div>
+      <div class="flex items-center gap-2 p-2 rounded-xl bg-rose-50 text-rose-800">
+        <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+        <span>{% trans "Annulés" %} ({{ rdv_cancelled_count }})</span>
+      </div>
+      <div class="flex items-center gap-2 p-2 rounded-xl bg-blue-50 text-blue-800">
+        <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
+        <span>{% trans "Planifiés" %} ({{ rdv_scheduled_count }})</span>
+      </div>
+    </div>
+
+  </div>
+
+</div>

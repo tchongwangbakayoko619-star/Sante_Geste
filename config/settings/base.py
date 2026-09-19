@@ -112,6 +112,7 @@ LOCAL_APPS = [
     "core",
     "apps.users",
     "apps.patients",
+    "apps.dashboard",
     # Your stuff: custom apps go here
 ]
 

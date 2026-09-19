@@ -1,0 +1,178 @@
+{# Organism: Dashboard Sidebar (Navigation Latérale Vert Émeraude) #}
+{% load i18n static %}
+<!-- Sidebar Drawer Backdrop (Mobile only) -->
+<div
+  id="sidebar-backdrop"
+  class="fixed inset-0 bg-neutral-900/60 backdrop-blur-xs z-40 lg:hidden hidden transition-opacity"
+  onclick="toggleSidebar(false)"
+  aria-hidden="true">
+</div>
+
+<!-- Main Sticky / Fixed Sidebar -->
+<aside
+  id="dashboard-sidebar"
+  class="fixed top-0 bottom-0 left-0 w-64 sm:w-72 bg-[#0B4D3C] text-white flex flex-col justify-between z-50 transition-transform duration-300 ease-in-out -translate-x-full lg:translate-x-0 shadow-2xl lg:shadow-none"
+  aria-label="{% trans "Menu de navigation principal" %}">
+
+  <!-- Top: Logo & Main Navigation -->
+  <div class="flex-1 overflow-y-auto py-6 px-4 space-y-6">
+
+    <!-- Brand Logo in Squircle (Identique à la capture) -->
+    <div class="flex items-center justify-between px-2">
+      <a href="{% url "home" %}" class="flex items-center gap-3.5 group focus:outline-none">
+        <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#18A68C] via-[#14967F] to-[#0D7A65] flex items-center justify-center shadow-lg border border-white/20 group-hover:scale-105 transition-transform">
+          <svg class="w-8 h-8 text-white" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M35 15C35 9.477 39.477 5 45 5H55C60.523 5 65 9.477 65 15V35H85C90.523 35 95 39.477 95 45V55C95 60.523 90.523 65 85 65H65V85C65 90.523 60.523 95 55 95H45C39.477 95 35 90.523 35 85V65H15C9.477 65 5 60.523 5 55V45C5 39.477 9.477 35 15 35H35V15Z" fill="currentColor" />
+            <path d="M12 50H36L44 32L54 68L64 42L70 50H88" stroke="#0B4D3C" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </div>
+        <div class="hidden sm:block">
+          <span class="font-title font-extrabold text-lg text-white tracking-tight leading-tight block">SantéGeste</span>
+          <span class="text-[10px] text-emerald-300 font-semibold uppercase tracking-wider block">CS² Health</span>
+        </div>
+      </a>
+
+      <!-- Mobile Close Button -->
+      <button
+        type="button"
+        onclick="toggleSidebar(false)"
+        class="lg:hidden p-2 rounded-xl text-emerald-200 hover:text-white hover:bg-white/10"
+        aria-label="{% trans "Fermer le menu" %}">
+        {% include "components/atoms/icon.html" with name="x-mark" size="w-5 h-5" %}
+      </button>
+    </div>
+
+    <!-- Navigation Menu Items -->
+    <nav class="space-y-1.5 pt-2" aria-label="{% trans "Navigation latérale" %}">
+
+      <!-- Item 1: Dashboard (Active) -->
+      <a
+        href="{% url "home" %}"
+        class="flex items-center gap-3.5 px-4 py-3 rounded-2xl text-sm font-bold text-white bg-[#13715C] shadow-sm transition-all">
+        {% include "components/atoms/icon.html" with name="dashboard-grid" size="w-5 h-5 text-emerald-200" %}
+        <span>{% trans "Dashboard" %}</span>
+      </a>
+
+      <!-- Item 2: Gestion Patients (Collapsible) -->
+      <div class="space-y-1" x-data="{ open: true }">
+        <button
+          type="button"
+          onclick="toggleMenu('patients-submenu', this)"
+          class="w-full flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-semibold text-emerald-100/90 hover:text-white hover:bg-white/10 transition-colors">
+          <div class="flex items-center gap-3.5">
+            {% include "components/atoms/icon.html" with name="users" size="w-5 h-5 text-emerald-300" %}
+            <span>{% trans "Gestion Patients" %}</span>
+          </div>
+          <svg class="w-4 h-4 text-emerald-300 transition-transform transform" id="patients-submenu-chevron" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+
+        <div id="patients-submenu" class="pl-12 pr-2 space-y-1">
+          <a href="{% url "patients:patient_list" %}" class="block py-1.5 text-xs text-emerald-200 hover:text-white transition-colors">
+            • {% trans "Tous les dossiers" %}
+          </a>
+          {% if request.user.is_agent_accueil or request.user.is_superuser %}
+            <a href="{% url "patients:patient_create" %}" class="block py-1.5 text-xs text-emerald-200 hover:text-white transition-colors">
+              • {% trans "+ Nouveau patient" %}
+            </a>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Item 3: Rendez-vous & Agenda (Collapsible) -->
+      <div class="space-y-1">
+        <button
+          type="button"
+          onclick="toggleMenu('rdv-submenu', this)"
+          class="w-full flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-semibold text-emerald-100/90 hover:text-white hover:bg-white/10 transition-colors">
+          <div class="flex items-center gap-3.5">
+            {% include "components/atoms/icon.html" with name="calendar" size="w-5 h-5 text-emerald-300" %}
+            <span>{% trans "Rendez-vous & Ag..." %}</span>
+          </div>
+          <svg class="w-4 h-4 text-emerald-300 transition-transform transform" id="rdv-submenu-chevron" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+
+        <div id="rdv-submenu" class="pl-12 pr-2 space-y-1">
+          <a href="{% url "patients:appointment_list" %}?date_filter=today" class="block py-1.5 text-xs text-emerald-200 hover:text-white transition-colors">
+            • {% trans "Planning du jour" %}
+          </a>
+          <a href="{% url "patients:appointment_list" %}" class="block py-1.5 text-xs text-emerald-200 hover:text-white transition-colors">
+            • {% trans "Agenda complet" %}
+          </a>
+          <a href="{% url "patients:appointment_create" %}" class="block py-1.5 text-xs text-emerald-200 hover:text-white transition-colors">
+            • {% trans "+ Planifier un RDV" %}
+          </a>
+        </div>
+      </div>
+
+      <!-- Item 4: Notifications & SMS -->
+      <div>
+        <button
+          type="button"
+          onclick="toggleMenu('notif-submenu', this)"
+          class="w-full flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-semibold text-emerald-100/90 hover:text-white hover:bg-white/10 transition-colors">
+          <div class="flex items-center gap-3.5">
+            {% include "components/atoms/icon.html" with name="bell" size="w-5 h-5 text-emerald-300" %}
+            <span>{% trans "Notifications & SMS" %}</span>
+          </div>
+          <svg class="w-4 h-4 text-emerald-300 transition-transform transform" id="notif-submenu-chevron" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+
+        <div id="notif-submenu" class="hidden pl-12 pr-2 space-y-1">
+          <span class="block py-1.5 text-xs text-emerald-300/70 italic">
+            {% trans "Rappels SMS automatiques actifs" %}
+          </span>
+        </div>
+      </div>
+
+    </nav>
+  </div>
+
+  <!-- Bottom: User Mini-Card Pill with Quick Settings & Logout (Identique à la capture) -->
+  <div class="p-4 border-t border-white/10 bg-black/10">
+    <div class="flex items-center justify-between p-2.5 rounded-2xl bg-white/10 hover:bg-white/15 transition-colors">
+      <!-- User info & Avatar -->
+      <a href="{% url "users:profile" %}" class="flex items-center gap-2.5 truncate flex-1 focus:outline-none">
+        <div class="relative shrink-0">
+          <div class="w-9 h-9 rounded-xl bg-emerald-200 text-[#0B4D3C] font-black flex items-center justify-center text-xs">
+            {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+          </div>
+          <span class="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-400 ring-2 ring-[#0B4D3C]"></span>
+        </div>
+        <div class="text-left truncate">
+          <p class="text-xs font-bold text-white truncate leading-tight">
+            {{ user.first_name }} {{ user.last_name|first|upper }}.
+          </p>
+          <p class="text-[10px] text-emerald-200/80 truncate leading-tight">
+            {% if user.is_agent_accueil %}
+              {% trans "Réceptionn..." %}
+            {% elif user.is_personnel_medical %}
+              {% trans "Praticien" %}
+            {% else %}
+              {% trans "Soignant" %}
+            {% endif %}
+          </p>
+        </div>
+      </a>
+
+      <!-- Quick Actions (Settings & Logout) -->
+      <div class="flex items-center gap-1 shrink-0 ml-1">
+        <a href="{% url "users:profile-edit" %}" class="p-1.5 text-emerald-300 hover:text-white rounded-lg hover:bg-white/10 transition-colors" title="{% trans "Paramètres" %}">
+          {% include "components/atoms/icon.html" with name="gear" size="w-4 h-4" %}
+        </a>
+        <form method="post" action="{% url "users:logout" %}">
+          {% csrf_token %}
+          <button type="submit" class="p-1.5 text-emerald-300 hover:text-rose-400 rounded-lg hover:bg-white/10 transition-colors cursor-pointer" title="{% trans "Déconnexion" %}">
+            {% include "components/atoms/icon.html" with name="logout" size="w-4 h-4" %}
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+</aside>
