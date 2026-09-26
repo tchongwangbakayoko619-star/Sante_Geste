@@ -14,6 +14,7 @@ from django.db.models import ProtectedError
 from django.urls import reverse
 from django.utils import timezone
 
+from apps.patients.forms import AppointmentCancelForm
 from apps.patients.forms import AppointmentForm
 from apps.patients.forms import PatientForm
 from apps.patients.models import Allergen
@@ -1194,6 +1195,384 @@ def test_appointment_service_reschedule_cancel_and_stats(sample_patient, doctor_
     assert "in_consultation_count" in stats
     assert "completed_count" in stats
     assert stats["today_count"] >= 1
+
+
+@pytest.mark.django_db
+def test_query_transform_tag(rf):
+    """Vérifie le bon fonctionnement du template tag query_transform avec conservation des filtres."""
+    from apps.patients.templatetags.patient_tags import query_transform
+
+    request = rf.get("/patients/?q=Dupont&status=active&gender=M&page=1")
+    context = {"request": request}
+
+    # Changement de page : conserve q, status, gender et met à jour page=2
+    result = query_transform(context, page=2)
+    assert "page=2" in result
+    assert "q=Dupont" in result
+    assert "status=active" in result
+    assert "gender=M" in result
+
+    # Suppression d'un paramètre en passant None ou chaîne vide
+    result_removed = query_transform(context, status=None, page=3)
+    assert "status=" not in result_removed
+    assert "page=3" in result_removed
+    assert "q=Dupont" in result_removed
+
+
+@pytest.mark.django_db
+def test_patient_list_view_multi_filters(client, agent_accueil):
+    """Vérifie les filtres multi-critères (statut, genre, groupe sanguin, tri) sur PatientListView."""
+    client.force_login(agent_accueil)
+
+    p1 = Patient.objects.create(
+        patient_number="PAT-TEST-0001",
+        first_name="Amadou",
+        last_name="Diallo",
+        date_of_birth=date(1990, 1, 1),
+        gender=GenderEnum.MALE,
+        blood_group=BloodGroupEnum.A_POSITIVE,
+        status=PatientStatusEnum.ACTIVE,
+    )
+    p2 = Patient.objects.create(
+        patient_number="PAT-TEST-0002",
+        first_name="Fatou",
+        last_name="Traore",
+        date_of_birth=date(1995, 5, 10),
+        gender=GenderEnum.FEMALE,
+        blood_group=BloodGroupEnum.O_POSITIVE,
+        status=PatientStatusEnum.ARCHIVED,
+    )
+
+    url = reverse("patients:patient_list")
+
+    # 1. Filtre par statut = ACTIVE
+    resp = client.get(url, {"status": PatientStatusEnum.ACTIVE})
+    assert resp.status_code == 200
+    patients = list(resp.context["patients"])
+    assert p1 in patients
+    assert p2 not in patients
+    assert resp.context["active_filters_count"] == 1
+
+    # 2. Filtre par genre = FEMALE
+    resp = client.get(url, {"gender": GenderEnum.FEMALE})
+    assert resp.status_code == 200
+    patients = list(resp.context["patients"])
+    assert p2 in patients
+    assert p1 not in patients
+
+    # 3. Filtre par groupe sanguin = A+
+    resp = client.get(url, {"blood_group": BloodGroupEnum.A_POSITIVE})
+    assert resp.status_code == 200
+    patients = list(resp.context["patients"])
+    assert p1 in patients
+    assert p2 not in patients
+
+    # 4. Tri par nom A-Z
+    resp = client.get(url, {"ordering": "last_name"})
+    assert resp.status_code == 200
+    patients = list(resp.context["patients"])
+    assert len(patients) >= 2
+    # Diallo vient avant Traore
+    assert patients[0].last_name <= patients[1].last_name
+
+    # 5. Recherche textuelle 'Fatou'
+    resp = client.get(url, {"q": "Fatou"})
+    assert resp.status_code == 200
+    patients = list(resp.context["patients"])
+    assert p2 in patients
+    assert p1 not in patients
+
+
+@pytest.mark.django_db
+def test_appointment_list_view_multi_filters(client, agent_accueil, doctor_user, sample_patient):
+    """Vérifie la recherche et les filtres multi-critères (médecin, statut, date précise) sur AppointmentListView."""
+    client.force_login(agent_accueil)
+
+    other_doctor = User.objects.create_user(
+        email="dr.kone@santegeste.com",
+        password="ValidPassword123!",
+        first_name="Seydou",
+        last_name="Kone",
+        is_personnel_medical=True,
+    )
+
+    base_time = timezone.now() + timedelta(days=2)
+    apt1 = create_appointment(
+        patient=sample_patient,
+        doctor=doctor_user,
+        scheduled_at=base_time.replace(hour=9, minute=0, second=0, microsecond=0),
+        reason="Consultation Cardiologie",
+    )
+    apt2 = create_appointment(
+        patient=sample_patient,
+        doctor=other_doctor,
+        scheduled_at=base_time.replace(hour=11, minute=0, second=0, microsecond=0),
+        reason="Bilan Pédiatrique",
+    )
+
+    url = reverse("patients:appointment_list")
+
+    # 1. Filtre date_filter=all + doctor=doctor_user.id
+    resp = client.get(url, {"date_filter": "all", "doctor": doctor_user.id})
+    assert resp.status_code == 200
+    appointments = list(resp.context["appointments"])
+    assert apt1 in appointments
+    assert apt2 not in appointments
+    assert resp.context["active_filters_count"] >= 1
+
+    # 2. Recherche par motif 'Cardiologie'
+    resp = client.get(url, {"date_filter": "all", "q": "Cardiologie"})
+    assert resp.status_code == 200
+    appointments = list(resp.context["appointments"])
+    assert apt1 in appointments
+    assert apt2 not in appointments
+
+    # 3. Filtre par date exacte
+    exact_date_str = base_time.strftime("%Y-%m-%d")
+    resp = client.get(url, {"date": exact_date_str})
+    assert resp.status_code == 200
+    appointments = list(resp.context["appointments"])
+    assert apt1 in appointments
+    assert apt2 in appointments
+
+    # 4. Filtre par statut clinique
+    apt2.status = AppointmentStatusEnum.IN_CONSULTATION
+    apt2.save()
+    resp_status = client.get(url, {"status": AppointmentStatusEnum.IN_CONSULTATION})
+    assert resp_status.status_code == 200
+    assert apt2 in list(resp_status.context["appointments"])
+    assert apt1 not in list(resp_status.context["appointments"])
+
+    # 5. Vérification de la présence de la barre de filtre harmonisée (identique à patients)
+    content = resp.content.decode("utf-8")
+    assert "appointment-filters-form" in content
+    assert 'name="q"' in content
+    assert 'name="status"' in content
+    assert 'name="doctor"' in content
+    assert 'name="date_filter"' in content
+    assert 'name="date"' in content
+    assert 'name="ordering"' in content
+
+
+@pytest.mark.django_db
+def test_appointment_list_planning_du_jour_vs_agenda_complet(client, agent_accueil, doctor_user, sample_patient):
+    """Vérifie la différence fondamentale entre 'Planning du jour' (?date_filter=today) et 'Agenda complet' (?date_filter=all / défaut)."""
+    client.force_login(agent_accueil)
+    now = timezone.now()
+
+    # RDV d'aujourd'hui
+    apt_today = create_appointment(
+        patient=sample_patient,
+        doctor=doctor_user,
+        scheduled_at=now.replace(hour=14, minute=0, second=0, microsecond=0),
+        reason="Consultation du jour",
+    )
+    # RDV dans 3 jours
+    apt_future = create_appointment(
+        patient=sample_patient,
+        doctor=doctor_user,
+        scheduled_at=(now + timedelta(days=3)).replace(hour=10, minute=0, second=0, microsecond=0),
+        reason="Consultation future",
+    )
+    # RDV il y a 3 jours
+    apt_past = Appointment.objects.create(
+        patient=sample_patient,
+        doctor=doctor_user,
+        scheduled_at=(now - timedelta(days=3)).replace(hour=9, minute=0, second=0, microsecond=0),
+        reason="Consultation passée",
+        status=AppointmentStatusEnum.COMPLETED,
+    )
+
+    url = reverse("patients:appointment_list")
+
+    # 1. Filtre Aujourd'hui (?date_filter=today) : uniquement le rendez-vous d'aujourd'hui
+    resp_today = client.get(url, {"date_filter": "today"})
+    assert resp_today.status_code == 200
+    today_appointments = list(resp_today.context["appointments"])
+    assert apt_today in today_appointments
+    assert apt_future not in today_appointments
+    assert apt_past not in today_appointments
+    assert resp_today.context["date_filter"] == "today"
+    assert "Agenda des Rendez-vous" in resp_today.content.decode("utf-8")
+    assert "Planning du Jour" not in resp_today.content.decode("utf-8")
+    assert "Planning du jour" not in resp_today.content.decode("utf-8")
+
+    # 2. Agenda complet (par défaut sans paramètre) : TOUS les rendez-vous
+    resp_default = client.get(url)
+    assert resp_default.status_code == 200
+    all_appointments = list(resp_default.context["appointments"])
+    assert apt_today in all_appointments
+    assert apt_future in all_appointments
+    assert apt_past in all_appointments
+    assert resp_default.context["date_filter"] == "all"
+    assert "Agenda Complet" in resp_default.content.decode("utf-8")
+
+    # 3. Agenda complet (explicite date_filter=all) : TOUS les rendez-vous
+    resp_all = client.get(url, {"date_filter": "all"})
+    assert resp_all.status_code == 200
+    all_explicit = list(resp_all.context["appointments"])
+    assert apt_today in all_explicit
+    assert apt_future in all_explicit
+    assert apt_past in all_explicit
+    assert resp_all.context["date_filter"] == "all"
+
+
+# ==============================================================================
+# Tests du Formulaire et de la Vue d'Annulation de Rendez-vous
+# ==============================================================================
+
+
+def test_appointment_cancel_form_valid():
+    """Vérifie qu'un motif prédéfini et la confirmation cochée rendent le formulaire valide."""
+    form = AppointmentCancelForm(
+        data={
+            "reason_category": "patient_request",
+            "reason_detail": "Voyage imprévu du patient",
+            "confirm_cancellation": True,
+        }
+    )
+    assert form.is_valid()
+    assert "Demande ou empêchement du patient : Voyage imprévu du patient" in form.get_cancellation_reason()
+
+
+def test_appointment_cancel_form_other_requires_detail():
+    """Vérifie que la catégorie 'Autre motif' exige des précisions textuelles."""
+    # Sans détail -> Invalide
+    form = AppointmentCancelForm(
+        data={
+            "reason_category": "other",
+            "reason_detail": "",
+            "confirm_cancellation": True,
+        }
+    )
+    assert not form.is_valid()
+    assert "reason_detail" in form.errors
+
+    # Avec détail -> Valide
+    form_valid = AppointmentCancelForm(
+        data={
+            "reason_category": "other",
+            "reason_detail": "Panne d'électricité dans le bloc",
+            "confirm_cancellation": True,
+        }
+    )
+    assert form_valid.is_valid()
+    assert form_valid.get_cancellation_reason() == "Panne d'électricité dans le bloc"
+
+
+def test_appointment_cancel_form_requires_confirmation():
+    """Vérifie que la case de confirmation est obligatoire."""
+    form = AppointmentCancelForm(
+        data={
+            "reason_category": "doctor_unavailable",
+            "confirm_cancellation": False,
+        }
+    )
+    assert not form.is_valid()
+    assert "confirm_cancellation" in form.errors
+
+
+@pytest.mark.django_db
+def test_appointment_cancel_view_get(client, agent_accueil, doctor_user, sample_patient):
+    """Vérifie l'affichage du formulaire de validation d'annulation via GET."""
+    client.force_login(agent_accueil)
+    scheduled_dt = timezone.now() + timedelta(days=1)
+    apt = create_appointment(
+        patient=sample_patient,
+        doctor=doctor_user,
+        scheduled_at=scheduled_dt,
+        reason="Consultation test annulation",
+    )
+    url = reverse("patients:appointment_cancel", kwargs={"pk": apt.pk})
+
+    response = client.get(url)
+    assert response.status_code == 200
+    assert "patients/appointment_cancel.html" in [t.name for t in response.templates]
+    assert response.context["appointment"] == apt
+    assert response.context["patient"] == sample_patient
+    content = response.content.decode("utf-8")
+    assert "Annulation de Rendez-vous" in content
+    assert sample_patient.full_name in content
+    assert "Conserver le rendez-vous" in content
+    assert "Confirmer l'annulation" in content
+
+
+@pytest.mark.django_db
+def test_appointment_cancel_view_post_success(client, agent_accueil, doctor_user, sample_patient):
+    """Vérifie la validation de l'annulation d'un rendez-vous via POST."""
+    client.force_login(agent_accueil)
+    scheduled_dt = timezone.now() + timedelta(days=1)
+    apt = create_appointment(
+        patient=sample_patient,
+        doctor=doctor_user,
+        scheduled_at=scheduled_dt,
+        reason="Consultation ORL",
+        notes="Notes initiales",
+    )
+    url = reverse("patients:appointment_cancel", kwargs={"pk": apt.pk})
+
+    post_data = {
+        "reason_category": "patient_request",
+        "reason_detail": "Patient alité à domicile",
+        "confirm_cancellation": True,
+        "next": reverse("patients:appointment_list"),
+    }
+    response = client.post(url, data=post_data)
+    assert response.status_code == 302
+    assert response.url == reverse("patients:appointment_list")
+
+    apt.refresh_from_db()
+    assert apt.status == AppointmentStatusEnum.CANCELLED
+    assert "[ANNULÉ]" in apt.notes
+    assert "Patient alité à domicile" in apt.notes
+    assert apt.updated_by == agent_accueil
+
+
+@pytest.mark.django_db
+def test_appointment_cancel_view_cannot_cancel_already_cancelled_or_completed(
+    client, agent_accueil, doctor_user, sample_patient
+):
+    """Vérifie qu'on ne peut pas ré-annuler un rendez-vous déjà annulé ou terminé."""
+    client.force_login(agent_accueil)
+    scheduled_dt = timezone.now() + timedelta(days=1)
+    apt = create_appointment(
+        patient=sample_patient,
+        doctor=doctor_user,
+        scheduled_at=scheduled_dt,
+        reason="Consultation déjà annulée",
+    )
+    apt.status = AppointmentStatusEnum.CANCELLED
+    apt.save()
+
+    url = reverse("patients:appointment_cancel", kwargs={"pk": apt.pk})
+    response = client.get(url)
+    assert response.status_code == 302  # Redirection avec message d'information
+
+    # Idem pour un rendez-vous déjà terminé
+    apt.status = AppointmentStatusEnum.COMPLETED
+    apt.save()
+    response = client.get(url)
+    assert response.status_code == 302
+
+
+@pytest.mark.django_db
+def test_appointment_cancel_view_rbac(client, caissier_user, doctor_user, sample_patient):
+    """Vérifie que les utilisateurs non autorisés (ex: caissier) reçoivent une interdiction 403."""
+    client.force_login(caissier_user)
+    scheduled_dt = timezone.now() + timedelta(days=1)
+    apt = create_appointment(
+        patient=sample_patient,
+        doctor=doctor_user,
+        scheduled_at=scheduled_dt,
+        reason="Consultation sécurité",
+    )
+    url = reverse("patients:appointment_cancel", kwargs={"pk": apt.pk})
+
+    response = client.get(url)
+    assert response.status_code == 403
+
+
+
 
 
 

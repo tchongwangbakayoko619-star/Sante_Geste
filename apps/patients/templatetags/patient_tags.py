@@ -65,3 +65,23 @@ def as_patient_presenter_filter(patient: Any) -> PatientPresenter:
     """Enveloppe une instance de patient dans son presenter dédié."""
     return PatientPresenter(patient)
 
+
+@register.simple_tag(takes_context=True)
+def query_transform(context: dict[str, Any], **kwargs: Any) -> str:
+    """Met à jour les paramètres GET de la requête courante en préservant l'ensemble des filtres actifs.
+
+    Usage:
+        <a href="?{% query_transform page=2 %}">Page 2</a>
+        <a href="?{% query_transform ordering='last_name' %}">Trier par nom</a>
+    """
+    request = context.get("request")
+    if not request:
+        return ""
+    query = request.GET.copy()
+    for k, v in kwargs.items():
+        if v is not None and v != "":
+            query[k] = str(v)
+        else:
+            query.pop(k, None)
+    return query.urlencode()
+

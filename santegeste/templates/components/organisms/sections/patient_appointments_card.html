@@ -70,6 +70,14 @@
                 </button>
               </form>
             {% endif %}
+
+            {% if rdv.status != "cancelled" and rdv.status != "completed" %}
+              <a href="{% url "patients:appointment_cancel" rdv.pk %}?next={{ patient.get_absolute_url|urlencode }}" class="p-1.5 text-neutral-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition-colors cursor-pointer" title="{% trans "Annuler ce rendez-vous" %}" aria-label="{% trans "Annuler le rendez-vous" %}">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+              </a>
+            {% endif %}
           </div>
         </div>
       {% endfor %}

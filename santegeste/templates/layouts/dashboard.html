@@ -24,6 +24,12 @@
     <!-- Main Application Workspace (Single Block Definition) -->
     <main id="main-content" class="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8" tabindex="-1">
       {% include "components/molecules/flash-messages.html" %}
+
+      <!-- Molecule: Breadcrumbs Navigation (Fil d'Ariane) -->
+      {% block breadcrumbs %}
+        {% include "components/molecules/nav/breadcrumbs.html" %}
+      {% endblock breadcrumbs %}
+
       {% block main %}
         {% block content_inner %}
         {% endblock content_inner %}

@@ -9,6 +9,8 @@
   {% endif %}
 {% endblock title %}
 
+{% block breadcrumbs %}{% endblock breadcrumbs %}
+
 {% block content_inner %}
 {% if request.user.is_authenticated %}
   <!-- Authenticated Workspace: Design conforme à la capture d'écran -->

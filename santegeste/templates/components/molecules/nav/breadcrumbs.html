@@ -1,0 +1,49 @@
+{# Molecule: Breadcrumbs (Fil d'Ariane - CS² Health Design System) #}
+{# Props: items (optionnel, liste de dicts avec 'label', 'url', 'active'), show_on_home (bool, défaut: False) #}
+{% load i18n navigation_tags %}
+
+{% get_breadcrumbs items as crumbs %}
+
+{% if crumbs and crumbs|length > 1 or show_on_home %}
+  <nav aria-label="{% trans "Fil d'Ariane" %}" class="flex items-center text-xs text-neutral-500 py-1 px-0.5 mb-4 sm:mb-5 overflow-x-auto no-scrollbar whitespace-nowrap">
+    <ol class="inline-flex items-center gap-1.5 sm:gap-2">
+      {% for item in crumbs %}
+        {% if not forloop.first %}
+          <!-- Séparateur Chevron -->
+          <li class="inline-flex items-center text-neutral-300 shrink-0" aria-hidden="true">
+            {% include "components/atoms/icon.html" with name="chevron-right" size="w-3.5 h-3.5" %}
+          </li>
+        {% endif %}
+
+        <li class="inline-flex items-center shrink-0">
+          {% if forloop.first %}
+            <!-- Élément Accueil / Racine -->
+            {% if item.url and not forloop.last %}
+              <a href="{{ item.url }}" class="inline-flex items-center gap-1.5 text-neutral-500 hover:text-emerald-700 transition-colors font-medium focus:outline-none focus:underline rounded-md px-1 py-0.5 -mx-1">
+                {% include "components/atoms/icon.html" with name="home" size="w-3.5 h-3.5 text-neutral-400" %}
+                <span>{{ item.label }}</span>
+              </a>
+            {% else %}
+              <span class="inline-flex items-center gap-1.5 text-neutral-900 font-semibold" aria-current="page">
+                {% include "components/atoms/icon.html" with name="home" size="w-3.5 h-3.5 text-emerald-600" %}
+                <span>{{ item.label }}</span>
+              </span>
+            {% endif %}
+
+          {% elif forloop.last or not item.url %}
+            <!-- Page active finale -->
+            <span class="text-neutral-900 font-semibold truncate max-w-[200px] sm:max-w-xs md:max-w-md" aria-current="page" title="{{ item.label }}">
+              {{ item.label }}
+            </span>
+
+          {% else %}
+            <!-- Niveaux intermédiaires cliquables -->
+            <a href="{{ item.url }}" class="text-neutral-500 hover:text-emerald-700 transition-colors font-medium focus:outline-none focus:underline rounded-md px-1 py-0.5 -mx-1">
+              {{ item.label }}
+            </a>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ol>
+  </nav>
+{% endif %}

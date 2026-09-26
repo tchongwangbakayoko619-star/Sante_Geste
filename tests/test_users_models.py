@@ -174,3 +174,40 @@ def test_admin_registration_and_configuration() -> None:
     assert otp_admin.has_change_permission(request) is False
     assert otp_admin.has_delete_permission(request) is True
 
+
+def test_user_role_display() -> None:
+    """Vérifie que role_display et get_role_display retournent le libellé correct selon le rôle."""
+    # Personnel médical
+    u_med = User(email="med@santegeste.com", is_personnel_medical=True)
+    assert u_med.role_display == "Personnel médical"
+    assert u_med.get_role_display() == "Personnel médical"
+
+    # Agent d'accueil
+    u_acc = User(email="acc@santegeste.com", is_agent_accueil=True)
+    assert u_acc.role_display == "Agent d'accueil"
+
+    # Propriétaire
+    u_prop = User(email="prop@santegeste.com", is_proprietaire=True)
+    assert u_prop.role_display == "Propriétaire"
+
+    # Responsable pharmacie
+    u_resp = User(email="resp@santegeste.com", is_responsable_pharmacie=True)
+    assert u_resp.role_display == "Responsable pharmacie"
+
+    # Vendeur pharmacie
+    u_vend = User(email="vend@santegeste.com", is_vendeur_pharmacie=True)
+    assert u_vend.role_display == "Vendeur pharmacie"
+
+    # Caissier
+    u_cais = User(email="cais@santegeste.com", is_caissier=True)
+    assert u_cais.role_display == "Caissier"
+
+    # Administrateur (superuser sans rôle métier)
+    u_admin = User(email="admin@santegeste.com", is_superuser=True)
+    assert u_admin.role_display == "Administrateur"
+
+    # Défaut
+    u_def = User(email="user@santegeste.com")
+    assert u_def.role_display == "Utilisateur"
+
+

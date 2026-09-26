@@ -52,12 +52,8 @@
 
   <!-- Search and Table Container -->
   <div class="bg-white border border-neutral-200/80 rounded-3xl shadow-xs overflow-hidden">
-    <!-- Search Bar Molecule -->
-    <div class="p-4 sm:p-6 border-b border-neutral-100 bg-neutral-50/50">
-      {% url "patients:patient_list" as list_url %}
-      {% trans "Rechercher par nom, prénom, matricule ou téléphone..." as search_placeholder %}
-      {% include "components/molecules/search/search_bar.html" with query_value=query placeholder=search_placeholder clear_url=list_url %}
-    </div>
+    <!-- Patient Filters Bar Molecule -->
+    {% include "components/molecules/filters/patient_filters_bar.html" with query=query selected_status=selected_status status_choices=status_choices selected_gender=selected_gender gender_choices=gender_choices selected_blood_group=selected_blood_group blood_group_choices=blood_group_choices selected_period=selected_period period_choices=period_choices selected_ordering=selected_ordering ordering_choices=ordering_choices active_filters_count=active_filters_count %}
 
     <!-- Patient Table Organism -->
     {% include "components/organisms/tables/patient_table.html" with patients=patients query=query %}

@@ -24,7 +24,7 @@
       </div>
     </div>
     <div class="pt-4 mt-2 border-t border-neutral-100 flex items-center gap-1.5 text-xs font-bold text-[#14967F]">
-      <span>&uarr;</span>
+      {% include "components/atoms/icon.html" with name="trend-up" size="w-3.5 h-3.5" %}
       <span>{{ rdv_confirmed_count }} {% trans "confirmés / honorés" %}</span>
     </div>
   </div>
@@ -45,7 +45,7 @@
       </div>
     </div>
     <div class="pt-4 mt-2 border-t border-neutral-100 flex items-center gap-1.5 text-xs font-bold text-[#14967F]">
-      <span>&uarr;</span>
+      {% include "components/atoms/icon.html" with name="trend-up" size="w-3.5 h-3.5" %}
       <span>+{{ new_patients_period }} {% trans "sur la période" %}</span>
     </div>
   </div>
@@ -66,7 +66,7 @@
       </div>
     </div>
     <div class="pt-4 mt-2 border-t border-neutral-100 flex items-center gap-1.5 text-xs font-bold text-blue-600">
-      <span>&#8599;</span>
+      {% include "components/atoms/icon.html" with name="trend-up" size="w-3.5 h-3.5" %}
       <span>{% trans "Prochains créneaux" %}</span>
     </div>
   </div>
@@ -87,7 +87,7 @@
       </div>
     </div>
     <div class="pt-4 mt-2 border-t border-neutral-100 flex items-center gap-1.5 text-xs font-bold text-rose-600">
-      <span>&darr;</span>
+      {% include "components/atoms/icon.html" with name="trend-down" size="w-3.5 h-3.5" %}
       <span>{% trans "Motifs enregistrés" %}</span>
     </div>
   </div>

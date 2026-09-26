@@ -89,7 +89,7 @@
         <button
           type="button"
           onclick="toggleMenu('rdv-submenu', this)" aria-label="{% trans "Rendez-vous & Ag..." %}"
-          class="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-emerald-300 {% if current_route == 'appointment_list' or current_route == 'appointment_create' or current_route == 'appointment_status_update' %}bg-teal-400/15 text-white{% else %}text-emerald-100/90 hover:text-white hover:bg-white/10{% endif %}" aria-controls="rdv-submenu" aria-expanded="true">
+          class="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-emerald-300 {% if current_route == 'appointment_list' or current_route == 'appointment_create' or current_route == 'appointment_status_update' or current_route == 'appointment_cancel' %}bg-teal-400/15 text-white{% else %}text-emerald-100/90 hover:text-white hover:bg-white/10{% endif %}" aria-controls="rdv-submenu" aria-expanded="true">
           <div class="flex items-center gap-3.5">
             {% include "components/atoms/icon.html" with name="calendar" size="w-5 h-5 text-emerald-300" %}
             <span data-sidebar-label>{% trans "Rendez-vous & Ag..." %}</span>
@@ -100,11 +100,7 @@
         </button>
 
         <div id="rdv-submenu" data-sidebar-submenu class="relative ml-12 border-l border-teal-300/30 pl-6 pr-2 space-y-1">
-          <a href="{% url "patients:appointment_list" %}?date_filter=today" class="relative flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs {% if current_route == 'appointment_list' and request.GET.date_filter == 'today' %}bg-white/10 text-white{% else %}text-slate-300 hover:bg-white/10 hover:text-white{% endif %} transition-colors before:absolute before:-left-[31px] before:top-1/2 before:size-2 before:-translate-y-1/2 before:rounded-full before:bg-teal-400 before:ring-4 before:ring-[#052d31]">
-            {% include "components/atoms/icon.html" with name="clock" size="w-3.5 h-3.5 shrink-0" %}
-            <span>{% trans "Planning du jour" %}</span>
-          </a>
-          <a href="{% url "patients:appointment_list" %}" class="relative flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs {% if current_route == 'appointment_list' and request.GET.date_filter != 'today' %}bg-white/10 text-white{% else %}text-slate-300 hover:bg-white/10 hover:text-white{% endif %} transition-colors before:absolute before:-left-[31px] before:top-1/2 before:size-2 before:-translate-y-1/2 before:rounded-full before:bg-teal-400 before:ring-4 before:ring-[#052d31]">
+          <a href="{% url "patients:appointment_list" %}" class="relative flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs {% if current_route == 'appointment_list' %}bg-white/10 text-white{% else %}text-slate-300 hover:bg-white/10 hover:text-white{% endif %} transition-colors before:absolute before:-left-[31px] before:top-1/2 before:size-2 before:-translate-y-1/2 before:rounded-full before:bg-teal-400 before:ring-4 before:ring-[#052d31]">
             {% include "components/atoms/icon.html" with name="calendar" size="w-3.5 h-3.5 shrink-0" %}
             <span>{% trans "Agenda complet" %}</span>
           </a>
@@ -160,14 +156,8 @@
           <p class="text-xs font-bold text-white truncate leading-tight">
             {{ user.first_name }} {{ user.last_name|first|upper }}.
           </p>
-          <p class="text-[10px] text-emerald-200/80 truncate leading-tight">
-            {% if user.is_agent_accueil %}
-              {% trans "Réceptionn..." %}
-            {% elif user.is_personnel_medical %}
-              {% trans "Praticien" %}
-            {% else %}
-              {% trans "Soignant" %}
-            {% endif %}
+          <p class="text-[10px] text-emerald-200/80 truncate leading-tight" title="{{ user.role_display }}">
+            {{ user.role_display }}
           </p>
         </div>
       </a>

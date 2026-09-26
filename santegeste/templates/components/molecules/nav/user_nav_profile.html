@@ -28,15 +28,7 @@
         {% include "components/atoms/icon.html" with name="chevron-down" size="w-3 h-3 text-neutral-400" %}
       </div>
       <span class="text-[11px] text-neutral-500 block leading-tight">
-        {% if user.is_agent_accueil %}
-          {% trans "Agent d'accueil" %}
-        {% elif user.is_personnel_medical %}
-          {% trans "Personnel médical" %}
-        {% elif user.is_superuser %}
-          {% trans "Administrateur" %}
-        {% else %}
-          {% trans "Soignant" %}
-        {% endif %}
+        {{ user.role_display }}
       </span>
     </div>
   </button>

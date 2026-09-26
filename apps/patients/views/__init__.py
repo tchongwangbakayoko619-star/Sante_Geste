@@ -1,5 +1,6 @@
 """Vues pour la gestion des patients, des rendez-vous et du tableau de bord."""
 
+from .appointment_views import AppointmentCancelView
 from .appointment_views import AppointmentCreateView
 from .appointment_views import AppointmentListView
 from .appointment_views import AppointmentStatusUpdateView
@@ -13,6 +14,7 @@ from .patient_views import PatientMedicalUpdateView
 from .patient_views import PatientUpdateView
 
 __all__ = [
+    "AppointmentCancelView",
     "AppointmentCreateView",
     "AppointmentListView",
     "AppointmentStatusUpdateView",

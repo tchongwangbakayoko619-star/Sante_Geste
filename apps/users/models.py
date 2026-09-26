@@ -126,6 +126,31 @@ class User(AbstractBaseUser, PermissionsMixin, BaseModel):
         full = f"{self.first_name} {self.last_name}".strip()
         return full or self.email
 
+    @property
+    def role_display(self) -> str:
+        """Retourne le libellé lisible du rôle principal de l'utilisateur."""
+        if self.is_proprietaire:
+            return str(_("Propriétaire"))
+        if self.is_personnel_medical:
+            return str(_("Personnel médical"))
+        if self.is_responsable_pharmacie:
+            return str(_("Responsable pharmacie"))
+        if self.is_vendeur_pharmacie:
+            return str(_("Vendeur pharmacie"))
+        if self.is_caissier:
+            return str(_("Caissier"))
+        if self.is_agent_accueil:
+            return str(_("Agent d'accueil"))
+        if self.is_superuser:
+            return str(_("Administrateur"))
+        if self.is_staff:
+            return str(_("Personnel"))
+        return str(_("Utilisateur"))
+
+    def get_role_display(self) -> str:
+        """Retourne le libellé d'affichage du rôle (alias méthode)."""
+        return self.role_display
+
     ROLE_FIELD_MAP: dict[UserRoleEnum, str] = {
         UserRoleEnum.PROPRIETAIRE: "is_proprietaire",
         UserRoleEnum.RESPONSABLE_PHARMACIE: "is_responsable_pharmacie",

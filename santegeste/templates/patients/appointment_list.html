@@ -1,7 +1,9 @@
 {% extends "base.html" %}
 {% load static i18n %}
 
-{% block title %}{% translate "Agenda des Rendez-vous" %} - CS² Health{% endblock title %}
+{% block title %}
+  {% translate "Agenda des Rendez-vous" %} - CS² Health
+{% endblock title %}
 
 {% block content_inner %}
 <div class="space-y-6">
@@ -12,7 +14,7 @@
       <div class="flex items-center gap-2">
         <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700">
           <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
-          {% trans "Planning Clinique" %}
+          {% trans "Agenda Complet" %}
         </span>
       </div>
       <h1 class="text-2xl sm:text-3xl font-extrabold text-neutral-900 tracking-tight font-title mt-2">
@@ -27,7 +29,7 @@
     <div class="flex items-center gap-3">
       <a href="{% url "patients:patient_list" %}" class="btn btn-outline py-2.5 px-4 text-xs sm:text-sm inline-flex items-center gap-2">
         {% include "components/atoms/icons/icon.html" with name="users" size="w-4 h-4 text-neutral-500" %}
-        {% trans "Liste des patients" %}
+        {% trans "Dossiers patients" %}
       </a>
       <a href="{% url "patients:appointment_create" %}" class="btn btn-primary py-2.5 px-4 text-xs sm:text-sm inline-flex items-center gap-2 shadow-xs font-bold">
         {% include "components/atoms/icons/icon.html" with name="plus" size="w-4 h-4" %}
@@ -53,23 +55,8 @@
 
   <!-- Filters & Appointments Table Card -->
   <div class="bg-white border border-neutral-200/80 rounded-3xl shadow-xs overflow-hidden">
-    <!-- Filter Navigation Tabs -->
-    <div class="p-4 sm:p-6 border-b border-neutral-100 flex flex-wrap items-center justify-between gap-4 bg-neutral-50/40">
-      <div class="flex flex-wrap items-center gap-2">
-        <a href="?date_filter=today" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-colors {% if date_filter == 'today' %}bg-[#14967F] text-white shadow-2xs{% else %}bg-white text-neutral-600 border border-neutral-200 hover:bg-neutral-50{% endif %}">
-          {% trans "Aujourd'hui" %}
-        </a>
-        <a href="?date_filter=upcoming" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-colors {% if date_filter == 'upcoming' %}bg-[#14967F] text-white shadow-2xs{% else %}bg-white text-neutral-600 border border-neutral-200 hover:bg-neutral-50{% endif %}">
-          {% trans "À venir" %}
-        </a>
-        <a href="?date_filter=past" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-colors {% if date_filter == 'past' %}bg-[#14967F] text-white shadow-2xs{% else %}bg-white text-neutral-600 border border-neutral-200 hover:bg-neutral-50{% endif %}">
-          {% trans "Historique" %}
-        </a>
-        <a href="?date_filter=all" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-colors {% if date_filter == 'all' %}bg-[#14967F] text-white shadow-2xs{% else %}bg-white text-neutral-600 border border-neutral-200 hover:bg-neutral-50{% endif %}">
-          {% trans "Tous" %}
-        </a>
-      </div>
-    </div>
+    <!-- Appointment Filters Bar Molecule -->
+    {% include "components/molecules/filters/appointment_filters_bar.html" with query=query date_filter=date_filter selected_date=selected_date selected_doctor=selected_doctor doctors=doctors selected_status=selected_status status_choices=status_choices statuses=statuses selected_ordering=selected_ordering ordering_choices=ordering_choices active_filters_count=active_filters_count date_filter_choices=date_filter_choices %}
 
     <!-- Appointment Table Organism -->
     {% include "components/organisms/tables/appointment_table.html" with appointments=appointments %}

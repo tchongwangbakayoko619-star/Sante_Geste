@@ -35,11 +35,13 @@ from apps.patients.services import update_patient_medical_record
 from apps.users.mixins import AgentAccueilRequiredMixin
 from apps.users.mixins import PatientManagementRequiredMixin
 from apps.users.mixins import PersonnelMedicalRequiredMixin
+from utils.enums import BloodGroupEnum
+from utils.enums import GenderEnum
 from utils.enums import PatientStatusEnum
 
 
 class PatientListView(PatientManagementRequiredMixin, ListView):
-    """Liste paginée des patients avec recherche instantanée et indicateurs clés."""
+    """Liste paginée des patients avec recherche instantanée, filtres multi-critères et indicateurs clés."""
 
     model = Patient
     template_name = "patients/patient_list.html"
@@ -49,14 +51,104 @@ class PatientListView(PatientManagementRequiredMixin, ListView):
     def get_queryset(self) -> QuerySet[Patient]:
         query = self.request.GET.get("q", "").strip()
         if query:
-            return search_patients(query, active_only=False).order_by("-created_at")
-        return Patient.objects.all().order_by("-created_at")
+            qs = search_patients(query, active_only=False)
+        else:
+            qs = Patient.objects.all()
+
+        # Filtre par statut administratif / clinique
+        status = self.request.GET.get("status", "").strip()
+        if status:
+            qs = qs.filter(status=status)
+
+        # Filtre par sexe / genre
+        gender = self.request.GET.get("gender", "").strip()
+        if gender:
+            qs = qs.filter(gender=gender)
+
+        # Filtre par groupe sanguin
+        blood_group = self.request.GET.get("blood_group", "").strip()
+        if blood_group:
+            qs = qs.filter(blood_group=blood_group)
+
+        # Filtre par période de création / enregistrement
+        period = self.request.GET.get("period", "").strip()
+        now = timezone.now()
+        if period == "today":
+            today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+            qs = qs.filter(created_at__gte=today_start)
+        elif period == "week":
+            week_start = (now - timezone.timedelta(days=now.weekday())).replace(hour=0, minute=0, second=0, microsecond=0)
+            qs = qs.filter(created_at__gte=week_start)
+        elif period == "month":
+            month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            qs = qs.filter(created_at__gte=month_start)
+        elif period == "year":
+            year_start = now.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
+            qs = qs.filter(created_at__gte=year_start)
+
+        # Tri dynamique sécurisé
+        ordering = self.request.GET.get("ordering", "-created_at").strip()
+        allowed_orderings = {
+            "-created_at": "-created_at",
+            "created_at": "created_at",
+            "last_name": "last_name",
+            "-last_name": "-last_name",
+            "patient_number": "patient_number",
+        }
+        order_field = allowed_orderings.get(ordering, "-created_at")
+        return qs.order_by(order_field)
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         query = self.request.GET.get("q", "").strip()
         context["search_form"] = PatientSearchForm(initial={"q": query})
         context["query"] = query
+
+        # Filtres sélectionnés
+        status = self.request.GET.get("status", "").strip()
+        gender = self.request.GET.get("gender", "").strip()
+        blood_group = self.request.GET.get("blood_group", "").strip()
+        period = self.request.GET.get("period", "").strip()
+        ordering = self.request.GET.get("ordering", "-created_at").strip()
+
+        context["selected_status"] = status
+        context["selected_gender"] = gender
+        context["selected_blood_group"] = blood_group
+        context["selected_period"] = period
+        context["selected_ordering"] = ordering
+
+        # Choix pour les listes déroulantes des filtres
+        context["status_choices"] = PatientStatusEnum.choices
+        context["gender_choices"] = GenderEnum.choices
+        context["blood_group_choices"] = BloodGroupEnum.choices
+        context["period_choices"] = [
+            ("today", _("Aujourd'hui")),
+            ("week", _("Cette semaine")),
+            ("month", _("Ce mois")),
+            ("year", _("Cette année")),
+        ]
+        context["ordering_choices"] = [
+            ("-created_at", _("Derniers inscrits")),
+            ("created_at", _("Premiers inscrits")),
+            ("last_name", _("Nom de famille (A-Z)")),
+            ("-last_name", _("Nom de famille (Z-A)")),
+        ]
+
+        # Compteur de filtres actifs
+        active_filters = 0
+        if query:
+            active_filters += 1
+        if status:
+            active_filters += 1
+        if gender:
+            active_filters += 1
+        if blood_group:
+            active_filters += 1
+        if period:
+            active_filters += 1
+        if ordering and ordering != "-created_at":
+            active_filters += 1
+        context["active_filters_count"] = active_filters
 
         # Métriques clés d'accueil
         now = timezone.now()

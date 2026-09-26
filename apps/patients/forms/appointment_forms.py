@@ -155,3 +155,78 @@ class AppointmentStatusForm(forms.ModelForm):
             ),
         }
 
+
+class AppointmentCancelForm(forms.Form):
+    """Formulaire de validation et justification pour l'annulation d'un rendez-vous médical."""
+
+    CANCELLATION_REASONS = [
+        ("", _("Sélectionnez le motif de l'annulation...")),
+        ("patient_request", _("Demande ou empêchement du patient")),
+        ("patient_unreachable", _("Patient injoignable / Absence non signalée")),
+        ("doctor_unavailable", _("Indisponibilité ou absence imprévue du praticien")),
+        ("scheduling_error", _("Erreur de programmation / Doublon de créneau")),
+        ("health_condition", _("Hospitalisation / Urgence médicale prioritaire")),
+        ("other", _("Autre motif (à préciser)")),
+    ]
+
+    reason_category = forms.ChoiceField(
+        choices=CANCELLATION_REASONS,
+        label=_("Motif de l'annulation"),
+        required=True,
+        widget=forms.Select(
+            attrs={
+                "class": "w-full px-4 py-2.5 rounded-xl border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-rose-500 text-sm text-neutral-800 transition-colors bg-white",
+            }
+        ),
+    )
+
+    reason_detail = forms.CharField(
+        label=_("Précisions complémentaires"),
+        required=False,
+        widget=forms.Textarea(
+            attrs={
+                "rows": 3,
+                "placeholder": _("Précisez les circonstances de l'annulation ou toute consigne pour le suivi..."),
+                "class": "w-full px-4 py-2.5 rounded-xl border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-rose-500 text-sm text-neutral-800 transition-colors resize-none",
+            }
+        ),
+        help_text=_("Obligatoire si vous sélectionnez « Autre motif »."),
+    )
+
+    confirm_cancellation = forms.BooleanField(
+        label=_("Je confirme l'annulation définitive de ce rendez-vous et la libération du créneau."),
+        required=True,
+        widget=forms.CheckboxInput(
+            attrs={
+                "class": "h-4 w-4 text-rose-600 focus:ring-rose-500 border-neutral-300 rounded cursor-pointer",
+            }
+        ),
+    )
+
+    def clean(self) -> dict[str, Any]:
+        cleaned_data = super().clean()
+        category = cleaned_data.get("reason_category")
+        detail = (cleaned_data.get("reason_detail") or "").strip()
+
+        if category == "other" and not detail:
+            self.add_error(
+                "reason_detail",
+                _("Veuillez préciser la raison de l'annulation lorsque vous sélectionnez « Autre motif »."),
+            )
+
+        return cleaned_data
+
+    def get_cancellation_reason(self) -> str:
+        """Compose une chaîne explicite pour le service métier cancel_appointment."""
+        category = self.cleaned_data.get("reason_category", "")
+        detail = (self.cleaned_data.get("reason_detail") or "").strip()
+        reasons_dict = dict(self.CANCELLATION_REASONS)
+        category_label = str(reasons_dict.get(category, category))
+
+        if detail:
+            if category == "other":
+                return detail
+            return f"{category_label} : {detail}"
+        return category_label
+
+
