@@ -14,7 +14,7 @@
   {% endif %}
 
   <!-- Main Content Wrapper with Topbar (offset by sidebar width on lg when authenticated) -->
-  <div class="flex-1 {% if request.user.is_authenticated %}lg:pl-72 flex flex-col w-full min-h-screen transition-all{% endif %}">
+  <div id="dashboard-main-content" class="flex-1 {% if request.user.is_authenticated %}lg:pl-72 flex flex-col w-full min-h-screen transition-all{% endif %}">
 
     {% if request.user.is_authenticated %}
       <!-- Organism: Dashboard Topbar (Barre supérieure avec recherche ⌘K, notifications, langue, profil) -->

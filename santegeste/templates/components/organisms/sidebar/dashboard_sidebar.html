@@ -3,7 +3,7 @@
 <!-- Sidebar Drawer Backdrop (Mobile only) -->
 <div
   id="sidebar-backdrop"
-  class="fixed inset-0 bg-neutral-900/60 backdrop-blur-xs z-40 lg:hidden hidden transition-opacity"
+  class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-40 lg:hidden hidden transition-opacity"
   onclick="toggleSidebar(false)"
   aria-hidden="true">
 </div>
@@ -11,70 +11,74 @@
 <!-- Main Sticky / Fixed Sidebar -->
 <aside
   id="dashboard-sidebar"
-  class="fixed top-0 bottom-0 left-0 w-64 sm:w-72 bg-[#0B4D3C] text-white flex flex-col justify-between z-50 transition-transform duration-300 ease-in-out -translate-x-full lg:translate-x-0 shadow-2xl lg:shadow-none"
+  class="fixed top-0 bottom-0 left-0 w-72 bg-[#052d31] text-white flex flex-col justify-between z-50 overflow-hidden border-r border-teal-300/10 transition-all duration-300 ease-out -translate-x-full lg:translate-x-0 shadow-2xl lg:shadow-none"
   aria-label="{% trans "Menu de navigation principal" %}">
 
   <!-- Top: Logo & Main Navigation -->
-  <div class="flex-1 overflow-y-auto py-6 px-4 space-y-6">
+  <div class="flex-1 overflow-y-auto no-scrollbar py-6 px-4 space-y-6 bg-[radial-gradient(circle_at_top_right,_rgba(20,184,166,.16),_transparent_32rem)]">
 
     <!-- Brand Logo in Squircle (Identique à la capture) -->
-    <div class="flex items-center justify-between px-2">
+    <div class="flex items-center justify-between px-2 pb-5 border-b border-white/10" data-sidebar-header>
       <a href="{% url "home" %}" class="flex items-center gap-3.5 group focus:outline-none">
-        <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#18A68C] via-[#14967F] to-[#0D7A65] flex items-center justify-center shadow-lg border border-white/20 group-hover:scale-105 transition-transform">
+        <div class="w-14 h-14 rounded-2xl bg-emerald-500 flex items-center justify-center shadow-lg border border-white/20 group-hover:scale-105 transition-transform" data-sidebar-brand>
           <svg class="w-8 h-8 text-white" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M35 15C35 9.477 39.477 5 45 5H55C60.523 5 65 9.477 65 15V35H85C90.523 35 95 39.477 95 45V55C95 60.523 90.523 65 85 65H65V85C65 90.523 60.523 95 55 95H45C39.477 95 35 90.523 35 85V65H15C9.477 65 5 60.523 5 55V45C5 39.477 9.477 35 15 35H35V15Z" fill="currentColor" />
-            <path d="M12 50H36L44 32L54 68L64 42L70 50H88" stroke="#0B4D3C" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M12 50H36L44 32L54 68L64 42L70 50H88" stroke="#052d31" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" />
           </svg>
         </div>
-        <div class="hidden sm:block">
-          <span class="font-title font-extrabold text-lg text-white tracking-tight leading-tight block">SantéGeste</span>
-          <span class="text-[10px] text-emerald-300 font-semibold uppercase tracking-wider block">CS² Health</span>
+        <div class="hidden sm:block" data-sidebar-label>
+          <span class="font-title font-extrabold text-xl text-white tracking-tight leading-tight block"><span>Santé</span><span class="text-emerald-400">Geste</span></span>
+          <span class="text-[10px] text-slate-300 font-semibold uppercase tracking-[.16em] block">CS² Health</span>
         </div>
       </a>
 
+      <button type="button" onclick="toggleDesktopSidebar()" class="hidden lg:block p-2 rounded-xl text-slate-300 hover:text-white hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-emerald-300" aria-label="{% trans "Réduire le menu" %}" aria-pressed="false" data-sidebar-collapse><svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="m15 18-6-6 6-6" /></svg></button>
       <!-- Mobile Close Button -->
       <button
         type="button"
         onclick="toggleSidebar(false)"
-        class="lg:hidden p-2 rounded-xl text-emerald-200 hover:text-white hover:bg-white/10"
+        class="lg:hidden p-2 rounded-xl text-emerald-200 hover:text-white hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-emerald-300"
         aria-label="{% trans "Fermer le menu" %}">
         {% include "components/atoms/icon.html" with name="x-mark" size="w-5 h-5" %}
       </button>
     </div>
 
     <!-- Navigation Menu Items -->
-    <nav class="space-y-1.5 pt-2" aria-label="{% trans "Navigation latérale" %}">
+    {% with current_route=request.resolver_match.url_name %}
+    <nav class="space-y-2 pt-2" aria-label="{% trans "Navigation latérale" %}">
 
       <!-- Item 1: Dashboard (Active) -->
       <a
-        href="{% url "home" %}"
-        class="flex items-center gap-3.5 px-4 py-3 rounded-2xl text-sm font-bold text-white bg-[#13715C] shadow-sm transition-all">
+        href="{% url "home" %}" aria-label="{% trans "Dashboard" %}"
+        class="flex items-center gap-3.5 px-4 py-3 rounded-xl border-l-[5px] text-sm font-bold text-white transition-all focus-visible:outline-2 focus-visible:outline-emerald-300 {% if current_route == 'home' %}border-emerald-300 bg-teal-400/20 shadow-sm shadow-teal-950/30{% else %}border-transparent hover:bg-white/10{% endif %}"{% if current_route == 'home' %} aria-current="page"{% endif %}>
         {% include "components/atoms/icon.html" with name="dashboard-grid" size="w-5 h-5 text-emerald-200" %}
-        <span>{% trans "Dashboard" %}</span>
+        <span data-sidebar-label>{% trans "Dashboard" %}</span>
       </a>
 
       <!-- Item 2: Gestion Patients (Collapsible) -->
       <div class="space-y-1" x-data="{ open: true }">
         <button
           type="button"
-          onclick="toggleMenu('patients-submenu', this)"
-          class="w-full flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-semibold text-emerald-100/90 hover:text-white hover:bg-white/10 transition-colors">
+          onclick="toggleMenu('patients-submenu', this)" aria-label="{% trans "Gestion Patients" %}"
+          class="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-emerald-300 {% if current_route == 'patient_list' or current_route == 'patient_create' or current_route == 'patient_detail' or current_route == 'patient_update' or current_route == 'patient_medical_update' or current_route == 'patient_allergy_create' or current_route == 'patient_allergy_delete' %}bg-teal-400/15 text-white{% else %}text-emerald-100/90 hover:text-white hover:bg-white/10{% endif %}" aria-controls="patients-submenu" aria-expanded="true">
           <div class="flex items-center gap-3.5">
             {% include "components/atoms/icon.html" with name="users" size="w-5 h-5 text-emerald-300" %}
-            <span>{% trans "Gestion Patients" %}</span>
+            <span data-sidebar-label>{% trans "Gestion Patients" %}</span>
           </div>
-          <svg class="w-4 h-4 text-emerald-300 transition-transform transform" id="patients-submenu-chevron" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg class="w-4 h-4 text-emerald-300 transition-transform transform" id="patients-submenu-chevron" data-sidebar-label fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
           </svg>
         </button>
 
-        <div id="patients-submenu" class="pl-12 pr-2 space-y-1">
-          <a href="{% url "patients:patient_list" %}" class="block py-1.5 text-xs text-emerald-200 hover:text-white transition-colors">
-            • {% trans "Tous les dossiers" %}
+        <div id="patients-submenu" data-sidebar-submenu class="relative ml-12 border-l border-teal-300/30 pl-6 pr-2 space-y-1">
+          <a href="{% url "patients:patient_list" %}" class="relative flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs {% if current_route == 'patient_list' or current_route == 'patient_detail' or current_route == 'patient_update' or current_route == 'patient_medical_update' or current_route == 'patient_allergy_create' or current_route == 'patient_allergy_delete' %}bg-white/10 text-white{% else %}text-slate-300 hover:bg-white/10 hover:text-white{% endif %} transition-colors before:absolute before:-left-[31px] before:top-1/2 before:size-2 before:-translate-y-1/2 before:rounded-full before:bg-teal-400 before:ring-4 before:ring-[#052d31]">
+            {% include "components/atoms/icon.html" with name="users" size="w-3.5 h-3.5 shrink-0" %}
+            <span>{% trans "Tous les dossiers" %}</span>
           </a>
           {% if request.user.is_agent_accueil or request.user.is_superuser %}
-            <a href="{% url "patients:patient_create" %}" class="block py-1.5 text-xs text-emerald-200 hover:text-white transition-colors">
-              • {% trans "+ Nouveau patient" %}
+            <a href="{% url "patients:patient_create" %}" class="relative flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs {% if current_route == 'patient_create' %}bg-white/10 text-white{% else %}text-slate-300 hover:bg-white/10 hover:text-white{% endif %} transition-colors before:absolute before:-left-[31px] before:top-1/2 before:size-2 before:-translate-y-1/2 before:rounded-full before:bg-teal-400 before:ring-4 before:ring-[#052d31]">
+              <svg class="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" d="M12 5v14m-7-7h14" /></svg>
+              <span>{% trans "+ Nouveau patient" %}</span>
             </a>
           {% endif %}
         </div>
@@ -84,26 +88,29 @@
       <div class="space-y-1">
         <button
           type="button"
-          onclick="toggleMenu('rdv-submenu', this)"
-          class="w-full flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-semibold text-emerald-100/90 hover:text-white hover:bg-white/10 transition-colors">
+          onclick="toggleMenu('rdv-submenu', this)" aria-label="{% trans "Rendez-vous & Ag..." %}"
+          class="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-emerald-300 {% if current_route == 'appointment_list' or current_route == 'appointment_create' or current_route == 'appointment_status_update' %}bg-teal-400/15 text-white{% else %}text-emerald-100/90 hover:text-white hover:bg-white/10{% endif %}" aria-controls="rdv-submenu" aria-expanded="true">
           <div class="flex items-center gap-3.5">
             {% include "components/atoms/icon.html" with name="calendar" size="w-5 h-5 text-emerald-300" %}
-            <span>{% trans "Rendez-vous & Ag..." %}</span>
+            <span data-sidebar-label>{% trans "Rendez-vous & Ag..." %}</span>
           </div>
-          <svg class="w-4 h-4 text-emerald-300 transition-transform transform" id="rdv-submenu-chevron" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg class="w-4 h-4 text-emerald-300 transition-transform transform" id="rdv-submenu-chevron" data-sidebar-label fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
           </svg>
         </button>
 
-        <div id="rdv-submenu" class="pl-12 pr-2 space-y-1">
-          <a href="{% url "patients:appointment_list" %}?date_filter=today" class="block py-1.5 text-xs text-emerald-200 hover:text-white transition-colors">
-            • {% trans "Planning du jour" %}
+        <div id="rdv-submenu" data-sidebar-submenu class="relative ml-12 border-l border-teal-300/30 pl-6 pr-2 space-y-1">
+          <a href="{% url "patients:appointment_list" %}?date_filter=today" class="relative flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs {% if current_route == 'appointment_list' and request.GET.date_filter == 'today' %}bg-white/10 text-white{% else %}text-slate-300 hover:bg-white/10 hover:text-white{% endif %} transition-colors before:absolute before:-left-[31px] before:top-1/2 before:size-2 before:-translate-y-1/2 before:rounded-full before:bg-teal-400 before:ring-4 before:ring-[#052d31]">
+            {% include "components/atoms/icon.html" with name="clock" size="w-3.5 h-3.5 shrink-0" %}
+            <span>{% trans "Planning du jour" %}</span>
           </a>
-          <a href="{% url "patients:appointment_list" %}" class="block py-1.5 text-xs text-emerald-200 hover:text-white transition-colors">
-            • {% trans "Agenda complet" %}
+          <a href="{% url "patients:appointment_list" %}" class="relative flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs {% if current_route == 'appointment_list' and request.GET.date_filter != 'today' %}bg-white/10 text-white{% else %}text-slate-300 hover:bg-white/10 hover:text-white{% endif %} transition-colors before:absolute before:-left-[31px] before:top-1/2 before:size-2 before:-translate-y-1/2 before:rounded-full before:bg-teal-400 before:ring-4 before:ring-[#052d31]">
+            {% include "components/atoms/icon.html" with name="calendar" size="w-3.5 h-3.5 shrink-0" %}
+            <span>{% trans "Agenda complet" %}</span>
           </a>
-          <a href="{% url "patients:appointment_create" %}" class="block py-1.5 text-xs text-emerald-200 hover:text-white transition-colors">
-            • {% trans "+ Planifier un RDV" %}
+          <a href="{% url "patients:appointment_create" %}" class="relative flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs {% if current_route == 'appointment_create' %}bg-white/10 text-white{% else %}text-slate-300 hover:bg-white/10 hover:text-white{% endif %} transition-colors before:absolute before:-left-[31px] before:top-1/2 before:size-2 before:-translate-y-1/2 before:rounded-full before:bg-teal-400 before:ring-4 before:ring-[#052d31]">
+            <svg class="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" d="M12 5v14m-7-7h14" /></svg>
+            <span>{% trans "+ Planifier un RDV" %}</span>
           </a>
         </div>
       </div>
@@ -112,18 +119,18 @@
       <div>
         <button
           type="button"
-          onclick="toggleMenu('notif-submenu', this)"
-          class="w-full flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-semibold text-emerald-100/90 hover:text-white hover:bg-white/10 transition-colors">
+          onclick="toggleMenu('notif-submenu', this)" aria-label="{% trans "Notifications & SMS" %}"
+          class="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold text-emerald-100/90 hover:text-white hover:bg-white/10 transition-colors focus-visible:outline-2 focus-visible:outline-emerald-300" aria-controls="notif-submenu" aria-expanded="false">
           <div class="flex items-center gap-3.5">
             {% include "components/atoms/icon.html" with name="bell" size="w-5 h-5 text-emerald-300" %}
-            <span>{% trans "Notifications & SMS" %}</span>
+            <span data-sidebar-label>{% trans "Notifications & SMS" %}</span>
           </div>
-          <svg class="w-4 h-4 text-emerald-300 transition-transform transform" id="notif-submenu-chevron" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg class="w-4 h-4 text-emerald-300 transition-transform transform" id="notif-submenu-chevron" data-sidebar-label fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
           </svg>
         </button>
 
-        <div id="notif-submenu" class="hidden pl-12 pr-2 space-y-1">
+        <div id="notif-submenu" data-sidebar-submenu class="hidden pl-12 pr-2 space-y-1">
           <span class="block py-1.5 text-xs text-emerald-300/70 italic">
             {% trans "Rappels SMS automatiques actifs" %}
           </span>
@@ -131,6 +138,7 @@
       </div>
 
     </nav>
+    {% endwith %}
   </div>
 
   <!-- Bottom: User Mini-Card Pill with Quick Settings & Logout (Identique à la capture) -->
@@ -142,13 +150,13 @@
           {% if user.avatar %}
             <img src="{{ user.avatar.url }}" alt="{{ user.full_name }}" class="w-9 h-9 rounded-xl object-cover border border-emerald-400">
           {% else %}
-            <div class="w-9 h-9 rounded-xl bg-emerald-200 text-[#0B4D3C] font-black flex items-center justify-center text-xs">
+            <div class="w-9 h-9 rounded-xl bg-emerald-200 text-[#052d31] font-black flex items-center justify-center text-xs">
               {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
             </div>
           {% endif %}
-          <span class="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-400 ring-2 ring-[#0B4D3C]"></span>
+          <span class="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-400 ring-2 ring-[#052d31]"></span>
         </div>
-        <div class="text-left truncate">
+        <div class="text-left truncate" data-sidebar-label>
           <p class="text-xs font-bold text-white truncate leading-tight">
             {{ user.first_name }} {{ user.last_name|first|upper }}.
           </p>

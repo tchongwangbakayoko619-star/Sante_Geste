@@ -23,7 +23,7 @@
         {% for rdv in recent_appointments %}
           <div class="p-3.5 rounded-2xl border border-neutral-200/80 bg-white hover:border-[#14967F]/40 transition shadow-2xs flex items-center justify-between gap-3">
             <div class="flex items-center gap-3">
-              <div class="px-3 py-1.5 rounded-xl bg-[#0B5746] text-white font-extrabold text-xs font-mono text-center shrink-0">
+              <div class="px-3 py-1.5 rounded-xl bg-[#14967F] text-white font-extrabold text-xs font-mono text-center shrink-0">
                 {{ rdv.scheduled_at|date:"H:i" }}
               </div>
               <div>
@@ -34,11 +34,11 @@
               </div>
             </div>
             <div>
-              {% if rdv.status == "COMPLETED" or rdv.status == "IN_CONSULTATION" %}
+              {% if rdv.status == "completed" or rdv.status == "in_consultation" or rdv.status == "COMPLETED" or rdv.status == "IN_CONSULTATION" %}
                 <span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200">{% trans "Honoré" %}</span>
-              {% elif rdv.status == "WAITING" %}
+              {% elif rdv.status == "waiting" or rdv.status == "WAITING" %}
                 <span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-amber-50 text-amber-700 border border-amber-200">{% trans "En attente" %}</span>
-              {% elif rdv.status == "CANCELLED" %}
+              {% elif rdv.status == "cancelled" or rdv.status == "CANCELLED" %}
                 <span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-rose-50 text-rose-700 border border-rose-200">{% trans "Annulé" %}</span>
               {% else %}
                 <span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-blue-50 text-blue-700 border border-blue-200">{% trans "Planifié" %}</span>
@@ -66,7 +66,7 @@
           </h3>
         </div>
         <div class="flex items-center gap-2">
-          <a href="{% url "patients:patient_create" %}" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-[#14967F] hover:bg-[#0B6B56] text-white text-xs font-bold transition">
+          <a href="{% url "patients:patient_create" %}" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-[#14967F] hover:bg-[#0f7a67] text-white text-xs font-bold transition">
             <span>+ {% trans "Nouveau" %}</span>
           </a>
           <a href="{% url "patients:patient_list" %}" class="text-xs font-bold text-[#14967F] hover:underline flex items-center gap-1">
@@ -81,7 +81,7 @@
         {% for patient in recent_patients %}
           <div class="p-3.5 rounded-2xl border border-neutral-200/80 bg-white hover:border-[#14967F]/40 transition flex items-center justify-between gap-3 shadow-2xs">
             <div class="flex items-center gap-3">
-              <div class="w-9 h-9 rounded-xl bg-emerald-50 text-[#0B6B56] font-extrabold text-xs flex items-center justify-center shrink-0 border border-emerald-100">
+              <div class="w-9 h-9 rounded-xl bg-emerald-50 text-[#14967F] font-extrabold text-xs flex items-center justify-center shrink-0 border border-emerald-100">
                 {{ patient.first_name|slice:":1" }}{{ patient.last_name|slice:":1" }}
               </div>
               <div>

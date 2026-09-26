@@ -5,7 +5,7 @@
   <div>
     <h1 class="text-2xl sm:text-3xl font-extrabold text-neutral-900 tracking-tight font-title">
       {{ greeting|default:"Bonjour" }},
-      <span class="text-[#0B6B56]">
+      <span class="text-[#14967F]">
         {% if user.first_name or user.last_name %}
           {{ user.first_name }} {{ user.last_name|upper }}
         {% else %}
@@ -21,7 +21,7 @@
   <!-- Right Date & Period Filter Controls -->
   <div class="flex flex-wrap items-center gap-2.5 shrink-0">
     <!-- Today Date Pill -->
-    <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-50 text-[#0B6B56] border border-emerald-200/80 shadow-2xs">
+    <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-50 text-[#14967F] border border-emerald-200/80 shadow-2xs">
       <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
       <span>{% trans "Aujourd'hui" %} • {{ today_date|default:"Aujourd'hui" }}</span>
     </div>

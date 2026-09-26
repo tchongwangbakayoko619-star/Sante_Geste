@@ -12,7 +12,7 @@
       {% if user.avatar %}
         <img src="{{ user.avatar.url }}" alt="{{ user.full_name }}" class="w-9 h-9 rounded-full object-cover border border-emerald-300">
       {% else %}
-        <div class="w-9 h-9 rounded-full bg-emerald-100 text-[#0B6B56] font-bold flex items-center justify-center text-xs border border-emerald-300">
+        <div class="w-9 h-9 rounded-full bg-emerald-100 text-[#14967F] font-bold flex items-center justify-center text-xs border border-emerald-300">
           {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
         </div>
       {% endif %}
@@ -52,12 +52,12 @@
       <p class="text-neutral-400 truncate text-[11px]">{{ user.email }}</p>
     </div>
 
-    <a href="{% url "users:profile" %}" class="flex items-center gap-2.5 px-4 py-2 text-neutral-700 hover:bg-emerald-50/60 hover:text-[#0B6B56] transition-colors" role="menuitem">
+    <a href="{% url "users:profile" %}" class="flex items-center gap-2.5 px-4 py-2 text-neutral-700 hover:bg-emerald-50/60 hover:text-[#14967F] transition-colors" role="menuitem">
       {% include "components/atoms/icon.html" with name="users" size="w-4 h-4 text-neutral-400" %}
       <span>{% trans "Mon profil soignant" %}</span>
     </a>
 
-    <a href="{% url "users:profile-edit" %}" class="flex items-center gap-2.5 px-4 py-2 text-neutral-700 hover:bg-emerald-50/60 hover:text-[#0B6B56] transition-colors" role="menuitem">
+    <a href="{% url "users:profile-edit" %}" class="flex items-center gap-2.5 px-4 py-2 text-neutral-700 hover:bg-emerald-50/60 hover:text-[#14967F] transition-colors" role="menuitem">
       {% include "components/atoms/icon.html" with name="gear" size="w-4 h-4 text-neutral-400" %}
       <span>{% trans "Paramètres du compte" %}</span>
     </a>

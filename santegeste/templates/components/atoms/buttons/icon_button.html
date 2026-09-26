@@ -2,11 +2,11 @@
 {# Props: icon_name, title, aria_label, type, href, class, custom_classes, variant (default: neutral) #}
 {% with btn_variant=variant|default:"neutral" %}
   {% if type == "a" %}
-    <a href="{{ href|default:'#' }}" class="p-2 rounded-xl border transition-colors inline-flex items-center justify-center {% if btn_variant == 'primary' %}bg-[#14967F] text-white hover:bg-[#117a67] border-transparent{% elif btn_variant == 'danger' %}bg-rose-50 text-rose-700 hover:bg-rose-100 border-rose-200{% else %}bg-white text-neutral-600 hover:bg-neutral-50 border-neutral-200{% endif %} {{ class|default:'' }} {{ custom_classes|default:'' }}" title="{{ title|default:aria_label }}" aria-label="{{ aria_label|default:title }}">
+    <a href="{{ href|default:'#' }}" class="p-2 rounded-xl border transition-colors inline-flex items-center justify-center {% if btn_variant == 'primary' %}bg-[#14967F] text-white hover:bg-[#117F6C] border-transparent{% elif btn_variant == 'danger' %}bg-rose-50 text-rose-700 hover:bg-rose-100 border-rose-200{% else %}bg-white text-neutral-600 hover:bg-neutral-50 border-neutral-200{% endif %} {{ class|default:'' }} {{ custom_classes|default:'' }}" title="{{ title|default:aria_label }}" aria-label="{{ aria_label|default:title }}">
       {% include "components/atoms/icon.html" with name=icon_name size=icon_size|default:"w-4 h-4" %}
     </a>
   {% else %}
-    <button type="{{ type|default:'button' }}" class="p-2 rounded-xl border transition-colors inline-flex items-center justify-center cursor-pointer {% if btn_variant == 'primary' %}bg-[#14967F] text-white hover:bg-[#117a67] border-transparent{% elif btn_variant == 'danger' %}bg-rose-50 text-rose-700 hover:bg-rose-100 border-rose-200{% else %}bg-white text-neutral-600 hover:bg-neutral-50 border-neutral-200{% endif %} {{ class|default:'' }} {{ custom_classes|default:'' }}" title="{{ title|default:aria_label }}" aria-label="{{ aria_label|default:title }}">
+    <button type="{{ type|default:'button' }}" class="p-2 rounded-xl border transition-colors inline-flex items-center justify-center cursor-pointer {% if btn_variant == 'primary' %}bg-[#14967F] text-white hover:bg-[#117F6C] border-transparent{% elif btn_variant == 'danger' %}bg-rose-50 text-rose-700 hover:bg-rose-100 border-rose-200{% else %}bg-white text-neutral-600 hover:bg-neutral-50 border-neutral-200{% endif %} {{ class|default:'' }} {{ custom_classes|default:'' }}" title="{{ title|default:aria_label }}" aria-label="{{ aria_label|default:title }}">
       {% include "components/atoms/icon.html" with name=icon_name size=icon_size|default:"w-4 h-4" %}
     </button>
   {% endif %}

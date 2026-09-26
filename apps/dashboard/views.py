@@ -46,4 +46,26 @@ class DashboardApiView(View):
             period=period,
         )
 
-        return JsonResponse(data, status=200)
+        serialized_data = dict(data)
+        serialized_data["recent_appointments"] = [
+            {
+                "id": str(app.id),
+                "scheduled_at": app.scheduled_at.isoformat() if app.scheduled_at else None,
+                "patient_name": f"{app.patient.first_name} {app.patient.last_name}" if getattr(app, "patient", None) else "",
+                "status": app.status,
+                "reason": app.reason,
+            }
+            for app in data.get("recent_appointments", [])
+        ]
+        serialized_data["recent_patients"] = [
+            {
+                "id": str(p.id),
+                "first_name": p.first_name,
+                "last_name": p.last_name,
+                "nup": p.nup,
+                "created_at": p.created_at.isoformat() if p.created_at else None,
+            }
+            for p in data.get("recent_patients", [])
+        ]
+
+        return JsonResponse(serialized_data, status=200)

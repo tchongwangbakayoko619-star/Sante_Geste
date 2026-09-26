@@ -49,7 +49,7 @@
 
   /* Subtle Dotted Background Pattern */
   .auth-pattern {
-    @apply absolute inset-0 bg-[radial-gradient(rgba(255,255,255,0.12)_1px,transparent_1px)] [background-size:24px_24px] pointer-events-none;
+    @apply absolute inset-0 bg-[radial-gradient(rgba(255, 255, 255, 0.12)_1px, transparent_1px)] [background-size:24px_24px] pointer-events-none;
   }
 
   /* Auth Card Containers */

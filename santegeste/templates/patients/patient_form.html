@@ -83,7 +83,7 @@
 
         <div class="sm:col-span-2 pt-2 border-t border-neutral-100">
           <p class="text-xs font-bold text-neutral-800 uppercase tracking-wider mb-3">
-            🚨 {% trans "Personne à contacter en cas d'urgence" %}
+            <span class="inline-flex items-center gap-1.5">{% include "components/atoms/icon.html" with name="alert-triangle" size="w-4 h-4 text-rose-600" %}{% trans "Personne à contacter en cas d'urgence" %}</span>
           </p>
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {% include "components/molecules/form_fields/django_field.html" with field=form.emergency_contact_name %}

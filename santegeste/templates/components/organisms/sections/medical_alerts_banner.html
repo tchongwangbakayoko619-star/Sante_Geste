@@ -78,14 +78,14 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {% if patient.allergies %}
                 <div class="bg-white/90 backdrop-blur-xs p-3.5 rounded-2xl border border-amber-200 shadow-2xs">
-                  <p class="text-[11px] font-bold text-amber-800 uppercase tracking-wider">⚠️ {% trans "Autres allergies / Déclarations libres" %}</p>
+                  <p class="text-[11px] font-bold text-amber-800 uppercase tracking-wider"><span class="inline-flex items-center gap-1.5">{% include "components/atoms/icon.html" with name="alert-triangle" size="w-3.5 h-3.5" %}{% trans "Autres allergies / Déclarations libres" %}</span></p>
                   <p class="text-xs font-semibold text-neutral-800 mt-1 whitespace-pre-line">{{ patient.allergies }}</p>
                 </div>
               {% endif %}
 
               {% if patient.chronic_diseases %}
                 <div class="bg-white/90 backdrop-blur-xs p-3.5 rounded-2xl border border-rose-200 shadow-2xs">
-                  <p class="text-[11px] font-bold text-rose-800 uppercase tracking-wider">🩺 {% trans "Affections chroniques & Antécédents" %}</p>
+                  <p class="text-[11px] font-bold text-rose-800 uppercase tracking-wider"><span class="inline-flex items-center gap-1.5">{% include "components/atoms/icon.html" with name="cross-heartbeat" size="w-3.5 h-3.5" %}{% trans "Affections chroniques & Antécédents" %}</span></p>
                   <p class="text-xs font-semibold text-neutral-800 mt-1 whitespace-pre-line">{{ patient.chronic_diseases }}</p>
                 </div>
               {% endif %}

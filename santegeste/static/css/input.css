@@ -33,6 +33,9 @@
   --color-health-900: #0c3730;
   --color-health-950: #041f1b;
 
+  /* Surface Sombre - Sidebar Médicale Haute Fidélité */
+  --color-health-sidebar: #052d31;
+
   /* Neutrals */
   --color-neutral-50: #f8fafc;
   --color-neutral-100: #f1f5f9;

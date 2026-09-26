@@ -44,7 +44,7 @@
   <div class="bg-white border border-neutral-200/80 rounded-3xl p-6 shadow-xs space-y-4">
     <h2 class="text-sm font-extrabold text-neutral-900 uppercase tracking-wider pb-3 border-b border-neutral-100 flex items-center justify-between">
       <span>{% trans "Contact d'Urgence" %}</span>
-      <span class="text-base" aria-hidden="true">🚨</span>
+      {% include "components/atoms/icon.html" with name="alert-triangle" size="w-5 h-5 text-rose-600" %}
     </h2>
 
     {% if patient.emergency_contact_name or patient.emergency_contact_phone %}

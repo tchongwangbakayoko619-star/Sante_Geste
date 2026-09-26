@@ -79,7 +79,6 @@ class DashboardService:
                     status__in=[
                         AppointmentStatusEnum.COMPLETED,
                         AppointmentStatusEnum.IN_CONSULTATION,
-                        AppointmentStatusEnum.WAITING,
                     ]
                 ),
             ),
@@ -186,10 +185,32 @@ class DashboardService:
         return labels.get(period, "Aujourd'hui")
 
     @classmethod
+    def _compute_spline(cls, pts: list[tuple[float, float]]) -> tuple[str, str]:
+        """Génère un chemin lissé de Bézier cubique (spline) et la surface fermée pour le SVG."""
+        if not pts:
+            return "", ""
+        k = 0.2
+        n = len(pts)
+        segments = []
+        for i in range(n - 1):
+            p_prev = pts[max(0, i - 1)]
+            p_curr = pts[i]
+            p_next = pts[i + 1]
+            p_nnext = pts[min(n - 1, i + 2)]
+            cp1x = round(p_curr[0] + (p_next[0] - p_prev[0]) * k, 1)
+            cp1y = round(max(20.0, min(220.0, p_curr[1] + (p_next[1] - p_prev[1]) * k)), 1)
+            cp2x = round(p_next[0] - (p_nnext[0] - p_curr[0]) * k, 1)
+            cp2y = round(max(20.0, min(220.0, p_next[1] - (p_nnext[1] - p_curr[1]) * k)), 1)
+            segments.append(f"C {cp1x} {cp1y}, {cp2x} {cp2y}, {p_next[0]} {p_next[1]}")
+        line_path = f"M {pts[0][0]} {pts[0][1]} " + " ".join(segments)
+        area_path = f"{line_path} L {pts[-1][0]} 220 L {pts[0][0]} 220 Z"
+        return line_path, area_path
+
+    @classmethod
     def _build_weekly_activity_chart(
         cls, appointment_qs: Any, local_now: datetime
     ) -> dict[str, Any]:
-        """Génère les données réelles pour le graphique d'activité sur la semaine en cours (du lundi au dimanche)."""
+        """Génère les données réelles et les coordonnées SVG pour l'activité hebdomadaire."""
         monday = local_now - timedelta(days=local_now.weekday())
         monday_start = monday.replace(hour=0, minute=0, second=0, microsecond=0)
         sunday_end = monday_start + timedelta(days=6, hours=23, minutes=59, seconds=59, microseconds=999999)
@@ -214,14 +235,59 @@ class DashboardService:
             ]:
                 completed_counts[day_idx] += 1
 
-        max_val = max(planned_counts + [10])
+        xs = [60, 155, 250, 345, 440, 535, 630]
+        raw_max = max(planned_counts + [4])
+        rem = raw_max % 4
+        max_val = raw_max if rem == 0 else raw_max + (4 - rem)
+        if max_val < 4:
+            max_val = 4
+
+        pts_planned = [(xs[i], round(220.0 - (planned_counts[i] / max_val) * 200.0, 1)) for i in range(7)]
+        pts_completed = [(xs[i], round(220.0 - (completed_counts[i] / max_val) * 200.0, 1)) for i in range(7)]
+
+        planned_path, planned_area = cls._compute_spline(pts_planned)
+        completed_path, completed_area = cls._compute_spline(pts_completed)
+
+        points = [
+            {
+                "day": days_labels[i],
+                "x": xs[i],
+                "planned_val": planned_counts[i],
+                "completed_val": completed_counts[i],
+                "planned_y": pts_planned[i][1],
+                "completed_y": pts_completed[i][1],
+            }
+            for i in range(7)
+        ]
+
+        y_ticks = [
+            {"val": max_val, "y": 20},
+            {"val": int(max_val * 0.75), "y": 70},
+            {"val": int(max_val * 0.50), "y": 120},
+            {"val": int(max_val * 0.25), "y": 170},
+            {"val": 0, "y": 220},
+        ]
+
+        total_planned = sum(planned_counts)
+        total_completed = sum(completed_counts)
+        completion_rate = round((total_completed / total_planned * 100), 1) if total_planned > 0 else 0.0
 
         return {
             "labels": days_labels,
             "planned": planned_counts,
             "completed": completed_counts,
+            "today_idx": local_now.weekday(),
+            "total_planned": total_planned,
+            "total_completed": total_completed,
+            "completion_rate": completion_rate,
             "max_value": max_val,
             "has_data": any(planned_counts),
+            "planned_path": planned_path,
+            "planned_area": planned_area,
+            "completed_path": completed_path,
+            "completed_area": completed_area,
+            "points": points,
+            "y_ticks": y_ticks,
         }
 
     @classmethod
@@ -232,14 +298,14 @@ class DashboardService:
             return {
                 "total": 0,
                 "has_data": False,
-                "percentages": {"completed": 0, "waiting": 0, "cancelled": 0, "scheduled": 0},
+                "percentages": {"confirmed": 0, "waiting": 0, "cancelled": 0, "scheduled": 0},
                 "dasharrays": {
-                    "completed": "0 365",
+                    "confirmed": "0 365",
                     "waiting": "0 365",
                     "cancelled": "0 365",
                     "scheduled": "0 365",
                 },
-                "dashoffsets": {"completed": "0", "waiting": "0", "cancelled": "0", "scheduled": "0"},
+                "dashoffsets": {"confirmed": "0", "waiting": "0", "cancelled": "0", "scheduled": "0"},
             }
 
         confirmed = stats["confirmed_count"] or 0

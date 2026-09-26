@@ -75,6 +75,11 @@ class TestDashboardService:
         assert data["rdv_cancelled_count"] == 1
         assert data["rdv_upcoming_count"] == 1
         assert data["status_breakdown"]["has_data"] is True
+        assert data["weekly_activity"]["has_data"] is True
+        assert "planned_path" in data["weekly_activity"]
+        assert data["weekly_activity"]["planned_path"].startswith("M 60")
+        assert len(data["weekly_activity"]["points"]) == 7
+        assert len(data["weekly_activity"]["y_ticks"]) == 5
 
 
 @pytest.mark.django_db

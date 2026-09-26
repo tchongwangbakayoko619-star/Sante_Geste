@@ -15,7 +15,7 @@
       </a>
       <div class="flex items-center gap-2 mt-1">
         <span class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-200">
-          🩺 {% trans "Espace Personnel Soignant" %}
+          <span class="inline-flex items-center gap-1.5">{% include "components/atoms/icon.html" with name="cross-heartbeat" size="w-3.5 h-3.5" %}{% trans "Espace Personnel Soignant" %}</span>
         </span>
       </div>
       <h1 class="font-title font-extrabold text-2xl text-neutral-900 tracking-tight mt-1.5">
@@ -54,7 +54,7 @@
     <div class="flex items-center justify-between pb-3 border-b border-neutral-100">
       <div>
         <h2 class="text-base font-bold text-neutral-900 flex items-center gap-2">
-          <span>🧬</span> {% trans "Allergies Médicamenteuses & Substances Codifiées" %}
+          <span class="inline-flex items-center gap-2">{% include "components/atoms/icon.html" with name="pill" size="w-4 h-4 text-rose-600" %}{% trans "Allergies Médicamenteuses & Substances Codifiées" %}</span>
         </h2>
         <p class="text-xs text-neutral-500">{% trans "Permet le croisement automatique et le blocage des prescriptions contre-indiquées." %}</p>
       </div>
@@ -92,7 +92,7 @@
               <form method="post" action="{% url "patients:patient_allergy_delete" patient.pk pa.pk %}" onsubmit="return confirm("{% trans "Retirer cette allergie codifiée du dossier ?" %}");">
                 {% csrf_token %}
                 <button type="submit" class="text-xs text-rose-600 hover:text-rose-800 font-semibold p-1 rounded-lg hover:bg-rose-100 transition-colors cursor-pointer" title="{% trans "Retirer" %}">
-                  ✕
+                  {% include "components/atoms/icon.html" with name="x-mark" size="w-4 h-4" %}
                 </button>
               </form>
             </div>
@@ -107,7 +107,7 @@
     <div class="pt-4 border-t border-neutral-100">
       <details class="group">
         <summary class="text-xs font-bold text-[#14967F] hover:text-[#0e7462] cursor-pointer flex items-center gap-1.5 transition-colors">
-          <span>➕ {% trans "Ajouter une substance allergène codifiée" %}</span>
+          <span class="inline-flex items-center gap-1.5">{% include "components/atoms/icon.html" with name="plus" size="w-3.5 h-3.5" %}{% trans "Ajouter une substance allergène codifiée" %}</span>
         </summary>
         <form method="post" action="{% url "patients:patient_allergy_create" patient.pk %}" class="mt-4 p-4 rounded-2xl bg-neutral-50 border border-neutral-200/80 space-y-4">
           {% csrf_token %}

@@ -38,20 +38,28 @@ def find_conflicting_appointment(
     L'optimisation SQL calcule la fin de consultation (`calculated_end`) directement au niveau du moteur
     relationnel (F("scheduled_at") + DurationField) sans charger ni itérer sur des créneaux en mémoire Python.
     """
+    from django.db import connection
     from django.db.models import DateTimeField
     from django.db.models import DurationField
     from django.db.models import ExpressionWrapper
     from django.db.models import F
+    from django.db.models import Value
 
     doctor_id = getattr(doctor, "pk", doctor)
     new_start = scheduled_at
     new_end = new_start + timedelta(minutes=duration_minutes)
 
     # Expression SQL calculant l'heure prévisionnelle de fin de chaque consultation
-    duration_expr = ExpressionWrapper(
-        F("estimated_duration_minutes") * 60 * 1000000,
-        output_field=DurationField(),
-    )
+    if connection.vendor == "sqlite":
+        duration_expr = ExpressionWrapper(
+            F("estimated_duration_minutes") * 60 * 1000000,
+            output_field=DurationField(),
+        )
+    else:
+        duration_expr = ExpressionWrapper(
+            F("estimated_duration_minutes") * Value(timedelta(minutes=1)),
+            output_field=DurationField(),
+        )
     end_expr = ExpressionWrapper(
         F("scheduled_at") + duration_expr,
         output_field=DateTimeField(),
