@@ -16,8 +16,15 @@
     @apply w-full px-4 py-2.5 text-base sm:text-sm text-neutral-900 bg-neutral-50/60 hover:bg-neutral-50 focus:bg-white border border-neutral-300 rounded-xl placeholder:text-neutral-400 transition-all duration-150 ease-in-out focus:outline-none focus:border-[#14967F] focus:ring-2 focus:ring-[#14967F]/20;
   }
 
-  .input-with-icon {
-    @apply pl-11 pr-4;
+  .input-with-icon,
+  input.input-with-icon,
+  input[type="text"].input-with-icon,
+  input[type="email"].input-with-icon,
+  input[type="password"].input-with-icon,
+  input[type="tel"].input-with-icon,
+  input[type="number"].input-with-icon {
+    padding-left: 2.75rem !important;
+    padding-right: 1rem;
   }
 
   .input-without-icon {
@@ -34,8 +41,10 @@
     @apply w-full px-4 py-2.5 text-base sm:text-sm text-neutral-900 bg-white hover:bg-neutral-50 border border-neutral-300 rounded-xl transition-all duration-150 ease-in-out focus:outline-none focus:border-[#14967F] focus:ring-2 focus:ring-[#14967F]/20 cursor-pointer;
   }
 
-  .select-with-icon {
-    @apply pl-11 pr-10;
+  .select-with-icon,
+  select.select-with-icon {
+    padding-left: 2.75rem !important;
+    padding-right: 2.5rem;
   }
 
   .select-without-icon {
