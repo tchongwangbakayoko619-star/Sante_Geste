@@ -1572,6 +1572,25 @@ def test_appointment_cancel_view_rbac(client, caissier_user, doctor_user, sample
     assert response.status_code == 403
 
 
+@pytest.mark.django_db
+def test_appointment_form_searchable_selects(client, agent_accueil, doctor_user, sample_patient):
+    """Vérifie que les champs patient et doctor disposent des attributs de recherche (combobox)."""
+    client.force_login(agent_accueil)
+    form = AppointmentForm()
+    assert form.fields["patient"].widget.attrs.get("data-searchable") == "true"
+    assert "searchable-select" in form.fields["patient"].widget.attrs.get("class", "")
+    assert form.fields["doctor"].widget.attrs.get("data-searchable") == "true"
+    assert "searchable-select" in form.fields["doctor"].widget.attrs.get("class", "")
+
+    url = reverse("patients:appointment_create")
+    resp = client.get(url)
+    assert resp.status_code == 200
+    content = resp.content.decode("utf-8")
+    assert 'data-searchable="true"' in content
+    assert "searchable-select.js" in content
+
+
+
 
 
 

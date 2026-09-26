@@ -89,3 +89,9 @@
 
 </div>
 {% endblock content_inner %}
+
+{% block javascript %}
+  {{ block.super }}
+  <script src="{% static "js/components/searchable-select.js" %}" defer></script>
+{% endblock javascript %}
+

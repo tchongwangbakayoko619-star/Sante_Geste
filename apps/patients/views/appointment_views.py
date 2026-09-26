@@ -94,7 +94,12 @@ class AppointmentListView(PatientManagementRequiredMixin, ListView):
         # Filtre par praticien / médecin traitant
         doctor_id = self.request.GET.get("doctor", "").strip()
         if doctor_id:
-            qs = qs.filter(doctor_id=doctor_id)
+            try:
+                import uuid
+                uuid.UUID(doctor_id)
+                qs = qs.filter(doctor_id=doctor_id)
+            except ValueError:
+                pass
 
         # Filtre par statut clinique
         status = self.request.GET.get("status", "").strip()

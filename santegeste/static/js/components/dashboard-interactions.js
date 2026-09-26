@@ -28,9 +28,9 @@ function toggleDesktopSidebar() {
   const header = sidebar.querySelector("[data-sidebar-header]");
   if (!sidebar || !main) return;
 
-  const collapsed = sidebar.classList.toggle("lg:w-20");
+  const collapsed = sidebar.classList.toggle("lg:w-24");
   sidebar.classList.toggle("lg:w-72", !collapsed);
-  main.classList.toggle("lg:pl-20", collapsed);
+  main.classList.toggle("lg:pl-24", collapsed);
   main.classList.toggle("lg:pl-72", !collapsed);
   sidebar.querySelectorAll("[data-sidebar-label], [data-sidebar-submenu]").forEach((element) => element.classList.toggle("lg:hidden", collapsed));
   header?.classList.toggle("lg:justify-center", false);
@@ -51,7 +51,7 @@ function toggleMenu(menuId, button) {
   if (!menu) return;
 
   // In compact desktop mode, reveal the sidebar first so submenu links remain usable.
-  if (sidebar?.classList.contains("lg:w-20")) {
+  if (sidebar?.classList.contains("lg:w-24")) {
     toggleDesktopSidebar();
     button.focus();
     return;

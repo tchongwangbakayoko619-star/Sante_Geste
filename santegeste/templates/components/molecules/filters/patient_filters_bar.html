@@ -17,7 +17,7 @@
           name="q"
           value="{{ query|default:'' }}"
           placeholder="{% trans "Rechercher par nom, prénom, NUP, téléphone, email..." %}"
-          class="w-full pl-10 pr-10 py-2.5 rounded-2xl border border-neutral-200 bg-white focus:outline-none focus:ring-2 focus:ring-[#14967F] focus:border-[#14967F] text-sm text-neutral-800 transition-colors shadow-2xs placeholder:text-neutral-400"
+          class="w-full pl-10 pr-10 py-2.5 rounded-xl border border-neutral-300 bg-neutral-50/60 hover:bg-neutral-50 focus:bg-white hover:border-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#14967F] focus:border-[#14967F] text-sm text-neutral-800 transition-all duration-150 ease-in-out shadow-2xs placeholder:text-neutral-400"
           autocomplete="off"
         >
         {% if query %}
@@ -63,7 +63,7 @@
           name="status"
           id="filter-status"
           onchange="this.form.submit()"
-          class="w-full text-xs py-2 px-3 pr-8 rounded-xl border border-neutral-200 bg-white text-neutral-800 focus:outline-none focus:ring-2 focus:ring-[#14967F] focus:border-[#14967F] transition shadow-2xs appearance-none truncate"
+          class="w-full text-xs py-2 px-3 pr-8 rounded-xl border border-neutral-300 bg-neutral-50/60 hover:bg-neutral-50 focus:bg-white hover:border-neutral-400 text-neutral-800 focus:outline-none focus:ring-2 focus:ring-[#14967F] focus:border-[#14967F] transition-all duration-150 ease-in-out shadow-2xs appearance-none truncate cursor-pointer"
         >
           <option value="">{% trans "Tous les statuts" %}</option>
           {% for val, label in status_choices %}
@@ -84,7 +84,7 @@
           name="gender"
           id="filter-gender"
           onchange="this.form.submit()"
-          class="w-full text-xs py-2 px-3 pr-8 rounded-xl border border-neutral-200 bg-white text-neutral-800 focus:outline-none focus:ring-2 focus:ring-[#14967F] focus:border-[#14967F] transition shadow-2xs appearance-none truncate"
+          class="w-full text-xs py-2 px-3 pr-8 rounded-xl border border-neutral-300 bg-neutral-50/60 hover:bg-neutral-50 focus:bg-white hover:border-neutral-400 text-neutral-800 focus:outline-none focus:ring-2 focus:ring-[#14967F] focus:border-[#14967F] transition-all duration-150 ease-in-out shadow-2xs appearance-none truncate cursor-pointer"
         >
           <option value="">{% trans "Tous les genres" %}</option>
           {% for val, label in gender_choices %}
@@ -105,7 +105,7 @@
           name="blood_group"
           id="filter-blood-group"
           onchange="this.form.submit()"
-          class="w-full text-xs py-2 px-3 pr-8 rounded-xl border border-neutral-200 bg-white text-neutral-800 focus:outline-none focus:ring-2 focus:ring-[#14967F] focus:border-[#14967F] transition shadow-2xs appearance-none truncate"
+          class="w-full text-xs py-2 px-3 pr-8 rounded-xl border border-neutral-300 bg-neutral-50/60 hover:bg-neutral-50 focus:bg-white hover:border-neutral-400 text-neutral-800 focus:outline-none focus:ring-2 focus:ring-[#14967F] focus:border-[#14967F] transition-all duration-150 ease-in-out shadow-2xs appearance-none truncate cursor-pointer"
         >
           <option value="">{% trans "Tous les groupes" %}</option>
           {% for val, label in blood_group_choices %}
@@ -126,7 +126,7 @@
           name="period"
           id="filter-period"
           onchange="this.form.submit()"
-          class="w-full text-xs py-2 px-3 pr-8 rounded-xl border border-neutral-200 bg-white text-neutral-800 focus:outline-none focus:ring-2 focus:ring-[#14967F] focus:border-[#14967F] transition shadow-2xs appearance-none truncate"
+          class="w-full text-xs py-2 px-3 pr-8 rounded-xl border border-neutral-300 bg-neutral-50/60 hover:bg-neutral-50 focus:bg-white hover:border-neutral-400 text-neutral-800 focus:outline-none focus:ring-2 focus:ring-[#14967F] focus:border-[#14967F] transition-all duration-150 ease-in-out shadow-2xs appearance-none truncate cursor-pointer"
         >
           <option value="">{% trans "Toutes les dates" %}</option>
           {% for val, label in period_choices %}
@@ -147,7 +147,7 @@
           name="ordering"
           id="filter-ordering"
           onchange="this.form.submit()"
-          class="w-full text-xs py-2 px-3 pr-8 rounded-xl border border-neutral-200 bg-white text-neutral-800 focus:outline-none focus:ring-2 focus:ring-[#14967F] focus:border-[#14967F] transition shadow-2xs appearance-none truncate"
+          class="w-full text-xs py-2 px-3 pr-8 rounded-xl border border-neutral-300 bg-neutral-50/60 hover:bg-neutral-50 focus:bg-white hover:border-neutral-400 text-neutral-800 focus:outline-none focus:ring-2 focus:ring-[#14967F] focus:border-[#14967F] transition-all duration-150 ease-in-out shadow-2xs appearance-none truncate cursor-pointer"
         >
           {% for val, label in ordering_choices %}
             <option value="{{ val }}" {% if selected_ordering == val %}selected{% endif %}>{{ label }}</option>

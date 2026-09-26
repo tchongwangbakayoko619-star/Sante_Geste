@@ -26,19 +26,64 @@
       <span>{% trans "Aujourd'hui" %} • {{ today_date|default:"Aujourd'hui" }}</span>
     </div>
 
-    <!-- Period Filter Dropdown -->
-    <div class="relative">
-      <select
-        onchange="if(this.value) window.location.href=this.value;"
-        class="appearance-none inline-flex items-center pl-3.5 pr-8 py-1.5 text-xs font-bold text-neutral-700 bg-white border border-neutral-200 rounded-xl hover:bg-neutral-50 focus:outline-none focus:ring-2 focus:ring-[#14967F] shadow-2xs cursor-pointer transition-colors"
-        aria-label="{% trans "Filtrer la période" %}">
-        <option value="?period=today" {% if period_filter == "today" or not period_filter %}selected{% endif %}>{% trans "Aujourd'hui" %}</option>
-        <option value="?period=week" {% if period_filter == "week" %}selected{% endif %}>{% trans "Cette semaine" %}</option>
-        <option value="?period=month" {% if period_filter == "month" %}selected{% endif %}>{% trans "Ce mois" %}</option>
-      </select>
-      <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-neutral-400">
-        {% include "components/atoms/icon.html" with name="chevron-down" size="w-3.5 h-3.5" %}
+    <!-- Period Filter Dropdown & Custom Range Controls -->
+    <div class="relative flex items-center gap-2">
+      <div class="relative">
+        <select
+          id="dashboard-period-select"
+          onchange="if(this.value === 'custom'){ document.getElementById('dashboard-custom-range-form').classList.remove('hidden'); } else if(this.value){ window.location.href=this.value; }"
+          class="appearance-none inline-flex items-center pl-3.5 pr-8 py-1.5 text-xs font-bold text-neutral-700 bg-white border border-neutral-300 hover:border-neutral-400 rounded-xl hover:bg-neutral-50 focus:outline-none focus:ring-2 focus:ring-[#14967F] focus:border-[#14967F] shadow-2xs cursor-pointer transition-all duration-150 ease-in-out"
+          aria-label="{% trans "Filtrer la période" %}">
+          <option value="?period=today" {% if period_filter == "today" or not period_filter %}selected{% endif %}>{% trans "Aujourd'hui" %}</option>
+          <option value="?period=week" {% if period_filter == "week" %}selected{% endif %}>{% trans "Cette semaine" %}</option>
+          <option value="?period=month" {% if period_filter == "month" %}selected{% endif %}>{% trans "Ce mois" %}</option>
+          <option value="?period=year" {% if period_filter == "year" %}selected{% endif %}>{% trans "Cette année" %}</option>
+          <option value="custom" {% if period_filter == "custom" %}selected{% endif %}>{% trans "Période personnalisée..." %}</option>
+        </select>
+        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-neutral-400">
+          {% include "components/atoms/icon.html" with name="chevron-down" size="w-3.5 h-3.5" %}
+        </div>
       </div>
+
+      <!-- Inline Custom Date Range Form (Modal/Bar) -->
+      <form
+        id="dashboard-custom-range-form"
+        method="GET"
+        action=""
+        class="{% if period_filter != 'custom' %}hidden{% endif %} flex flex-wrap items-center gap-1.5 bg-white border border-neutral-300 p-1.5 rounded-xl shadow-xs">
+        <input type="hidden" name="period" value="custom">
+        <div class="flex items-center gap-1 text-[11px] font-bold text-neutral-600 pl-1">
+          <span>{% trans "Du" %}</span>
+          <input
+            type="date"
+            name="start_date"
+            required
+            value="{{ custom_start_input|default:custom_start_date }}"
+            class="px-2 py-1 text-xs font-medium text-neutral-800 bg-neutral-50 border border-neutral-300 rounded-lg hover:border-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#14967F] focus:border-[#14967F] transition-all">
+        </div>
+        <div class="flex items-center gap-1 text-[11px] font-bold text-neutral-600">
+          <span>{% trans "au" %}</span>
+          <input
+            type="date"
+            name="end_date"
+            required
+            value="{{ custom_end_input|default:custom_end_date }}"
+            class="px-2 py-1 text-xs font-medium text-neutral-800 bg-neutral-50 border border-neutral-300 rounded-lg hover:border-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#14967F] focus:border-[#14967F] transition-all">
+        </div>
+        <button
+          type="submit"
+          class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-bold text-white bg-[#14967F] hover:bg-[#0B5746] rounded-lg transition-colors cursor-pointer shadow-2xs">
+          {% include "components/atoms/icon.html" with name="check" size="w-3.5 h-3.5" %}
+          <span>{% trans "Appliquer" %}</span>
+        </button>
+        <button
+          type="button"
+          onclick="document.getElementById('dashboard-custom-range-form').classList.add('hidden');"
+          class="p-1 text-neutral-400 hover:text-neutral-600 rounded-lg hover:bg-neutral-100 transition-colors"
+          title="{% trans "Fermer" %}">
+          {% include "components/atoms/icon.html" with name="x" size="w-3.5 h-3.5" %}
+        </button>
+      </form>
     </div>
   </div>
 </div>

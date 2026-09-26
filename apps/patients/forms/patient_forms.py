@@ -151,8 +151,8 @@ class PatientSearchForm(forms.Form):
         label=_("Recherche"),
         widget=forms.TextInput(
             attrs={
+                "type": "search",
                 "placeholder": _("Rechercher un dossier par matricule, nom, prénom, téléphone..."),
-                "class": "w-full pl-11 pr-4 py-2.5 rounded-2xl border border-neutral-200 bg-white text-sm placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#14967F] focus:border-transparent transition-all shadow-xs",
                 "autocomplete": "off",
             }
         ),
@@ -170,23 +170,19 @@ class PatientMedicalUpdateForm(forms.ModelForm):
             "chronic_diseases",
         ]
         widgets = {
-            "blood_group": forms.Select(
-                attrs={
-                    "class": "w-full px-4 py-2.5 rounded-xl border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-[#14967F] focus:border-[#14967F] text-sm text-neutral-800 transition-colors bg-white",
-                }
-            ),
+            "blood_group": forms.Select(),
             "allergies": forms.Textarea(
                 attrs={
                     "rows": 4,
                     "placeholder": _("Ex: Pénicilline, Sulfamides, Latex... Laisser vide si aucune allergie constatée"),
-                    "class": "w-full px-4 py-2.5 rounded-xl border border-amber-300 bg-amber-50/20 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-sm text-neutral-800 transition-colors resize-none",
+                    "class": "border-amber-300 bg-amber-50/20 focus:ring-amber-500 focus:border-amber-500 resize-none",
                 }
             ),
             "chronic_diseases": forms.Textarea(
                 attrs={
                     "rows": 4,
                     "placeholder": _("Ex: Diabète type 2 insulino-dépendant, HTA sous traitement, Asthme sévère..."),
-                    "class": "w-full px-4 py-2.5 rounded-xl border border-rose-300 bg-rose-50/20 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-rose-500 text-sm text-neutral-800 transition-colors resize-none",
+                    "class": "border-rose-300 bg-rose-50/20 focus:ring-rose-500 focus:border-rose-500 resize-none",
                 }
             ),
         }
@@ -206,38 +202,24 @@ class PatientAllergyForm(forms.ModelForm):
             "notes",
         ]
         widgets = {
-            "allergen": forms.Select(
-                attrs={
-                    "class": "w-full px-4 py-2.5 rounded-xl border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-[#14967F] focus:border-[#14967F] text-sm text-neutral-800 transition-colors bg-white",
-                }
-            ),
-            "criticality": forms.Select(
-                attrs={
-                    "class": "w-full px-4 py-2.5 rounded-xl border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-[#14967F] focus:border-[#14967F] text-sm text-neutral-800 transition-colors bg-white",
-                }
-            ),
-            "verification_status": forms.Select(
-                attrs={
-                    "class": "w-full px-4 py-2.5 rounded-xl border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-[#14967F] focus:border-[#14967F] text-sm text-neutral-800 transition-colors bg-white",
-                }
-            ),
+            "allergen": forms.Select(),
+            "criticality": forms.Select(),
+            "verification_status": forms.Select(),
             "reaction": forms.TextInput(
                 attrs={
                     "placeholder": _("Ex: Œdème de Quincke, Urticaire aiguë, Choc anaphylactique..."),
-                    "class": "w-full px-4 py-2.5 rounded-xl border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-[#14967F] focus:border-[#14967F] text-sm text-neutral-800 transition-colors",
                 }
             ),
             "diagnosed_date": forms.DateInput(
                 attrs={
                     "type": "date",
-                    "class": "w-full px-4 py-2.5 rounded-xl border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-[#14967F] focus:border-[#14967F] text-sm text-neutral-800 transition-colors",
                 }
             ),
             "notes": forms.Textarea(
                 attrs={
                     "rows": 3,
                     "placeholder": _("Précisions contextuelles, circonstances de survenue..."),
-                    "class": "w-full px-4 py-2.5 rounded-xl border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-[#14967F] focus:border-[#14967F] text-sm text-neutral-800 transition-colors resize-none",
+                    "class": "resize-none",
                 }
             ),
         }

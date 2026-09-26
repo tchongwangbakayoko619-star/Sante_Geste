@@ -163,7 +163,7 @@
       </a>
 
       <!-- Quick Actions (Settings & Logout) -->
-      <div class="flex items-center gap-1 shrink-0 ml-1">
+      <div class="flex items-center gap-1 shrink-0 ml-1" data-sidebar-label>
         <a href="{% url "users:profile-edit" %}" class="p-1.5 text-emerald-300 hover:text-white rounded-lg hover:bg-white/10 transition-colors" title="{% trans "Paramètres" %}">
           {% include "components/atoms/icon.html" with name="gear" size="w-4 h-4" %}
         </a>

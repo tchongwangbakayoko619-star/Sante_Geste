@@ -8,6 +8,6 @@
     {% if required %}required aria-required="true"{% endif %}
     {% if aria_describedby %}aria-describedby="{{ aria_describedby }}"{% endif %}
     aria-invalid="{% if has_error or aria_invalid %}true{% else %}false{% endif %}"
-    class="textarea-base w-full px-4 py-2.5 rounded-xl border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-[#14967F] focus:border-[#14967F] text-sm text-neutral-800 transition-colors resize-none {% if has_error or aria_invalid %}input-error{% endif %} {{ class|default:'' }} {{ custom_classes|default:'' }}"
+    class="textarea-base resize-none {% if has_error or aria_invalid %}input-error{% endif %} {{ class|default:'' }} {{ custom_classes|default:'' }}"
   >{{ value|default:'' }}</textarea>
 {% endwith %}

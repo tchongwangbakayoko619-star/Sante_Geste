@@ -27,7 +27,6 @@ class AppointmentForm(forms.ModelForm):
         widget=forms.DateTimeInput(
             attrs={
                 "type": "datetime-local",
-                "class": "w-full px-4 py-2.5 rounded-xl border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-[#14967F] focus:border-[#14967F] text-sm text-neutral-800 transition-colors bg-white",
             },
             format="%Y-%m-%dT%H:%M",
         ),
@@ -46,32 +45,34 @@ class AppointmentForm(forms.ModelForm):
         widgets = {
             "patient": forms.Select(
                 attrs={
-                    "class": "w-full px-4 py-2.5 rounded-xl border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-[#14967F] focus:border-[#14967F] text-sm text-neutral-800 transition-colors bg-white",
+                    "class": "searchable-select",
+                    "data-searchable": "true",
+                    "data-placeholder": _("Rechercher un patient (nom, prénom, matricule)..."),
                 }
             ),
             "doctor": forms.Select(
                 attrs={
-                    "class": "w-full px-4 py-2.5 rounded-xl border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-[#14967F] focus:border-[#14967F] text-sm text-neutral-800 transition-colors bg-white",
+                    "class": "searchable-select",
+                    "data-searchable": "true",
+                    "data-placeholder": _("Rechercher un médecin / praticien..."),
                 }
             ),
             "estimated_duration_minutes": forms.NumberInput(
                 attrs={
                     "min": "5",
                     "step": "5",
-                    "class": "w-full px-4 py-2.5 rounded-xl border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-[#14967F] focus:border-[#14967F] text-sm text-neutral-800 transition-colors",
                 }
             ),
             "reason": forms.TextInput(
                 attrs={
                     "placeholder": _("Ex: Consultation générale, Suivi tensionnel, Contrôle post-op..."),
-                    "class": "w-full px-4 py-2.5 rounded-xl border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-[#14967F] focus:border-[#14967F] text-sm text-neutral-800 transition-colors",
                 }
             ),
             "notes": forms.Textarea(
                 attrs={
                     "rows": 2,
                     "placeholder": _("Notes ou consignes préalables (à jeun, apporter bilans antérieurs...)"),
-                    "class": "w-full px-4 py-2.5 rounded-xl border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-[#14967F] focus:border-[#14967F] text-sm text-neutral-800 transition-colors resize-none",
+                    "class": "resize-none",
                 }
             ),
         }
@@ -85,6 +86,7 @@ class AppointmentForm(forms.ModelForm):
             doctor_filter |= models.Q(pk=self.instance.doctor_id)
 
         self.fields["doctor"].queryset = User.objects.filter(doctor_filter).order_by("last_name", "first_name")
+        self.fields["doctor"].empty_label = _("Sélectionnez ou recherchez un praticien...")
         self.fields["doctor"].label_from_instance = (
             lambda u: f"Dr. {u.full_name}{' (Inactif)' if not u.is_active else ''}" if u.full_name else u.email
         )
@@ -93,6 +95,7 @@ class AppointmentForm(forms.ModelForm):
         self.fields["patient"].queryset = Patient.objects.filter(
             status=PatientStatusEnum.ACTIVE
         ).order_by("last_name", "first_name")
+        self.fields["patient"].empty_label = _("Sélectionnez ou recherchez un patient...")
         self.fields["patient"].label_from_instance = (
             lambda p: f"{p.patient_number} - {p.full_name}"
         )
@@ -173,11 +176,7 @@ class AppointmentCancelForm(forms.Form):
         choices=CANCELLATION_REASONS,
         label=_("Motif de l'annulation"),
         required=True,
-        widget=forms.Select(
-            attrs={
-                "class": "w-full px-4 py-2.5 rounded-xl border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-rose-500 text-sm text-neutral-800 transition-colors bg-white",
-            }
-        ),
+        widget=forms.Select(),
     )
 
     reason_detail = forms.CharField(
@@ -187,7 +186,7 @@ class AppointmentCancelForm(forms.Form):
             attrs={
                 "rows": 3,
                 "placeholder": _("Précisez les circonstances de l'annulation ou toute consigne pour le suivi..."),
-                "class": "w-full px-4 py-2.5 rounded-xl border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-rose-500 text-sm text-neutral-800 transition-colors resize-none",
+                "class": "resize-none",
             }
         ),
         help_text=_("Obligatoire si vous sélectionnez « Autre motif »."),

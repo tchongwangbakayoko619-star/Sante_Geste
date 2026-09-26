@@ -8,6 +8,7 @@ Calculs basés exclusivement sur la base de données réelle et les modèles :
 
 from __future__ import annotations
 
+import calendar
 from datetime import datetime
 from datetime import timedelta
 from typing import TYPE_CHECKING
@@ -103,8 +104,14 @@ class DashboardService:
             created_at__lte=end_date,
         ).count()
 
-        # 5. Séries temporelles pour les graphiques (Courbe Hebdomadaire & Répartition Donut)
-        weekly_activity = cls._build_weekly_activity_chart(appointment_qs=appointment_qs, local_now=local_now)
+        # 5. Séries temporelles pour les graphiques (Courbe d'activité adaptative & Donut)
+        activity_chart = cls._build_activity_chart(
+            appointment_qs=appointment_qs,
+            period=period,
+            start_date=start_date,
+            end_date=end_date,
+            local_now=local_now,
+        )
         status_breakdown = cls._build_status_breakdown(stats=stats)
 
         # 6. File d'attente du jour (Les 5 prochains RDV du jour ou en attente)
@@ -122,10 +129,13 @@ class DashboardService:
         return {
             "greeting": greeting,
             "today_date": today.strftime("%d/%m/%Y"),
+            "period": period,
             "period_filter": period,
-            "period_label": cls._get_period_label(period),
+            "period_label": cls._get_period_label(period, start_date=start_date, end_date=end_date),
             "start_date": start_date.isoformat(),
             "end_date": end_date.isoformat(),
+            "custom_start_date": start_date.strftime("%Y-%m-%d"),
+            "custom_end_date": end_date.strftime("%Y-%m-%d"),
             # KPIs principaux
             "rdv_today_count": stats["total_count"] or 0,
             "rdv_confirmed_count": stats["confirmed_count"] or 0,
@@ -138,7 +148,8 @@ class DashboardService:
             "total_patients": total_patients,
             "new_patients_period": new_patients_period,
             # Graphiques
-            "weekly_activity": weekly_activity,
+            "activity_chart": activity_chart,
+            "weekly_activity": activity_chart,  # Rétrocompatibilité avec les tests et templates existants
             "status_breakdown": status_breakdown,
             # Listes réelles
             "recent_appointments": recent_appointments,
@@ -154,20 +165,22 @@ class DashboardService:
         custom_end: datetime | None = None,
     ) -> tuple[datetime, datetime]:
         """Calcule les bornes d'extension temporelle (start_date, end_date) en UTC aware."""
-        today = local_now.date()
-
         if period == "week":
             start_date = local_now - timedelta(days=local_now.weekday())
             start_date = start_date.replace(hour=0, minute=0, second=0, microsecond=0)
             end_date = start_date + timedelta(days=6, hours=23, minutes=59, seconds=59, microseconds=999999)
         elif period == "month":
             start_date = local_now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-            next_month = start_date.replace(day=28) + timedelta(days=4)
-            end_date = next_month - timedelta(days=next_month.day)
-            end_date = end_date.replace(hour=23, minute=59, second=59, microsecond=999999)
+            num_days = calendar.monthrange(local_now.year, local_now.month)[1]
+            end_date = local_now.replace(day=num_days, hour=23, minute=59, second=59, microsecond=999999)
+        elif period == "year":
+            start_date = local_now.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
+            end_date = local_now.replace(month=12, day=31, hour=23, minute=59, second=59, microsecond=999999)
         elif period == "custom" and custom_start and custom_end:
-            start_date = custom_start
-            end_date = custom_end
+            if custom_start > custom_end:
+                custom_start, custom_end = custom_end, custom_start
+            start_date = custom_start.replace(hour=0, minute=0, second=0, microsecond=0)
+            end_date = custom_end.replace(hour=23, minute=59, second=59, microsecond=999999)
         else:  # today (par défaut)
             start_date = local_now.replace(hour=0, minute=0, second=0, microsecond=0)
             end_date = local_now.replace(hour=23, minute=59, second=59, microsecond=999999)
@@ -175,20 +188,37 @@ class DashboardService:
         return start_date, end_date
 
     @classmethod
-    def _get_period_label(cls, period: str) -> str:
-        labels = {
-            "today": "Aujourd'hui",
-            "week": "Cette semaine",
-            "month": "Ce mois",
-            "custom": "Période personnalisée",
-        }
-        return labels.get(period, "Aujourd'hui")
+    def _get_period_label(
+        cls,
+        period: str,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
+    ) -> str:
+        """Retourne le libellé lisible de la période."""
+        if period == "today":
+            return "Aujourd'hui"
+        if period == "week":
+            return "Cette semaine"
+        if period == "month":
+            return "Ce mois"
+        if period == "year":
+            year_val = start_date.year if start_date else timezone.now().year
+            return f"Année {year_val}"
+        if period == "custom" and start_date and end_date:
+            return f"Du {start_date.strftime('%d/%m/%Y')} au {end_date.strftime('%d/%m/%Y')}"
+        return "Aujourd'hui"
 
     @classmethod
     def _compute_spline(cls, pts: list[tuple[float, float]]) -> tuple[str, str]:
         """Génère un chemin lissé de Bézier cubique (spline) et la surface fermée pour le SVG."""
         if not pts:
             return "", ""
+        if len(pts) == 1:
+            x, y = pts[0]
+            line_path = f"M {x} {y}"
+            area_path = f"M {x} 220 L {x} {y} L {x} 220 Z"
+            return line_path, area_path
+
         k = 0.2
         n = len(pts)
         segments = []
@@ -207,58 +237,277 @@ class DashboardService:
         return line_path, area_path
 
     @classmethod
-    def _build_weekly_activity_chart(
-        cls, appointment_qs: Any, local_now: datetime
+    def _build_activity_chart(
+        cls,
+        appointment_qs: Any,
+        period: str,
+        start_date: datetime,
+        end_date: datetime,
+        local_now: datetime,
     ) -> dict[str, Any]:
-        """Génère les données réelles et les coordonnées SVG pour l'activité hebdomadaire."""
-        monday = local_now - timedelta(days=local_now.weekday())
-        monday_start = monday.replace(hour=0, minute=0, second=0, microsecond=0)
-        sunday_end = monday_start + timedelta(days=6, hours=23, minutes=59, seconds=59, microseconds=999999)
-
-        week_appointments = appointment_qs.filter(
-            scheduled_at__gte=monday_start,
-            scheduled_at__lte=sunday_end,
+        """Génère les données réelles et les coordonnées SVG pour n'importe quelle période temporelle."""
+        period_appointments = appointment_qs.filter(
+            scheduled_at__gte=start_date,
+            scheduled_at__lte=end_date,
         )
 
-        days_labels = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"]
-        planned_counts = [0] * 7
-        completed_counts = [0] * 7
+        today_idx = -1
+        chart_title = "Activité & Consultation"
+        chart_subtitle = "Évolution comparative des RDV planifiés vs consultations honorées"
 
-        for rdv in week_appointments:
-            rdv_local = timezone.localtime(rdv.scheduled_at)
-            day_idx = rdv_local.weekday()
-            planned_counts[day_idx] += 1
-            if rdv.status in [
-                AppointmentStatusEnum.COMPLETED,
-                AppointmentStatusEnum.IN_CONSULTATION,
-                AppointmentStatusEnum.WAITING,
-            ]:
-                completed_counts[day_idx] += 1
+        if period == "today":
+            # 7 créneaux horaires réguliers (08h, 10h, 12h, 14h, 16h, 18h, 20h)
+            time_slots = [8, 10, 12, 14, 16, 18, 20]
+            slot_labels = [f"{h:02d}h" for h in time_slots]
+            planned_counts = [0] * len(time_slots)
+            completed_counts = [0] * len(time_slots)
 
-        xs = [60, 155, 250, 345, 440, 535, 630]
+            for rdv in period_appointments:
+                rdv_local = timezone.localtime(rdv.scheduled_at)
+                hour = rdv_local.hour
+                best_idx = min(range(len(time_slots)), key=lambda i: abs(time_slots[i] - hour))
+                planned_counts[best_idx] += 1
+                if rdv.status in [
+                    AppointmentStatusEnum.COMPLETED,
+                    AppointmentStatusEnum.IN_CONSULTATION,
+                    AppointmentStatusEnum.WAITING,
+                ]:
+                    completed_counts[best_idx] += 1
+
+            xs = [round(60.0 + i * (570.0 / 6), 1) for i in range(7)]
+            col_w = round(570.0 / 7, 1)
+            points_meta = []
+            for i in range(7):
+                points_meta.append({
+                    "day": slot_labels[i],
+                    "short_label": slot_labels[i],
+                    "show_label": True,
+                    "x": xs[i],
+                    "col_w": col_w,
+                    "col_x": round(xs[i] - col_w / 2.0, 1),
+                })
+            now_hour = local_now.hour
+            today_idx = min(range(len(time_slots)), key=lambda i: abs(time_slots[i] - now_hour))
+            chart_title = "Activité de la Journée & Consultation"
+            chart_subtitle = "Évolution par créneau horaire des consultations du jour"
+
+        elif period == "week":
+            days_labels = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"]
+            planned_counts = [0] * 7
+            completed_counts = [0] * 7
+
+            for rdv in period_appointments:
+                rdv_local = timezone.localtime(rdv.scheduled_at)
+                day_idx = rdv_local.weekday()
+                planned_counts[day_idx] += 1
+                if rdv.status in [
+                    AppointmentStatusEnum.COMPLETED,
+                    AppointmentStatusEnum.IN_CONSULTATION,
+                    AppointmentStatusEnum.WAITING,
+                ]:
+                    completed_counts[day_idx] += 1
+
+            xs = [60.0, 155.0, 250.0, 345.0, 440.0, 535.0, 630.0]
+            col_w = 94.0
+            points_meta = []
+            for i in range(7):
+                points_meta.append({
+                    "day": days_labels[i],
+                    "short_label": days_labels[i],
+                    "show_label": True,
+                    "x": xs[i],
+                    "col_w": col_w,
+                    "col_x": round(xs[i] - col_w / 2.0, 1),
+                })
+            today_idx = local_now.weekday()
+            chart_title = "Activité Hebdomadaire & Consultation"
+            chart_subtitle = "Évolution comparative des RDV planifiés vs consultations honorées"
+
+        elif period == "month":
+            # Découpage mensuel (jours du mois en cours)
+            num_days = calendar.monthrange(start_date.year, start_date.month)[1]
+            planned_counts = [0] * num_days
+            completed_counts = [0] * num_days
+
+            for rdv in period_appointments:
+                rdv_local = timezone.localtime(rdv.scheduled_at)
+                day_idx = rdv_local.day - 1
+                if 0 <= day_idx < num_days:
+                    planned_counts[day_idx] += 1
+                    if rdv.status in [
+                        AppointmentStatusEnum.COMPLETED,
+                        AppointmentStatusEnum.IN_CONSULTATION,
+                        AppointmentStatusEnum.WAITING,
+                    ]:
+                        completed_counts[day_idx] += 1
+
+            step_x = 570.0 / (num_days - 1) if num_days > 1 else 0
+            col_w = round(step_x, 1) if step_x > 0 else 94.0
+            points_meta = []
+            key_days = {1, 5, 10, 15, 20, 25, num_days}
+            for i in range(num_days):
+                day_num = i + 1
+                x = round(60.0 + i * step_x, 1)
+                points_meta.append({
+                    "day": f"{day_num:02d}/{start_date.month:02d}",
+                    "short_label": str(day_num),
+                    "show_label": day_num in key_days,
+                    "x": x,
+                    "col_w": col_w,
+                    "col_x": round(x - col_w / 2.0, 1),
+                })
+            if start_date.month == local_now.month and start_date.year == local_now.year:
+                today_idx = local_now.day - 1
+            chart_title = "Activité Mensuelle & Consultation"
+            chart_subtitle = f"Évolution quotidienne des consultations ({start_date.strftime('%B %Y')})"
+
+        elif period == "year":
+            # Découpage annuel par 12 mois
+            month_labels = ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Aoû", "Sep", "Oct", "Nov", "Déc"]
+            planned_counts = [0] * 12
+            completed_counts = [0] * 12
+
+            for rdv in period_appointments:
+                rdv_local = timezone.localtime(rdv.scheduled_at)
+                m_idx = rdv_local.month - 1
+                planned_counts[m_idx] += 1
+                if rdv.status in [
+                    AppointmentStatusEnum.COMPLETED,
+                    AppointmentStatusEnum.IN_CONSULTATION,
+                    AppointmentStatusEnum.WAITING,
+                ]:
+                    completed_counts[m_idx] += 1
+
+            step_x = 570.0 / 11
+            col_w = round(step_x, 1)
+            points_meta = []
+            for i in range(12):
+                x = round(60.0 + i * step_x, 1)
+                points_meta.append({
+                    "day": month_labels[i],
+                    "short_label": month_labels[i],
+                    "show_label": True,
+                    "x": x,
+                    "col_w": col_w,
+                    "col_x": round(x - col_w / 2.0, 1),
+                })
+            if start_date.year == local_now.year:
+                today_idx = local_now.month - 1
+            chart_title = f"Activité Annuelle {start_date.year}"
+            chart_subtitle = "Évolution mensuelle des consultations et admissions"
+
+        else:
+            # Période personnalisée (custom)
+            start_d = start_date.date()
+            end_d = end_date.date()
+            total_days = max(1, (end_d - start_d).days + 1)
+
+            if total_days <= 31:
+                # Mode journalier
+                planned_counts = [0] * total_days
+                completed_counts = [0] * total_days
+
+                for rdv in period_appointments:
+                    rdv_local = timezone.localtime(rdv.scheduled_at)
+                    d_idx = (rdv_local.date() - start_d).days
+                    if 0 <= d_idx < total_days:
+                        planned_counts[d_idx] += 1
+                        if rdv.status in [
+                            AppointmentStatusEnum.COMPLETED,
+                            AppointmentStatusEnum.IN_CONSULTATION,
+                            AppointmentStatusEnum.WAITING,
+                        ]:
+                            completed_counts[d_idx] += 1
+
+                step_x = 570.0 / (total_days - 1) if total_days > 1 else 0
+                col_w = round(step_x, 1) if step_x > 0 else 94.0
+                points_meta = []
+                for i in range(total_days):
+                    cur_date = start_d + timedelta(days=i)
+                    x = round(60.0 + i * step_x, 1)
+                    show = (total_days <= 10) or (i == 0) or (i == total_days - 1) or (i % max(1, total_days // 6) == 0)
+                    points_meta.append({
+                        "day": cur_date.strftime("%d/%m"),
+                        "short_label": cur_date.strftime("%d/%m"),
+                        "show_label": show,
+                        "x": x,
+                        "col_w": col_w,
+                        "col_x": round(x - col_w / 2.0, 1),
+                    })
+                    if cur_date == local_now.date():
+                        today_idx = i
+            else:
+                # Période plus longue : regrouper en 10 tranches équidistantes
+                num_buckets = 10
+                bucket_size = total_days / num_buckets
+                planned_counts = [0] * num_buckets
+                completed_counts = [0] * num_buckets
+
+                for rdv in period_appointments:
+                    rdv_local = timezone.localtime(rdv.scheduled_at)
+                    diff_days = (rdv_local.date() - start_d).days
+                    b_idx = min(num_buckets - 1, int(diff_days / bucket_size))
+                    if 0 <= b_idx < num_buckets:
+                        planned_counts[b_idx] += 1
+                        if rdv.status in [
+                            AppointmentStatusEnum.COMPLETED,
+                            AppointmentStatusEnum.IN_CONSULTATION,
+                            AppointmentStatusEnum.WAITING,
+                        ]:
+                            completed_counts[b_idx] += 1
+
+                step_x = 570.0 / (num_buckets - 1)
+                col_w = round(step_x, 1)
+                points_meta = []
+                for i in range(num_buckets):
+                    b_start = start_d + timedelta(days=int(i * bucket_size))
+                    x = round(60.0 + i * step_x, 1)
+                    points_meta.append({
+                        "day": b_start.strftime("%d/%m"),
+                        "short_label": b_start.strftime("%d/%m"),
+                        "show_label": True,
+                        "x": x,
+                        "col_w": col_w,
+                        "col_x": round(x - col_w / 2.0, 1),
+                    })
+
+            chart_title = "Activité sur la Période Sélectionnée"
+            chart_subtitle = f"Du {start_date.strftime('%d/%m/%Y')} au {end_date.strftime('%d/%m/%Y')}"
+
+        # Échelle Y dynamique
+        n_points = len(planned_counts)
         raw_max = max(planned_counts + [4])
         rem = raw_max % 4
         max_val = raw_max if rem == 0 else raw_max + (4 - rem)
         if max_val < 4:
             max_val = 4
 
-        pts_planned = [(xs[i], round(220.0 - (planned_counts[i] / max_val) * 200.0, 1)) for i in range(7)]
-        pts_completed = [(xs[i], round(220.0 - (completed_counts[i] / max_val) * 200.0, 1)) for i in range(7)]
+        pts_planned = [
+            (points_meta[i]["x"], round(220.0 - (planned_counts[i] / max_val) * 200.0, 1))
+            for i in range(n_points)
+        ]
+        pts_completed = [
+            (points_meta[i]["x"], round(220.0 - (completed_counts[i] / max_val) * 200.0, 1))
+            for i in range(n_points)
+        ]
 
         planned_path, planned_area = cls._compute_spline(pts_planned)
         completed_path, completed_area = cls._compute_spline(pts_completed)
 
-        points = [
-            {
-                "day": days_labels[i],
-                "x": xs[i],
+        points = []
+        for i in range(n_points):
+            points.append({
+                "day": points_meta[i]["day"],
+                "short_label": points_meta[i].get("short_label", points_meta[i]["day"]),
+                "show_label": points_meta[i].get("show_label", True),
+                "x": points_meta[i]["x"],
+                "col_w": points_meta[i]["col_w"],
+                "col_x": points_meta[i]["col_x"],
                 "planned_val": planned_counts[i],
                 "completed_val": completed_counts[i],
                 "planned_y": pts_planned[i][1],
                 "completed_y": pts_completed[i][1],
-            }
-            for i in range(7)
-        ]
+            })
 
         y_ticks = [
             {"val": max_val, "y": 20},
@@ -273,10 +522,12 @@ class DashboardService:
         completion_rate = round((total_completed / total_planned * 100), 1) if total_planned > 0 else 0.0
 
         return {
-            "labels": days_labels,
+            "title": chart_title,
+            "subtitle": chart_subtitle,
+            "labels": [p["day"] for p in points_meta],
             "planned": planned_counts,
             "completed": completed_counts,
-            "today_idx": local_now.weekday(),
+            "today_idx": today_idx,
             "total_planned": total_planned,
             "total_completed": total_completed,
             "completion_rate": completion_rate,
@@ -289,6 +540,22 @@ class DashboardService:
             "points": points,
             "y_ticks": y_ticks,
         }
+
+    @classmethod
+    def _build_weekly_activity_chart(
+        cls, appointment_qs: Any, local_now: datetime
+    ) -> dict[str, Any]:
+        """Méthode de compatibilité pour l'activité hebdomadaire."""
+        monday = local_now - timedelta(days=local_now.weekday())
+        monday_start = monday.replace(hour=0, minute=0, second=0, microsecond=0)
+        sunday_end = monday_start + timedelta(days=6, hours=23, minutes=59, seconds=59, microseconds=999999)
+        return cls._build_activity_chart(
+            appointment_qs=appointment_qs,
+            period="week",
+            start_date=monday_start,
+            end_date=sunday_end,
+            local_now=local_now,
+        )
 
     @classmethod
     def _build_status_breakdown(cls, stats: dict[str, Any]) -> dict[str, Any]:

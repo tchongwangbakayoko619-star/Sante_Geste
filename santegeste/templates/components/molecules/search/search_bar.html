@@ -12,7 +12,7 @@
     name="q"
     value="{{ query_value|default:'' }}"
     placeholder="{{ placeholder|default:'Rechercher...' }}"
-    class="w-full pl-10 pr-16 py-2.5 rounded-2xl border border-neutral-200 bg-white focus:outline-none focus:ring-2 focus:ring-[#14967F] focus:border-[#14967F] text-sm text-neutral-800 transition-colors shadow-2xs"
+    class="w-full pl-10 pr-16 py-2.5 rounded-xl border border-neutral-300 bg-neutral-50/60 hover:bg-neutral-50 focus:bg-white hover:border-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#14967F] focus:border-[#14967F] text-sm text-neutral-800 transition-all duration-150 ease-in-out shadow-2xs placeholder:text-neutral-400"
     autocomplete="off"
   >
   {% if query_value %}
