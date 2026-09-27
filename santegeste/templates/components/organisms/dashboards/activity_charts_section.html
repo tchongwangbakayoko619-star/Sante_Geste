@@ -1,47 +1,43 @@
-{# Organism: Dashboard Charts Section (Courbe Hebdomadaire Interactive + Donut Dynamique Synchronisé) #}
-{% load i18n %}
+{# Organism: Dashboard Charts Section (Chart.js Dynamique, Courbe d'Activité & Donut Répartition) #}
+{% load i18n l10n %}
 
-<style>
-  /* Animations et micro-interactions des graphiques SantéGeste */
-  @keyframes drawPath {
-    from {
-      stroke-dashoffset: 1200;
-      opacity: 0.2;
+{% with chart=activity_chart|default:weekly_activity %}
+
+<!-- Injection Sécurisée des Données Réelles pour Chart.js (Immunisée contre les virgules de localisation) -->
+{% if charts_config %}
+  {{ charts_config|json_script:"dashboard-charts-data" }}
+{% else %}
+  <script id="dashboard-charts-data" type="application/json">
+  {
+    "activity": {
+      "has_data": {{ chart.has_data|yesno:"true,false" }},
+      "labels": [{% for l in chart.labels %}"{{ l|escapejs }}"{% if not forloop.last %},{% endif %}{% endfor %}],
+      "planned": [{% for p in chart.planned %}{{ p|unlocalize }}{% if not forloop.last %},{% endif %}{% endfor %}],
+      "completed": [{% for c in chart.completed %}{{ c|unlocalize }}{% if not forloop.last %},{% endif %}{% endfor %}],
+      "today_idx": {{ chart.today_idx|default:-1|unlocalize }},
+      "total_planned": {{ chart.total_planned|default:0|unlocalize }},
+      "total_completed": {{ chart.total_completed|default:0|unlocalize }},
+      "completion_rate": {{ chart.completion_rate|default:0|unlocalize }}
+    },
+    "status_breakdown": {
+      "has_data": {{ status_breakdown.has_data|yesno:"true,false" }},
+      "total": {{ status_breakdown.total|default:0|unlocalize }},
+      "counts": {
+        "confirmed": {{ status_breakdown.counts.confirmed|default:0|unlocalize }},
+        "waiting": {{ status_breakdown.counts.waiting|default:0|unlocalize }},
+        "cancelled": {{ status_breakdown.counts.cancelled|default:0|unlocalize }},
+        "scheduled": {{ status_breakdown.counts.scheduled|default:0|unlocalize }}
+      },
+      "percentages": {
+        "confirmed": {{ status_breakdown.percentages.confirmed|default:0|unlocalize }},
+        "waiting": {{ status_breakdown.percentages.waiting|default:0|unlocalize }},
+        "cancelled": {{ status_breakdown.percentages.cancelled|default:0|unlocalize }},
+        "scheduled": {{ status_breakdown.percentages.scheduled|default:0|unlocalize }}
+      }
     }
-    to {
-      stroke-dashoffset: 0;
-      opacity: 1;
-    }
   }
-
-  @keyframes fadeInArea {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
-
-  .chart-curve-animated {
-    stroke-dasharray: 1200;
-    stroke-dashoffset: 1200;
-    animation: drawPath 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  }
-
-  .chart-area-animated {
-    animation: fadeInArea 1.1s ease-out forwards;
-  }
-
-  .donut-segment {
-    transition: stroke-width 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease, filter 0.2s ease;
-    transform-origin: center;
-  }
-
-  .chart-point {
-    transition: r 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), stroke-width 0.2s ease, opacity 0.2s ease;
-  }
-</style>
+  </script>
+{% endif %}
 
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
@@ -53,10 +49,10 @@
       <div>
         <h2 class="text-base font-extrabold text-neutral-900 font-title flex items-center gap-2">
           {% include "components/atoms/icon.html" with name="chart-line" size="w-5 h-5 text-[#14967F]" %}
-          <span>{% trans "Activité Hebdomadaire & Consultation" %}</span>
+          <span>{{ chart.title|default:_("Activité Hebdomadaire & Prise en Charge")|safe }}</span>
         </h2>
         <p class="text-xs text-neutral-500 mt-0.5">
-          {% trans "Évolution comparative des RDV planifiés vs consultations honorées" %}
+          {{ chart.subtitle|default:_("Évolution comparative des RDV planifiés vs consultations honorées") }}
         </p>
       </div>
 
@@ -68,14 +64,14 @@
           id="legend-btn-planned"
           data-series="planned"
           class="group flex items-center gap-2 px-3 py-1.5 rounded-xl border border-neutral-200/80 bg-neutral-50/60 hover:border-[#0B5746] hover:bg-[#0B5746]/5 hover:shadow-xs transition-all duration-200 cursor-pointer select-none"
-          title="{% trans "Cliquer pour masquer/afficher ou survoler pour isoler" %}">
+          title="{% trans "Cliquer pour masquer/afficher la courbe" %}">
           <span class="relative flex h-2.5 w-2.5 items-center justify-center">
             <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#0B5746] opacity-40 group-hover:opacity-100"></span>
             <span class="relative inline-flex rounded-full h-2 w-2 bg-[#0B5746]"></span>
           </span>
           <span class="text-neutral-700 group-hover:text-neutral-900 font-bold">{% trans "RDV Planifiés" %}</span>
           <span class="px-1.5 py-0.5 rounded-md bg-white border border-neutral-200/80 group-hover:border-[#0B5746]/30 text-neutral-800 font-mono font-black text-xs transition-colors">
-            {{ weekly_activity.total_planned|default:"0" }}
+            {{ chart.total_planned|default:"0" }}
           </span>
         </button>
 
@@ -85,31 +81,31 @@
           id="legend-btn-completed"
           data-series="completed"
           class="group flex items-center gap-2 px-3 py-1.5 rounded-xl border border-neutral-200/80 bg-neutral-50/60 hover:border-[#14967F] hover:bg-[#14967F]/5 hover:shadow-xs transition-all duration-200 cursor-pointer select-none"
-          title="{% trans "Cliquer pour masquer/afficher ou survoler pour isoler" %}">
+          title="{% trans "Cliquer pour masquer/afficher la courbe" %}">
           <span class="relative flex h-2.5 w-2.5 items-center justify-center">
             <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#14967F] opacity-40 group-hover:opacity-100"></span>
             <span class="relative inline-flex rounded-full h-2 w-2 bg-[#14967F]"></span>
           </span>
           <span class="text-neutral-700 group-hover:text-neutral-900 font-bold">{% trans "Honorés / Prise en charge" %}</span>
           <span class="px-1.5 py-0.5 rounded-md bg-emerald-50 border border-emerald-200/80 text-emerald-800 font-mono font-black text-xs transition-colors">
-            {{ weekly_activity.total_completed|default:"0" }}
+            {{ chart.total_completed|default:"0" }}
           </span>
-          {% if weekly_activity.completion_rate %}
+          {% if chart.completion_rate %}
             <span class="text-[10px] font-extrabold text-emerald-700 bg-emerald-100/80 px-1.5 py-0.5 rounded-md">
-              {{ weekly_activity.completion_rate }}%
+              {{ chart.completion_rate }}%
             </span>
           {% endif %}
         </button>
       </div>
     </div>
 
-    {% if weekly_activity.has_data %}
+    {% if chart.has_data %}
       <!-- 2. High-Contrast Interactive Day Summary Banner (Always perfectly legible) -->
       <div id="weekly-active-day-card" class="bg-neutral-50/60 border border-neutral-200/80 rounded-2xl p-3.5 flex flex-wrap items-center justify-between gap-3 transition-colors duration-150">
         <div class="flex items-center gap-3">
           <div id="active-day-avatar" class="w-10 h-10 rounded-xl bg-white border border-neutral-200/80 flex items-center justify-center text-[#14967F] font-black text-sm shadow-2xs font-mono">
-            {% for pt in weekly_activity.points %}
-              {% if forloop.counter0 == weekly_activity.today_idx %}
+            {% for pt in chart.points %}
+              {% if forloop.counter0 == chart.today_idx %}
                 {{ pt.day|slice:":1" }}
               {% endif %}
             {% endfor %}
@@ -117,8 +113,8 @@
           <div>
             <div class="flex items-center gap-2">
               <h4 id="active-day-name" class="text-sm font-black text-neutral-900">
-                {% for pt in weekly_activity.points %}
-                  {% if forloop.counter0 == weekly_activity.today_idx %}
+                {% for pt in chart.points %}
+                  {% if forloop.counter0 == chart.today_idx %}
                     {{ pt.day }} ({% trans "Aujourd'hui" %})
                   {% endif %}
                 {% endfor %}
@@ -128,7 +124,7 @@
               </span>
             </div>
             <p id="active-day-hint" class="text-[11px] text-neutral-500 font-medium">
-              {% trans "Survolez les colonnes du graphique pour inspecter chaque jour." %}
+              {% trans "Survolez les points du graphique pour inspecter chaque intervalle." %}
             </p>
           </div>
         </div>
@@ -137,8 +133,8 @@
           <div class="text-right">
             <p class="text-[10px] font-extrabold uppercase tracking-wider text-neutral-500">{% trans "Planifiés" %}</p>
             <p id="active-day-planned" class="text-xl font-black text-neutral-900 font-mono">
-              {% for pt in weekly_activity.points %}
-                {% if forloop.counter0 == weekly_activity.today_idx %}{{ pt.planned_val }}{% endif %}
+              {% for pt in chart.points %}
+                {% if forloop.counter0 == chart.today_idx %}{{ pt.planned_val }}{% endif %}
               {% endfor %}
             </p>
           </div>
@@ -146,8 +142,8 @@
           <div class="text-right">
             <p class="text-[10px] font-extrabold uppercase tracking-wider text-neutral-500">{% trans "Honorés" %}</p>
             <p id="active-day-completed" class="text-xl font-black text-[#14967F] font-mono">
-              {% for pt in weekly_activity.points %}
-                {% if forloop.counter0 == weekly_activity.today_idx %}{{ pt.completed_val }}{% endif %}
+              {% for pt in chart.points %}
+                {% if forloop.counter0 == chart.today_idx %}{{ pt.completed_val }}{% endif %}
               {% endfor %}
             </p>
           </div>
@@ -155,8 +151,8 @@
           <div class="text-right">
             <p class="text-[10px] font-extrabold uppercase tracking-wider text-neutral-500">{% trans "Taux" %}</p>
             <p id="active-day-rate" class="text-xl font-black text-emerald-600 font-mono">
-              {% for pt in weekly_activity.points %}
-                {% if forloop.counter0 == weekly_activity.today_idx %}
+              {% for pt in chart.points %}
+                {% if forloop.counter0 == chart.today_idx %}
                   {% if pt.planned_val > 0 %}
                     {% widthratio pt.completed_val pt.planned_val 100 %}%
                   {% else %}
@@ -169,173 +165,9 @@
         </div>
       </div>
 
-      <!-- 3. Dynamic SVG Curve Chart Container -->
-      <div id="weekly-chart-container" class="relative w-full h-64 sm:h-72 select-none">
-
-        <!-- High-Contrast Floating Tooltip Card (Safe boundaries, white card) -->
-        <div
-          id="weekly-chart-tooltip"
-          class="absolute z-30 pointer-events-none opacity-0 transition-opacity duration-150 ease-out bg-white text-neutral-900 rounded-2xl p-3.5 shadow-xl border border-neutral-200/80 text-xs w-56 space-y-2 pointer-events-none"
-          style="left: 0px; top: 0px;">
-          <div class="flex items-center justify-between border-b border-neutral-100 pb-2">
-            <div class="flex items-center gap-1.5">
-              <span class="w-2.5 h-2.5 rounded-full bg-[#14967F]"></span>
-              <span id="tooltip-day" class="font-extrabold text-neutral-900 text-sm"></span>
-            </div>
-            <span id="tooltip-rate" class="px-2 py-0.5 rounded-md text-[10px] font-extrabold font-mono bg-emerald-50 text-emerald-800 border border-emerald-200"></span>
-          </div>
-          <div class="space-y-1.5 pt-0.5">
-            <div class="flex items-center justify-between text-neutral-600">
-              <span class="flex items-center gap-1.5 font-medium">
-                <span class="w-2.5 h-2.5 rounded-full bg-[#0B5746]"></span>
-                <span>{% trans "RDV Planifiés" %}</span>
-              </span>
-              <span id="tooltip-planned" class="font-mono font-black text-neutral-900 text-sm">0</span>
-            </div>
-            <div class="flex items-center justify-between text-neutral-600">
-              <span class="flex items-center gap-1.5 font-medium">
-                <span class="w-2.5 h-2.5 rounded-full bg-[#14967F]"></span>
-                <span>{% trans "Honorés" %}</span>
-              </span>
-              <span id="tooltip-completed" class="font-mono font-black text-[#14967F] text-sm">0</span>
-            </div>
-          </div>
-        </div>
-
-        <svg id="weekly-activity-svg" class="w-full h-full overflow-visible" viewBox="0 0 650 260" preserveAspectRatio="none">
-          <defs>
-            <linearGradient id="gradient-planned" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="#0B5746" stop-opacity="0.22"/>
-              <stop offset="100%" stop-color="#0B5746" stop-opacity="0.01"/>
-            </linearGradient>
-            <linearGradient id="gradient-completed" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="#14967F" stop-opacity="0.32"/>
-              <stop offset="100%" stop-color="#14967F" stop-opacity="0.02"/>
-            </linearGradient>
-            <filter id="glow-planned" x="-20%" y="-20%" width="140%" height="140%">
-              <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#0B5746" flood-opacity="0.4"/>
-            </filter>
-            <filter id="glow-completed" x="-20%" y="-20%" width="140%" height="140%">
-              <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#14967F" flood-opacity="0.5"/>
-            </filter>
-          </defs>
-
-          <!-- Y-Axis Grid Lines -->
-          <g stroke="#E5E7EB" stroke-width="1" stroke-dasharray="3 3">
-            {% for tick in weekly_activity.y_ticks %}
-              <line x1="45" y1="{{ tick.y }}" x2="640" y2="{{ tick.y }}" {% if tick.val == 0 %}stroke-dasharray="0" stroke="#D1D5DB"{% endif %} />
-            {% endfor %}
-          </g>
-
-          <!-- Y-Axis Numerical Values -->
-          <g class="text-[10px] font-mono font-bold" fill="#6B7280" text-anchor="end">
-            {% for tick in weekly_activity.y_ticks %}
-              <text x="38" y="{{ tick.y|add:3 }}">{{ tick.val }}</text>
-            {% endfor %}
-          </g>
-
-          <!-- Vertical Crosshair Line (shown dynamically on hover) -->
-          <line
-            id="chart-crosshair-line"
-            x1="0" y1="20" x2="0" y2="220"
-            stroke="#14967F" stroke-width="1.5" stroke-dasharray="3 3"
-            opacity="0"
-            class="transition-opacity duration-150 pointer-events-none"
-          />
-
-          <!-- Shaded Area Fills -->
-          <path
-            id="area-planned"
-            d="{{ weekly_activity.planned_area }}"
-            fill="url(#gradient-planned)"
-            class="chart-area-animated transition-opacity duration-300"
-          />
-          <path
-            id="area-completed"
-            d="{{ weekly_activity.completed_area }}"
-            fill="url(#gradient-completed)"
-            class="chart-area-animated transition-opacity duration-300"
-          />
-
-          <!-- Smooth Curve Strokes -->
-          <path
-            id="curve-planned"
-            d="{{ weekly_activity.planned_path }}"
-            fill="none"
-            stroke="#0B5746"
-            stroke-width="2.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            class="chart-curve-animated transition-all duration-300"
-          />
-          <path
-            id="curve-completed"
-            d="{{ weekly_activity.completed_path }}"
-            fill="none"
-            stroke="#14967F"
-            stroke-width="3"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            class="chart-curve-animated transition-all duration-300"
-          />
-
-          <!-- Interactive Data Points (Circles) with Halos -->
-          {% for pt in weekly_activity.points %}
-            <!-- Planned Halo & Dot -->
-            <circle
-              id="halo-planned-{{ forloop.counter0 }}"
-              cx="{{ pt.x }}" cy="{{ pt.planned_y }}"
-              r="7" fill="#0B5746" opacity="0"
-              class="pointer-events-none transition-all duration-200"
-            />
-            <circle
-              id="dot-planned-{{ forloop.counter0 }}"
-              cx="{{ pt.x }}" cy="{{ pt.planned_y }}"
-              r="4" fill="#0B5746" stroke="#ffffff" stroke-width="2"
-              class="chart-point transition-all duration-200 cursor-pointer pointer-events-none"
-            />
-
-            <!-- Completed Halo & Dot -->
-            <circle
-              id="halo-completed-{{ forloop.counter0 }}"
-              cx="{{ pt.x }}" cy="{{ pt.completed_y }}"
-              r="8" fill="#14967F" opacity="0"
-              class="pointer-events-none transition-all duration-200"
-            />
-            <circle
-              id="dot-completed-{{ forloop.counter0 }}"
-              cx="{{ pt.x }}" cy="{{ pt.completed_y }}"
-              r="4.5" fill="#14967F" stroke="#ffffff" stroke-width="2"
-              class="chart-point transition-all duration-200 cursor-pointer pointer-events-none"
-            />
-          {% endfor %}
-
-          <!-- X-Axis Days Labels -->
-          <g class="text-neutral-600 font-bold text-xs select-none" fill="#4B5563" text-anchor="middle">
-            {% for pt in weekly_activity.points %}
-              <text id="label-day-{{ forloop.counter0 }}" x="{{ pt.x }}" y="245" class="transition-all duration-150">{{ pt.day }}</text>
-            {% endfor %}
-          </g>
-
-          <!-- Transparent Hover Trigger Columns for Seamless Interaction -->
-          {% for pt in weekly_activity.points %}
-            <rect
-              x="{{ pt.x|add:-47 }}"
-              y="15"
-              width="94"
-              height="210"
-              fill="transparent"
-              class="chart-hover-col cursor-pointer"
-              data-idx="{{ forloop.counter0 }}"
-              data-day="{{ pt.day }}"
-              data-x="{{ pt.x }}"
-              data-planned-y="{{ pt.planned_y }}"
-              data-completed-y="{{ pt.completed_y }}"
-              data-planned="{{ pt.planned_val }}"
-              data-completed="{{ pt.completed_val }}"
-            />
-          {% endfor %}
-        </svg>
+      <!-- 3. Chart.js Activity Canvas Container with Smooth Loading Animation -->
+      <div id="activity-chart-container" class="relative w-full h-64 sm:h-72 select-none">
+        <canvas id="activityChartCanvas"></canvas>
       </div>
 
     {% else %}
@@ -344,9 +176,9 @@
         <div class="w-12 h-12 rounded-full bg-neutral-100 flex items-center justify-center text-neutral-400 mb-3">
           {% include "components/atoms/icon.html" with name="chart-line" size="w-6 h-6" %}
         </div>
-        <p class="text-sm font-bold text-neutral-700">{% trans "Aucune activité hebdomadaire à afficher" %}</p>
+        <p class="text-sm font-bold text-neutral-700">{% trans "Aucune activité à afficher" %}</p>
         <p class="text-xs text-neutral-500 mt-1 max-w-sm">
-          {% trans "Aucun rendez-vous médical n'a été planifié ou enregistré pour la semaine en cours." %}
+          {% trans "Aucun rendez-vous médical n'a été planifié ou enregistré pour la période sélectionnée." %}
         </p>
       </div>
     {% endif %}
@@ -370,77 +202,14 @@
     </div>
 
     {% if status_breakdown.has_data %}
-      <!-- Dynamic Donut Chart -->
-      <div class="relative flex items-center justify-center my-auto py-2">
-        <svg id="status-donut-svg" class="w-52 h-52 transform -rotate-90 overflow-visible" viewBox="0 0 160 160">
-          <!-- Background track circle -->
-          <circle cx="80" cy="80" r="58" stroke="#F1F5F9" stroke-width="20" fill="none" />
-
-          <!-- Green Segment: Confirmed/Honorés -->
-          <circle
-            id="donut-seg-confirmed"
-            data-status="confirmed"
-            data-label="{% trans "Honorés" %}"
-            data-count="{{ status_breakdown.counts.confirmed|default:0 }}"
-            data-pct="{{ status_breakdown.percentages.confirmed|default:0 }}"
-            data-color="#14967F"
-            cx="80" cy="80" r="58"
-            stroke="#14967F" stroke-width="20" fill="none"
-            stroke-dasharray="{{ status_breakdown.dasharrays.confirmed }}"
-            stroke-dashoffset="{{ status_breakdown.dashoffsets.confirmed }}"
-            class="donut-segment cursor-pointer"
-          />
-
-          <!-- Orange Segment: En Attente -->
-          <circle
-            id="donut-seg-waiting"
-            data-status="waiting"
-            data-label="{% trans "En attente" %}"
-            data-count="{{ status_breakdown.counts.waiting|default:0 }}"
-            data-pct="{{ status_breakdown.percentages.waiting|default:0 }}"
-            data-color="#F59E0B"
-            cx="80" cy="80" r="58"
-            stroke="#F59E0B" stroke-width="20" fill="none"
-            stroke-dasharray="{{ status_breakdown.dasharrays.waiting }}"
-            stroke-dashoffset="{{ status_breakdown.dashoffsets.waiting }}"
-            class="donut-segment cursor-pointer"
-          />
-
-          <!-- Red Segment: Annulés -->
-          <circle
-            id="donut-seg-cancelled"
-            data-status="cancelled"
-            data-label="{% trans "Annulés" %}"
-            data-count="{{ status_breakdown.counts.cancelled|default:0 }}"
-            data-pct="{{ status_breakdown.percentages.cancelled|default:0 }}"
-            data-color="#EF4444"
-            cx="80" cy="80" r="58"
-            stroke="#EF4444" stroke-width="20" fill="none"
-            stroke-dasharray="{{ status_breakdown.dasharrays.cancelled }}"
-            stroke-dashoffset="{{ status_breakdown.dashoffsets.cancelled }}"
-            class="donut-segment cursor-pointer"
-          />
-
-          <!-- Blue Segment: Planifiés -->
-          <circle
-            id="donut-seg-scheduled"
-            data-status="scheduled"
-            data-label="{% trans "Planifiés" %}"
-            data-count="{{ status_breakdown.counts.scheduled|default:0 }}"
-            data-pct="{{ status_breakdown.percentages.scheduled|default:0 }}"
-            data-color="#3B82F6"
-            cx="80" cy="80" r="58"
-            stroke="#3B82F6" stroke-width="20" fill="none"
-            stroke-dasharray="{{ status_breakdown.dasharrays.scheduled }}"
-            stroke-dashoffset="{{ status_breakdown.dashoffsets.scheduled }}"
-            class="donut-segment cursor-pointer"
-          />
-        </svg>
+      <!-- Dynamic Donut Chart powered by Chart.js with Loading Animation -->
+      <div class="relative flex items-center justify-center my-auto py-2 h-56 w-56 mx-auto">
+        <canvas id="statusDonutCanvas" class="w-full h-full"></canvas>
 
         <!-- Center Interactive Text inside Donut Hole (High-contrast, uncluttered) -->
         <div id="donut-center" class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center select-none">
           <span id="donut-center-value" class="text-3xl font-black text-neutral-900 leading-none transition-all duration-200">
-            {{ status_breakdown.total }}
+            {{ status_breakdown.total|default:0 }}
           </span>
           <span id="donut-center-label" class="text-[11px] font-extrabold text-neutral-500 uppercase tracking-wider mt-1.5 transition-all duration-200">
             {% trans "Total RDV" %}
@@ -461,7 +230,7 @@
       </div>
     {% endif %}
 
-    <!-- Status Breakdown Rich Information Cards (Unified borders border-neutral-200/80) -->
+    <!-- Status Breakdown Rich Information Cards (Synchronized with Donut) -->
     <div class="grid grid-cols-2 gap-3 pt-3 border-t border-neutral-100">
       <!-- Honorés -->
       <button
@@ -543,3 +312,5 @@
   </div>
 
 </div>
+
+{% endwith %}

@@ -1,0 +1,118 @@
+/* ==========================================================================
+   SIDEBAR COMPONENT (Google Classroom Navigation Model - CS² Health Design System)
+   ========================================================================== */
+
+:root {
+  --sidebar-width: 18rem;       /* 288px - expanded */
+  --sidebar-width-mini: 5rem;   /* 80px - collapsed */
+}
+
+/* 1. Transitions synchronisées Desktop */
+@media (min-width: 1024px) {
+  #dashboard-sidebar {
+    width: var(--sidebar-width);
+    transition: width 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  #dashboard-main-content {
+    padding-left: var(--sidebar-width);
+    transition: padding-left 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* État Collapsed / Mini sur Desktop */
+  html.sidebar-collapsed #dashboard-sidebar {
+    width: var(--sidebar-width-mini);
+  }
+
+  html.sidebar-collapsed #dashboard-main-content {
+    padding-left: var(--sidebar-width-mini);
+  }
+
+  /* Masquage propre des labels et sous-menus inline en mode mini */
+  html.sidebar-collapsed [data-sidebar-label],
+  html.sidebar-collapsed [data-sidebar-submenu] {
+    display: none !important;
+  }
+
+  /* Alignement centré des éléments de navigation en mode mini */
+  html.sidebar-collapsed .sidebar-nav-item {
+    justify-content: center !important;
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+  }
+
+  /* Header compact en mode mini */
+  html.sidebar-collapsed [data-sidebar-header] {
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: center !important;
+    gap: 0.75rem !important;
+    padding-left: 0.25rem !important;
+    padding-right: 0.25rem !important;
+  }
+
+  /* Profil utilisateur compact en mode mini */
+  html.sidebar-collapsed [data-sidebar-user-card] {
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: center !important;
+    padding: 0.5rem 0.25rem !important;
+    gap: 0.5rem !important;
+  }
+
+  html.sidebar-collapsed [data-sidebar-user-actions] {
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 0.25rem !important;
+    margin-left: 0 !important;
+  }
+}
+
+/* 2. Panneaux Flyout pour sous-menus en mode mini */
+.sidebar-flyout {
+  position: fixed;
+  left: calc(var(--sidebar-width-mini) + 8px);
+  background: #07363b;
+  border: 1px solid rgba(20, 184, 166, 0.25);
+  border-radius: 1rem;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.4);
+  padding: 0.5rem;
+  min-width: 13.5rem;
+  z-index: 65;
+  animation: sidebarFlyoutIn 150ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes sidebarFlyoutIn {
+  from {
+    opacity: 0;
+    transform: translateX(-6px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+/* 3. Floating Tooltip */
+#sidebar-floating-tooltip {
+  position: fixed;
+  pointer-events: none;
+  z-index: 70;
+  padding: 0.375rem 0.75rem;
+  border-radius: 0.625rem;
+  background-color: #0c3730;
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -4px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(45, 212, 191, 0.3);
+  opacity: 0;
+  transform: translateY(-50%) translateX(-4px);
+  transition: opacity 120ms ease, transform 120ms ease;
+}
+
+#sidebar-floating-tooltip.visible {
+  opacity: 1;
+  transform: translateY(-50%) translateX(0);
+}

@@ -1,6 +1,6 @@
-{# Organism: Dashboard Sidebar (Navigation Latérale Vert Émeraude) #}
+{# Organism: Dashboard Sidebar (Navigation Latérale Vert Émeraude - Modèle Google Classroom) #}
 {% load i18n static %}
-<!-- Sidebar Drawer Backdrop (Mobile only) -->
+<!-- Sidebar Drawer Backdrop (Mobile / Tablet only) -->
 <div
   id="sidebar-backdrop"
   class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-40 lg:hidden hidden transition-opacity"
@@ -11,17 +11,18 @@
 <!-- Main Sticky / Fixed Sidebar -->
 <aside
   id="dashboard-sidebar"
-  class="fixed top-0 bottom-0 left-0 w-72 bg-[#052d31] text-white flex flex-col justify-between z-50 overflow-hidden border-r border-teal-300/10 transition-all duration-300 ease-out -translate-x-full lg:translate-x-0 shadow-2xl lg:shadow-none"
+  class="fixed top-0 bottom-0 left-0 w-72 bg-[#052d31] text-white flex flex-col justify-between z-50 overflow-hidden border-r border-teal-300/10 transition-[width,transform] duration-200 ease-out -translate-x-full lg:translate-x-0 shadow-2xl lg:shadow-none"
   aria-label="{% trans "Menu de navigation principal" %}">
 
   <!-- Top: Logo & Main Navigation -->
   <div class="flex-1 overflow-y-auto no-scrollbar py-6 px-4 space-y-6 bg-[radial-gradient(circle_at_top_right,_rgba(20,184,166,.16),_transparent_32rem)]">
 
-    <!-- Brand Logo in Squircle (Identique à la capture) -->
+    <!-- Brand Logo & Hamburger Menu Button -->
     <div class="flex items-center justify-between px-2 pb-5 border-b border-white/10" data-sidebar-header>
-      <a href="{% url "home" %}" class="flex items-center gap-3.5 group focus:outline-none">
-        <div class="w-14 h-14 rounded-2xl bg-emerald-500 flex items-center justify-center shadow-lg border border-white/20 group-hover:scale-105 transition-transform" data-sidebar-brand>
-          <svg class="w-8 h-8 text-white" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- Logo link -->
+      <a href="{% url "home" %}" class="flex items-center gap-3.5 group focus:outline-none" data-sidebar-brand-link data-sidebar-tooltip="SantéGeste CS² Health">
+        <div class="w-12 h-12 rounded-2xl bg-emerald-500 flex items-center justify-center shadow-lg border border-white/20 group-hover:scale-105 transition-transform shrink-0" data-sidebar-brand>
+          <svg class="w-7 h-7 text-white" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M35 15C35 9.477 39.477 5 45 5H55C60.523 5 65 9.477 65 15V35H85C90.523 35 95 39.477 95 45V55C95 60.523 90.523 65 85 65H65V85C65 90.523 60.523 95 55 95H45C39.477 95 35 90.523 35 85V65H15C9.477 65 5 60.523 5 55V45C5 39.477 9.477 35 15 35H35V15Z" fill="currentColor" />
             <path d="M12 50H36L44 32L54 68L64 42L70 50H88" stroke="#052d31" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" />
           </svg>
@@ -32,7 +33,21 @@
         </div>
       </a>
 
-      <button type="button" onclick="toggleDesktopSidebar()" class="hidden lg:block p-2 rounded-xl text-slate-300 hover:text-white hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-emerald-300" aria-label="{% trans "Réduire le menu" %}" aria-pressed="false" data-sidebar-collapse><svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="m15 18-6-6 6-6" /></svg></button>
+      <!-- Desktop Google Classroom Menu Toggle Button (☰) -->
+      <button
+        type="button"
+        onclick="toggleDesktopSidebar()"
+        class="hidden lg:flex items-center justify-center p-2 rounded-xl text-slate-300 hover:text-white hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-emerald-300 transition-colors shrink-0"
+        aria-label="{% trans "Réduire le menu" %}"
+        aria-expanded="true"
+        aria-controls="dashboard-sidebar"
+        data-sidebar-collapse
+        data-sidebar-tooltip="{% trans "Menu principal" %}">
+        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </button>
+
       <!-- Mobile Close Button -->
       <button
         type="button"
@@ -49,27 +64,39 @@
 
       <!-- Item 1: Dashboard (Active) -->
       <a
-        href="{% url "home" %}" aria-label="{% trans "Dashboard" %}"
-        class="flex items-center gap-3.5 px-4 py-3 rounded-xl border-l-[5px] text-sm font-bold text-white transition-all focus-visible:outline-2 focus-visible:outline-emerald-300 {% if current_route == 'home' %}border-emerald-300 bg-teal-400/20 shadow-sm shadow-teal-950/30{% else %}border-transparent hover:bg-white/10{% endif %}"{% if current_route == 'home' %} aria-current="page"{% endif %}>
-        {% include "components/atoms/icon.html" with name="dashboard-grid" size="w-5 h-5 text-emerald-200" %}
+        href="{% url "home" %}"
+        aria-label="{% trans "Dashboard" %}"
+        data-sidebar-tooltip="{% trans "Dashboard" %}"
+        class="sidebar-nav-item flex items-center gap-3.5 px-4 py-3 rounded-xl border-l-[5px] text-sm font-bold text-white transition-all focus-visible:outline-2 focus-visible:outline-emerald-300 {% if current_route == 'home' %}border-emerald-300 bg-teal-400/20 shadow-sm shadow-teal-950/30{% else %}border-transparent hover:bg-white/10{% endif %}"{% if current_route == 'home' %} aria-current="page"{% endif %}>
+        <div class="w-6 h-6 flex items-center justify-center shrink-0">
+          {% include "components/atoms/icon.html" with name="dashboard-grid" size="w-5 h-5 text-emerald-200" %}
+        </div>
         <span data-sidebar-label>{% trans "Dashboard" %}</span>
       </a>
 
-      <!-- Item 2: Gestion Patients (Collapsible) -->
-      <div class="space-y-1" x-data="{ open: true }">
+      <!-- Item 2: Gestion Patients (Collapsible / Flyout in Mini) -->
+      <div class="space-y-1 relative" data-sidebar-item-container>
         <button
           type="button"
-          onclick="toggleMenu('patients-submenu', this)" aria-label="{% trans "Gestion Patients" %}"
-          class="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-emerald-300 {% if current_route == 'patient_list' or current_route == 'patient_create' or current_route == 'patient_detail' or current_route == 'patient_update' or current_route == 'patient_medical_update' or current_route == 'patient_allergy_create' or current_route == 'patient_allergy_delete' %}bg-teal-400/15 text-white{% else %}text-emerald-100/90 hover:text-white hover:bg-white/10{% endif %}" aria-controls="patients-submenu" aria-expanded="true">
+          onclick="toggleMenu('patients-submenu', this)"
+          aria-label="{% trans "Gestion Patients" %}"
+          data-sidebar-tooltip="{% trans "Gestion Patients" %}"
+          data-flyout-target="patients-flyout"
+          class="sidebar-nav-item w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-emerald-300 {% if current_route == 'patient_list' or current_route == 'patient_create' or current_route == 'patient_detail' or current_route == 'patient_update' or current_route == 'patient_medical_update' or current_route == 'patient_allergy_create' or current_route == 'patient_allergy_delete' %}bg-teal-400/15 text-white border-l-[5px] border-emerald-300{% else %}text-emerald-100/90 hover:text-white hover:bg-white/10 border-l-[5px] border-transparent{% endif %}"
+          aria-controls="patients-submenu"
+          aria-expanded="true">
           <div class="flex items-center gap-3.5">
-            {% include "components/atoms/icon.html" with name="users" size="w-5 h-5 text-emerald-300" %}
+            <div class="w-6 h-6 flex items-center justify-center shrink-0">
+              {% include "components/atoms/icon.html" with name="users" size="w-5 h-5 text-emerald-300" %}
+            </div>
             <span data-sidebar-label>{% trans "Gestion Patients" %}</span>
           </div>
-          <svg class="w-4 h-4 text-emerald-300 transition-transform transform" id="patients-submenu-chevron" data-sidebar-label fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg class="w-4 h-4 text-emerald-300 transition-transform transform shrink-0" id="patients-submenu-chevron" data-sidebar-label fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
           </svg>
         </button>
 
+        <!-- Inline Accordion Submenu (Mode Expanded) -->
         <div id="patients-submenu" data-sidebar-submenu class="relative ml-12 border-l border-teal-300/30 pl-6 pr-2 space-y-1">
           <a href="{% url "patients:patient_list" %}" class="relative flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs {% if current_route == 'patient_list' or current_route == 'patient_detail' or current_route == 'patient_update' or current_route == 'patient_medical_update' or current_route == 'patient_allergy_create' or current_route == 'patient_allergy_delete' %}bg-white/10 text-white{% else %}text-slate-300 hover:bg-white/10 hover:text-white{% endif %} transition-colors before:absolute before:-left-[31px] before:top-1/2 before:size-2 before:-translate-y-1/2 before:rounded-full before:bg-teal-400 before:ring-4 before:ring-[#052d31]">
             {% include "components/atoms/icon.html" with name="users" size="w-3.5 h-3.5 shrink-0" %}
@@ -84,21 +111,29 @@
         </div>
       </div>
 
-      <!-- Item 3: Rendez-vous & Agenda (Collapsible) -->
-      <div class="space-y-1">
+      <!-- Item 3: Rendez-vous & Agenda (Collapsible / Flyout in Mini) -->
+      <div class="space-y-1 relative" data-sidebar-item-container>
         <button
           type="button"
-          onclick="toggleMenu('rdv-submenu', this)" aria-label="{% trans "Rendez-vous & Ag..." %}"
-          class="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-emerald-300 {% if current_route == 'appointment_list' or current_route == 'appointment_create' or current_route == 'appointment_status_update' or current_route == 'appointment_cancel' %}bg-teal-400/15 text-white{% else %}text-emerald-100/90 hover:text-white hover:bg-white/10{% endif %}" aria-controls="rdv-submenu" aria-expanded="true">
+          onclick="toggleMenu('rdv-submenu', this)"
+          aria-label="{% trans "Rendez-vous & Agenda" %}"
+          data-sidebar-tooltip="{% trans "Rendez-vous & Agenda" %}"
+          data-flyout-target="rdv-flyout"
+          class="sidebar-nav-item w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-emerald-300 {% if current_route == 'appointment_list' or current_route == 'appointment_create' or current_route == 'appointment_status_update' or current_route == 'appointment_cancel' %}bg-teal-400/15 text-white border-l-[5px] border-emerald-300{% else %}text-emerald-100/90 hover:text-white hover:bg-white/10 border-l-[5px] border-transparent{% endif %}"
+          aria-controls="rdv-submenu"
+          aria-expanded="true">
           <div class="flex items-center gap-3.5">
-            {% include "components/atoms/icon.html" with name="calendar" size="w-5 h-5 text-emerald-300" %}
+            <div class="w-6 h-6 flex items-center justify-center shrink-0">
+              {% include "components/atoms/icon.html" with name="calendar" size="w-5 h-5 text-emerald-300" %}
+            </div>
             <span data-sidebar-label>{% trans "Rendez-vous & Ag..." %}</span>
           </div>
-          <svg class="w-4 h-4 text-emerald-300 transition-transform transform" id="rdv-submenu-chevron" data-sidebar-label fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg class="w-4 h-4 text-emerald-300 transition-transform transform shrink-0" id="rdv-submenu-chevron" data-sidebar-label fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
           </svg>
         </button>
 
+        <!-- Inline Accordion Submenu (Mode Expanded) -->
         <div id="rdv-submenu" data-sidebar-submenu class="relative ml-12 border-l border-teal-300/30 pl-6 pr-2 space-y-1">
           <a href="{% url "patients:appointment_list" %}" class="relative flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs {% if current_route == 'appointment_list' %}bg-white/10 text-white{% else %}text-slate-300 hover:bg-white/10 hover:text-white{% endif %} transition-colors before:absolute before:-left-[31px] before:top-1/2 before:size-2 before:-translate-y-1/2 before:rounded-full before:bg-teal-400 before:ring-4 before:ring-[#052d31]">
             {% include "components/atoms/icon.html" with name="calendar" size="w-3.5 h-3.5 shrink-0" %}
@@ -111,21 +146,29 @@
         </div>
       </div>
 
-      <!-- Item 4: Notifications & SMS -->
-      <div>
+      <!-- Item 4: Notifications & SMS (Collapsible / Flyout in Mini) -->
+      <div class="space-y-1 relative" data-sidebar-item-container>
         <button
           type="button"
-          onclick="toggleMenu('notif-submenu', this)" aria-label="{% trans "Notifications & SMS" %}"
-          class="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold text-emerald-100/90 hover:text-white hover:bg-white/10 transition-colors focus-visible:outline-2 focus-visible:outline-emerald-300" aria-controls="notif-submenu" aria-expanded="false">
+          onclick="toggleMenu('notif-submenu', this)"
+          aria-label="{% trans "Notifications & SMS" %}"
+          data-sidebar-tooltip="{% trans "Notifications & SMS" %}"
+          data-flyout-target="notif-flyout"
+          class="sidebar-nav-item w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold text-emerald-100/90 hover:text-white hover:bg-white/10 transition-colors focus-visible:outline-2 focus-visible:outline-emerald-300 border-l-[5px] border-transparent"
+          aria-controls="notif-submenu"
+          aria-expanded="false">
           <div class="flex items-center gap-3.5">
-            {% include "components/atoms/icon.html" with name="bell" size="w-5 h-5 text-emerald-300" %}
+            <div class="w-6 h-6 flex items-center justify-center shrink-0">
+              {% include "components/atoms/icon.html" with name="bell" size="w-5 h-5 text-emerald-300" %}
+            </div>
             <span data-sidebar-label>{% trans "Notifications & SMS" %}</span>
           </div>
-          <svg class="w-4 h-4 text-emerald-300 transition-transform transform" id="notif-submenu-chevron" data-sidebar-label fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg class="w-4 h-4 text-emerald-300 transition-transform transform shrink-0" id="notif-submenu-chevron" data-sidebar-label fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
           </svg>
         </button>
 
+        <!-- Inline Submenu (Mode Expanded) -->
         <div id="notif-submenu" data-sidebar-submenu class="hidden pl-12 pr-2 space-y-1">
           <span class="block py-1.5 text-xs text-emerald-300/70 italic">
             {% trans "Rappels SMS automatiques actifs" %}
@@ -137,11 +180,11 @@
     {% endwith %}
   </div>
 
-  <!-- Bottom: User Mini-Card Pill with Quick Settings & Logout (Identique à la capture) -->
+  <!-- Bottom: User Profile Section (Expanded / Collapsed Mini) -->
   <div class="p-4 border-t border-white/10 bg-black/10">
-    <div class="flex items-center justify-between p-2.5 rounded-2xl bg-white/10 hover:bg-white/15 transition-colors">
+    <div class="flex items-center justify-between p-2.5 rounded-2xl bg-white/10 hover:bg-white/15 transition-colors" data-sidebar-user-card>
       <!-- User info & Avatar -->
-      <a href="{% url "users:profile" %}" class="flex items-center gap-2.5 truncate flex-1 focus:outline-none">
+      <a href="{% url "users:profile" %}" class="flex items-center gap-2.5 truncate focus:outline-none" data-sidebar-tooltip="{{ user.full_name }} ({{ user.role_display }})">
         <div class="relative shrink-0">
           {% if user.avatar %}
             <img src="{{ user.avatar.url }}" alt="{{ user.full_name }}" class="w-9 h-9 rounded-xl object-cover border border-emerald-400">
@@ -163,13 +206,13 @@
       </a>
 
       <!-- Quick Actions (Settings & Logout) -->
-      <div class="flex items-center gap-1 shrink-0 ml-1" data-sidebar-label>
-        <a href="{% url "users:profile-edit" %}" class="p-1.5 text-emerald-300 hover:text-white rounded-lg hover:bg-white/10 transition-colors" title="{% trans "Paramètres" %}">
+      <div class="flex items-center gap-1 shrink-0 ml-1" data-sidebar-user-actions>
+        <a href="{% url "users:profile-edit" %}" class="p-1.5 text-emerald-300 hover:text-white rounded-lg hover:bg-white/10 transition-colors" data-sidebar-tooltip="{% trans "Paramètres" %}" aria-label="{% trans "Paramètres" %}">
           {% include "components/atoms/icon.html" with name="gear" size="w-4 h-4" %}
         </a>
-        <form method="post" action="{% url "users:logout" %}">
+        <form method="post" action="{% url "users:logout" %}" class="inline">
           {% csrf_token %}
-          <button type="submit" class="p-1.5 text-emerald-300 hover:text-rose-400 rounded-lg hover:bg-white/10 transition-colors cursor-pointer" title="{% trans "Déconnexion" %}">
+          <button type="submit" class="p-1.5 text-emerald-300 hover:text-rose-400 rounded-lg hover:bg-white/10 transition-colors cursor-pointer" data-sidebar-tooltip="{% trans "Déconnexion" %}" aria-label="{% trans "Déconnexion" %}">
             {% include "components/atoms/icon.html" with name="logout" size="w-4 h-4" %}
           </button>
         </form>
@@ -178,3 +221,58 @@
   </div>
 
 </aside>
+
+<!-- ==========================================================================
+     FLYOUT MENUS (Mode Collapsed / Mini sur Desktop)
+     ========================================================================== -->
+<!-- Flyout: Gestion Patients -->
+<div id="patients-flyout" class="sidebar-flyout hidden" role="region" aria-label="{% trans "Sous-menu Gestion Patients" %}">
+  <div class="px-2.5 py-1.5 text-xs font-bold text-emerald-300 border-b border-white/10 mb-1 flex items-center gap-2">
+    {% include "components/atoms/icon.html" with name="users" size="w-3.5 h-3.5" %}
+    <span>{% trans "Gestion Patients" %}</span>
+  </div>
+  <div class="space-y-1">
+    <a href="{% url "patients:patient_list" %}" class="flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-200 hover:text-white hover:bg-white/10 transition-colors">
+      {% include "components/atoms/icon.html" with name="users" size="w-3.5 h-3.5 shrink-0 text-emerald-400" %}
+      <span>{% trans "Tous les dossiers" %}</span>
+    </a>
+    {% if request.user.is_agent_accueil or request.user.is_superuser %}
+      <a href="{% url "patients:patient_create" %}" class="flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-200 hover:text-white hover:bg-white/10 transition-colors">
+        <svg class="w-3.5 h-3.5 shrink-0 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M12 5v14m-7-7h14" /></svg>
+        <span>{% trans "+ Nouveau patient" %}</span>
+      </a>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Flyout: Rendez-vous & Agenda -->
+<div id="rdv-flyout" class="sidebar-flyout hidden" role="region" aria-label="{% trans "Sous-menu Rendez-vous & Agenda" %}">
+  <div class="px-2.5 py-1.5 text-xs font-bold text-emerald-300 border-b border-white/10 mb-1 flex items-center gap-2">
+    {% include "components/atoms/icon.html" with name="calendar" size="w-3.5 h-3.5" %}
+    <span>{% trans "Rendez-vous & Agenda" %}</span>
+  </div>
+  <div class="space-y-1">
+    <a href="{% url "patients:appointment_list" %}" class="flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-200 hover:text-white hover:bg-white/10 transition-colors">
+      {% include "components/atoms/icon.html" with name="calendar" size="w-3.5 h-3.5 shrink-0 text-emerald-400" %}
+      <span>{% trans "Agenda complet" %}</span>
+    </a>
+    <a href="{% url "patients:appointment_create" %}" class="flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-200 hover:text-white hover:bg-white/10 transition-colors">
+      <svg class="w-3.5 h-3.5 shrink-0 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M12 5v14m-7-7h14" /></svg>
+      <span>{% trans "+ Planifier un RDV" %}</span>
+    </a>
+  </div>
+</div>
+
+<!-- Flyout: Notifications & SMS -->
+<div id="notif-flyout" class="sidebar-flyout hidden" role="region" aria-label="{% trans "Sous-menu Notifications & SMS" %}">
+  <div class="px-2.5 py-1.5 text-xs font-bold text-emerald-300 border-b border-white/10 mb-1 flex items-center gap-2">
+    {% include "components/atoms/icon.html" with name="bell" size="w-3.5 h-3.5" %}
+    <span>{% trans "Notifications & SMS" %}</span>
+  </div>
+  <div class="px-2.5 py-1.5 text-xs text-emerald-200/80 italic">
+    {% trans "Rappels SMS automatiques actifs" %}
+  </div>
+</div>
+
+<!-- Floating Tooltip Container -->
+<div id="sidebar-floating-tooltip" role="tooltip" aria-hidden="true"></div>

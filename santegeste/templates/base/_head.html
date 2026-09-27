@@ -6,3 +6,14 @@
 
 <!-- Tailwind CSS v4 & CS² Health Tokens -->
 <link rel="stylesheet" href="{% static 'css/output.css' %}">
+
+<!-- Script synchrone anti-flash pour la sidebar SantéGeste (Google Classroom UX) -->
+<script>
+  (function() {
+    try {
+      if (window.innerWidth >= 1024 && localStorage.getItem('santegeste-sidebar-state') === 'collapsed') {
+        document.documentElement.classList.add('sidebar-collapsed');
+      }
+    } catch(e) {}
+  })();
+</script>

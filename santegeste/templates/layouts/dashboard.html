@@ -46,5 +46,15 @@
 
 {% block javascript %}
   {{ block.super }}
+  <script src="{% static "js/vendor/chart.umd.min.js" %}"></script>
+  <script>
+    if (typeof Chart === 'undefined') {
+      var cdnScript = document.createElement('script');
+      cdnScript.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js';
+      document.head.appendChild(cdnScript);
+    }
+  </script>
   <script src="{% static "js/components/dashboard-interactions.js" %}" defer></script>
+  <script src="{% static "js/components/dashboard-charts.js" %}" defer></script>
 {% endblock javascript %}
+

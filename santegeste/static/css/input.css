@@ -90,3 +90,4 @@ body::-webkit-scrollbar {
 @import "./components/alerts.css";
 @import "./components/badges.css";
 @import "./components/skeletons.css";
+@import "./components/sidebar.css";

@@ -107,7 +107,7 @@ class DashboardService:
         # 5. Séries temporelles pour les graphiques (Courbe d'activité adaptative & Donut)
         activity_chart = cls._build_activity_chart(
             appointment_qs=appointment_qs,
-            period=period,
+            period="week" if period == "today" else period,
             start_date=start_date,
             end_date=end_date,
             local_now=local_now,
@@ -151,6 +151,34 @@ class DashboardService:
             "activity_chart": activity_chart,
             "weekly_activity": activity_chart,  # Rétrocompatibilité avec les tests et templates existants
             "status_breakdown": status_breakdown,
+            "charts_config": {
+                "activity": {
+                    "has_data": bool(activity_chart.get("has_data")),
+                    "labels": list(activity_chart.get("labels", [])),
+                    "planned": list(activity_chart.get("planned", [])),
+                    "completed": list(activity_chart.get("completed", [])),
+                    "today_idx": activity_chart.get("today_idx", -1),
+                    "total_planned": activity_chart.get("total_planned", 0),
+                    "total_completed": activity_chart.get("total_completed", 0),
+                    "completion_rate": float(activity_chart.get("completion_rate", 0)),
+                },
+                "status_breakdown": {
+                    "has_data": bool(status_breakdown.get("has_data")),
+                    "total": int(status_breakdown.get("total", 0)),
+                    "counts": {
+                        "confirmed": int(status_breakdown.get("counts", {}).get("confirmed", 0)),
+                        "waiting": int(status_breakdown.get("counts", {}).get("waiting", 0)),
+                        "cancelled": int(status_breakdown.get("counts", {}).get("cancelled", 0)),
+                        "scheduled": int(status_breakdown.get("counts", {}).get("scheduled", 0)),
+                    },
+                    "percentages": {
+                        "confirmed": float(status_breakdown.get("percentages", {}).get("confirmed", 0)),
+                        "waiting": float(status_breakdown.get("percentages", {}).get("waiting", 0)),
+                        "cancelled": float(status_breakdown.get("percentages", {}).get("cancelled", 0)),
+                        "scheduled": float(status_breakdown.get("percentages", {}).get("scheduled", 0)),
+                    },
+                },
+            },
             # Listes réelles
             "recent_appointments": recent_appointments,
             "recent_patients": recent_patients,
@@ -320,7 +348,7 @@ class DashboardService:
                     "col_x": round(xs[i] - col_w / 2.0, 1),
                 })
             today_idx = local_now.weekday()
-            chart_title = "Activité Hebdomadaire & Consultation"
+            chart_title = "Activité Hebdomadaire & Prise en Charge"
             chart_subtitle = "Évolution comparative des RDV planifiés vs consultations honorées"
 
         elif period == "month":
