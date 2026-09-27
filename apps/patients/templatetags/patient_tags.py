@@ -85,3 +85,24 @@ def query_transform(context: dict[str, Any], **kwargs: Any) -> str:
             query.pop(k, None)
     return query.urlencode()
 
+
+@register.filter(name="get_elided_page_range")
+def get_elided_page_range(page_obj: Any, on_each_side: int = 1) -> list[Any]:
+    """Retourne la plage de pages élidée pour la pagination navigable.
+
+    Usage:
+        {% for page_num in page_obj|get_elided_page_range %}
+            ...
+        {% endfor %}
+    """
+    if not hasattr(page_obj, "paginator") or not hasattr(page_obj, "number"):
+        return []
+    return list(
+        page_obj.paginator.get_elided_page_range(
+            number=page_obj.number,
+            on_each_side=on_each_side,
+            on_ends=1,
+        )
+    )
+
+

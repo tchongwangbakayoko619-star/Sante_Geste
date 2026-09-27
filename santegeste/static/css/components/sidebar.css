@@ -3,8 +3,10 @@
    ========================================================================== */
 
 :root {
-  --sidebar-width: 18rem;       /* 288px - expanded */
-  --sidebar-width-mini: 5rem;   /* 80px - collapsed */
+  --sidebar-width: 18rem;
+  /* 288px - expanded */
+  --sidebar-width-mini: 5rem;
+  /* 80px - collapsed */
 }
 
 /* 1. Transitions synchronisées Desktop */
@@ -87,6 +89,7 @@
     opacity: 0;
     transform: translateX(-6px) scale(0.97);
   }
+
   to {
     opacity: 1;
     transform: translateX(0) scale(1);
@@ -103,6 +106,7 @@
     opacity: 1;
     transform: translateX(0) scale(1);
   }
+
   to {
     opacity: 0;
     transform: translateX(-4px) scale(0.98);
