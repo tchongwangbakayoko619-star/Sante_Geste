@@ -93,6 +93,22 @@
   }
 }
 
+.sidebar-flyout.is-closing {
+  animation: sidebarFlyoutOut 80ms ease-out forwards;
+  pointer-events: none;
+}
+
+@keyframes sidebarFlyoutOut {
+  from {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-4px) scale(0.98);
+  }
+}
+
 /* 3. Floating Tooltip */
 #sidebar-floating-tooltip {
   position: fixed;

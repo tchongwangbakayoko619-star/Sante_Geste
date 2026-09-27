@@ -65,15 +65,31 @@ function toggleDesktopSidebar() {
 // ==========================================================================
 
 /**
- * Ferme tous les panneaux flyout actifs
+ * Ferme un flyout individuel avec micro-transition de fade-out (80ms)
  */
-function closeAllFlyouts() {
-  document.querySelectorAll(".sidebar-flyout").forEach((flyout) => {
+function closeFlyout(flyout) {
+  if (!flyout || flyout.classList.contains("hidden")) return;
+  flyout.classList.add("is-closing");
+  setTimeout(() => {
+    flyout.classList.remove("is-closing");
     flyout.classList.add("hidden");
+  }, 80);
+}
+
+/**
+ * Ferme tous les panneaux flyout actifs avec animation fade-out
+ */
+function closeAllFlyouts(exceptFlyoutId = null) {
+  document.querySelectorAll(".sidebar-flyout").forEach((flyout) => {
+    if (flyout.id === exceptFlyoutId) return;
+    if (!flyout.classList.contains("hidden") && !flyout.classList.contains("is-closing")) {
+      closeFlyout(flyout);
+    }
   });
   document.querySelectorAll("[data-flyout-target]").forEach((btn) => {
     const isCollapsed = document.documentElement.classList.contains("sidebar-collapsed");
-    if (isCollapsed) {
+    const targetId = btn.getAttribute("data-flyout-target");
+    if (isCollapsed && targetId !== exceptFlyoutId) {
       btn.setAttribute("aria-expanded", "false");
     }
   });
@@ -83,11 +99,13 @@ function closeAllFlyouts() {
  * Ouvre un flyout spécifique aligné avec le bouton déclencheur
  */
 function openFlyout(button, flyoutId) {
-  closeAllFlyouts();
+  closeAllFlyouts(flyoutId);
   hideSidebarTooltip();
 
   const flyout = document.getElementById(flyoutId);
   if (!flyout) return;
+
+  flyout.classList.remove("is-closing", "hidden");
 
   const rect = button.getBoundingClientRect();
   const flyoutHeight = flyout.offsetHeight || 150;
@@ -95,7 +113,6 @@ function openFlyout(button, flyoutId) {
   const targetTop = Math.max(16, Math.min(rect.top, maxTop));
 
   flyout.style.top = `${targetTop}px`;
-  flyout.classList.remove("hidden");
   button.setAttribute("aria-expanded", "true");
 }
 
@@ -109,12 +126,12 @@ function toggleMenu(menuId, button) {
   const isCollapsed = isDesktop && document.documentElement.classList.contains("sidebar-collapsed");
 
   if (isCollapsed) {
-    // Mode Collapsed / Mini : Gestion du Flyout
+    // Mode Collapsed / Mini : Gestion du Flyout avec animation
     const flyoutId = button.getAttribute("data-flyout-target");
     if (!flyoutId) return;
 
     const flyout = document.getElementById(flyoutId);
-    if (flyout && !flyout.classList.contains("hidden")) {
+    if (flyout && !flyout.classList.contains("hidden") && !flyout.classList.contains("is-closing")) {
       closeAllFlyouts();
     } else {
       openFlyout(button, flyoutId);
@@ -151,7 +168,7 @@ function showSidebarTooltip(target) {
   const flyoutId = target.getAttribute("data-flyout-target");
   if (flyoutId) {
     const flyout = document.getElementById(flyoutId);
-    if (flyout && !flyout.classList.contains("hidden")) return;
+    if (flyout && !flyout.classList.contains("hidden") && !flyout.classList.contains("is-closing")) return;
   }
 
   const tooltipText = target.getAttribute("data-sidebar-tooltip");
