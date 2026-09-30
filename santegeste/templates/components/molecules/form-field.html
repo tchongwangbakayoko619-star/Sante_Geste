@@ -7,12 +7,18 @@
       {% include "components/atoms/label.html" with for_id=field_id text=label required=required %}
     {% endif %}
 
-    {% if has_error and error_message %}
-      {% include "components/atoms/input.html" with id=field_id name=name type=type placeholder=placeholder value=value required=required autocomplete=autocomplete pattern=pattern inputmode=inputmode icon_left=icon_left has_error=has_error aria_describedby=field_id|add:"-error" %}
-    {% elif hint_text %}
-      {% include "components/atoms/input.html" with id=field_id name=name type=type placeholder=placeholder value=value required=required autocomplete=autocomplete pattern=pattern inputmode=inputmode icon_left=icon_left has_error=has_error aria_describedby=field_id|add:"-hint" %}
+    {% if type == 'textarea' %}
+      {% include "components/atoms/inputs/textarea.html" with id=field_id name=name value=value placeholder=placeholder required=required has_error=has_error aria_describedby=field_id|add:"-error" %}
+    {% elif type == 'select' %}
+      {% include "components/atoms/select.html" with id=field_id name=name required=required has_error=has_error aria_describedby=field_id|add:"-error" options=options value=value %}
     {% else %}
-      {% include "components/atoms/input.html" with id=field_id name=name type=type placeholder=placeholder value=value required=required autocomplete=autocomplete pattern=pattern inputmode=inputmode icon_left=icon_left has_error=has_error %}
+      {% if has_error and error_message %}
+        {% include "components/atoms/input.html" with id=field_id name=name type=type placeholder=placeholder value=value required=required autocomplete=autocomplete pattern=pattern inputmode=inputmode icon_left=icon_left has_error=has_error aria_describedby=field_id|add:"-error" %}
+      {% elif hint_text %}
+        {% include "components/atoms/input.html" with id=field_id name=name type=type placeholder=placeholder value=value required=required autocomplete=autocomplete pattern=pattern inputmode=inputmode icon_left=icon_left has_error=has_error aria_describedby=field_id|add:"-hint" %}
+      {% else %}
+        {% include "components/atoms/input.html" with id=field_id name=name type=type placeholder=placeholder value=value required=required autocomplete=autocomplete pattern=pattern inputmode=inputmode icon_left=icon_left has_error=has_error %}
+      {% endif %}
     {% endif %}
 
     {% if has_error and error_message %}
@@ -27,3 +33,4 @@
     {% endif %}
   </div>
 {% endwith %}
+

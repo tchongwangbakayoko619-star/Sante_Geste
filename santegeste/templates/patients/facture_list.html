@@ -1,0 +1,78 @@
+{% extends "layouts/dashboard.html" %}
+{% load i18n static %}
+
+{% block title %}{% trans "Historique des Factures de Caisse" %} - SantéGeste{% endblock %}
+
+{% block content_inner %}
+<div class="space-y-6">
+  <!-- En-tête -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-neutral-200/80 shadow-sm">
+    <div>
+      <h1 class="text-2xl font-bold text-neutral-900 font-title tracking-tight flex items-center gap-3">
+        <span class="p-2 rounded-xl bg-amber-50 text-amber-600">
+          {% include "components/atoms/icon.html" with name="banknotes" size="w-6 h-6" %}
+        </span>
+        {% trans "Historique des Factures" %}
+      </h1>
+      <p class="text-sm text-neutral-500 mt-1">
+        {% trans "Consultez l'ensemble des factures émises et le suivi des règlements de caisse." %}
+      </p>
+    </div>
+    <a href="{% url "patients:caisse_pending_list" %}" class="px-4 py-2 rounded-xl bg-[#14967F] text-white font-bold text-sm hover:bg-[#0E6A5A] transition-colors">
+      {% trans "Actes à encaisser" %}
+    </a>
+  </div>
+
+  <!-- Tableau des Factures -->
+  <div class="bg-white rounded-2xl border border-neutral-200/80 shadow-sm overflow-hidden">
+    {% if factures %}
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="bg-neutral-50/80 border-b border-neutral-200 text-xs font-bold text-neutral-500 uppercase tracking-wider">
+              <th class="py-3.5 px-6">{% trans "N° Facture" %}</th>
+              <th class="py-3.5 px-6">{% trans "Date Émission" %}</th>
+              <th class="py-3.5 px-6">{% trans "Patient" %}</th>
+              <th class="py-3.5 px-6">{% trans "Montant Total" %}</th>
+              <th class="py-3.5 px-6">{% trans "Statut" %}</th>
+              <th class="py-3.5 px-6 text-right">{% trans "Action" %}</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-neutral-200 text-sm">
+            {% for f in factures %}
+              <tr class="hover:bg-neutral-50/50 transition-colors">
+                <td class="py-4 px-6 font-mono font-bold text-neutral-900">
+                  {{ f.invoice_number }}
+                </td>
+                <td class="py-4 px-6 text-neutral-600">
+                  {{ f.issued_at|date:"d/m/Y H:i" }}
+                </td>
+                <td class="py-4 px-6 font-bold text-neutral-900">
+                  {{ f.patient.full_name }}
+                </td>
+                <td class="py-4 px-6 font-bold text-neutral-900">
+                  {{ f.total_amount }} FCFA
+                </td>
+                <td class="py-4 px-6">
+                  <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold {% if f.status == 'PAID' %}bg-emerald-100 text-emerald-800{% elif f.status == 'PARTIALLY_PAID' %}bg-amber-100 text-amber-800{% else %}bg-rose-100 text-rose-800{% endif %}">
+                    {{ f.get_status_display }}
+                  </span>
+                </td>
+                <td class="py-4 px-6 text-right">
+                  <a href="{% url "patients:facture_detail" f.pk %}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-teal-50 text-[#14967F] font-semibold text-xs hover:bg-teal-100 transition-colors">
+                    {% trans "Voir facture" %}
+                  </a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="py-12 text-center text-neutral-500">
+        <p class="text-base font-semibold">{% trans "Aucune facture enregistrée." %}</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

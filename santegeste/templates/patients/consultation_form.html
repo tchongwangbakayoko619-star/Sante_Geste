@@ -1,0 +1,73 @@
+{% extends "layouts/dashboard.html" %}
+{% load i18n static %}
+
+{% block title %}{% trans "Nouvelle Consultation Médicale" %} - SantéGeste{% endblock %}
+
+{% block content_inner %}
+<div class="max-w-4xl mx-auto space-y-6">
+  <!-- En-tête -->
+  <div class="flex items-center justify-between bg-white p-6 rounded-2xl border border-neutral-200/80 shadow-sm">
+    <div>
+      <h1 class="text-2xl font-bold text-neutral-900 font-title tracking-tight flex items-center gap-3">
+        <span class="p-2 rounded-xl bg-teal-50 text-[#14967F]">
+          {% include "components/atoms/icon.html" with name="clipboard-document-list" size="w-6 h-6" %}
+        </span>
+        {% trans "Consultation Médicale" %}
+      </h1>
+      <p class="text-sm text-neutral-500 mt-1">
+        {% trans "Patient" %} : <strong class="text-neutral-800">{{ patient.full_name }}</strong> ({{ patient.patient_number }})
+      </p>
+    </div>
+    <a href="{% url "patients:patient_detail" patient.pk %}" class="px-4 py-2 rounded-xl bg-neutral-100 text-neutral-700 font-semibold text-sm hover:bg-neutral-200 transition-colors">
+      {% trans "Voir fiche patient" %}
+    </a>
+  </div>
+
+  <!-- Alerte allergies s'il en existe -->
+  {% if patient.has_critical_alerts %}
+    <div class="bg-rose-50 border border-rose-200 text-rose-800 p-4 rounded-2xl flex items-start gap-3">
+      {% include "components/atoms/icon.html" with name="exclamation-triangle" size="w-5 h-5 text-rose-600 shrink-0 mt-0.5" %}
+      <div>
+        <h4 class="font-bold text-sm">{% trans "Alerte Médicale / Allergies" %}</h4>
+        <p class="text-xs mt-0.5">{{ patient.allergies|default:_("Substances déclarées à l'admission") }}</p>
+      </div>
+    </div>
+  {% endif %}
+
+  <!-- Formulaire de consultation -->
+  <form method="post" class="bg-white p-6 rounded-2xl border border-neutral-200/80 shadow-sm space-y-6">
+    {% csrf_token %}
+    {% if appointment %}<input type="hidden" name="appointment" value="{{ appointment.pk }}">{% endif %}
+    {% if patient %}<input type="hidden" name="patient" value="{{ patient.pk }}">{% endif %}
+
+    <div class="space-y-4">
+      <h3 class="text-base font-bold text-neutral-900 border-b border-neutral-200 pb-2">{% trans "1. Motif & Observations" %}</h3>
+      {% include "components/molecules/form-field.html" with id="id_reason" name="reason" label="Motif de la consultation *" value=form.reason.value required=True has_error=form.reason.errors error_message=form.reason.errors.0 %}
+      {% include "components/molecules/form-field.html" with id="id_symptoms" name="symptoms" type="textarea" label="Symptômes et constatations" value=form.symptoms.value has_error=form.symptoms.errors error_message=form.symptoms.errors.0 %}
+    </div>
+
+    <div class="space-y-4">
+      <h3 class="text-base font-bold text-neutral-900 border-b border-neutral-200 pb-2">{% trans "2. Constantes Vitales" %}</h3>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {% include "components/molecules/form-field.html" with id="id_tension" name="tension" label="Tension artérielle (ex: 12/8)" value=form.tension.value %}
+        {% include "components/molecules/form-field.html" with id="id_poids" name="poids" label="Poids (kg)" value=form.poids.value %}
+        {% include "components/molecules/form-field.html" with id="id_temperature" name="temperature" label="Température (°C)" value=form.temperature.value %}
+        {% include "components/molecules/form-field.html" with id="id_pouls" name="pouls" label="Pouls (bpm)" value=form.pouls.value %}
+      </div>
+    </div>
+
+    <div class="space-y-4">
+      <h3 class="text-base font-bold text-neutral-900 border-b border-neutral-200 pb-2">{% trans "3. Diagnostic & Notes" %}</h3>
+      {% include "components/molecules/form-field.html" with id="id_diagnosis" name="diagnosis" type="textarea" label="Diagnostic clinique retenu *" value=form.diagnosis.value required=True has_error=form.diagnosis.errors error_message=form.diagnosis.errors.0 %}
+      {% include "components/molecules/form-field.html" with id="id_notes" name="notes" type="textarea" label="Notes et recommandations" value=form.notes.value %}
+    </div>
+
+    <div class="flex items-center justify-end gap-3 pt-4 border-t border-neutral-200">
+      <a href="{% url "patients:my_appointments" %}" class="px-5 py-2.5 rounded-xl border border-neutral-300 text-neutral-700 font-semibold text-sm hover:bg-neutral-50 transition-colors">
+        {% trans "Annuler" %}
+      </a>
+      {% include "components/atoms/button.html" with text="Valider & Terminer la consultation" type="submit" variant="primary" icon_left="check" %}
+    </div>
+  </form>
+</div>
+{% endblock %}

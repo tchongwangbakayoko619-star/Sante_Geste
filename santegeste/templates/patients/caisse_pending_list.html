@@ -1,0 +1,66 @@
+{% extends "layouts/dashboard.html" %}
+{% load i18n static %}
+
+{% block title %}{% trans "Module Caisse - Actes à Encaisser" %} - SantéGeste{% endblock %}
+
+{% block content_inner %}
+<div class="space-y-6">
+  <!-- En-tête -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-neutral-200/80 shadow-sm">
+    <div>
+      <h1 class="text-2xl font-bold text-neutral-900 font-title tracking-tight flex items-center gap-3">
+        <span class="p-2 rounded-xl bg-amber-50 text-amber-600">
+          {% include "components/atoms/icon.html" with name="banknotes" size="w-6 h-6" %}
+        </span>
+        {% trans "Caisse & Facturation - Actes en Attente" %}
+      </h1>
+      <p class="text-sm text-neutral-500 mt-1">
+        {% trans "Prestations médicales réalisées transmises à la caisse pour facturation et encaissement." %}
+      </p>
+    </div>
+    <a href="{% url "patients:facture_list" %}" class="px-4 py-2 rounded-xl bg-neutral-100 text-neutral-700 font-semibold text-sm hover:bg-neutral-200 transition-colors">
+      {% trans "Historique Factures" %}
+    </a>
+  </div>
+
+  <!-- Groupes de patients avec prestations en attente -->
+  {% if grouped_patients %}
+    <div class="space-y-4">
+      {% for item in grouped_patients %}
+        <div class="bg-white p-6 rounded-2xl border border-neutral-200/80 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div class="space-y-1">
+            <div class="flex items-center gap-2">
+              <h3 class="text-lg font-bold text-neutral-900">{{ item.patient.full_name }}</h3>
+              <span class="text-xs font-mono text-neutral-400">({{ item.patient.patient_number }})</span>
+            </div>
+            <p class="text-xs text-neutral-500">
+              {{ item.items|length }} {% trans "acte(s) réalisé(s) en attente d'encaissement" %}
+            </p>
+            <ul class="text-xs text-neutral-600 space-y-0.5 pt-1">
+              {% for p in item.items %}
+                <li>• {{ p.prestation.name }} (x{{ p.quantity }}) - {{ p.total_price }} FCFA</li>
+              {% endfor %}
+            </ul>
+          </div>
+
+          <div class="text-right space-y-2 shrink-0">
+            <div class="text-xl font-extrabold text-emerald-800">
+              {{ item.total }} FCFA
+            </div>
+            <form method="post" action="{% url "patients:facture_create" item.patient.pk %}">
+              {% csrf_token %}
+              <button type="submit" class="px-5 py-2.5 bg-[#14967F] text-white font-bold text-sm rounded-xl hover:bg-[#0E6A5A] transition-colors shadow-sm">
+                {% trans "Émettre la Facture & Encaisser" %}
+              </button>
+            </form>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="bg-white p-12 text-center rounded-2xl border border-neutral-200/80 shadow-sm text-neutral-500">
+      <p class="text-base font-semibold">{% trans "Aucun acte en attente d'encaissement." %}</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

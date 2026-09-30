@@ -1,0 +1,100 @@
+{% extends "layouts/dashboard.html" %}
+{% load i18n static %}
+
+{% block title %}{% trans "Facture" %} {{ facture.invoice_number }} - SantéGeste{% endblock %}
+
+{% block content_inner %}
+<div class="max-w-4xl mx-auto space-y-6">
+  <!-- En-tête / Reçu de Caisse -->
+  <div class="bg-white p-6 sm:p-8 rounded-2xl border border-neutral-200/80 shadow-sm space-y-6">
+    <div class="flex flex-col sm:flex-row justify-between items-start border-b border-neutral-200 pb-6 gap-4">
+      <div>
+        <h1 class="text-3xl font-extrabold text-neutral-900 font-title tracking-tight">
+          {% trans "FACTURE N°" %} {{ facture.invoice_number }}
+        </h1>
+        <p class="text-xs text-neutral-400 mt-1">
+          {% trans "Émise le" %} {{ facture.issued_at|date:"d/m/Y à H:i" }} par {{ facture.issued_by.full_name }}
+        </p>
+      </div>
+      <div class="text-right flex flex-col items-end gap-2">
+        <span class="inline-block px-3 py-1 rounded-full text-xs font-bold {% if facture.status == 'PAID' %}bg-emerald-100 text-emerald-800{% elif facture.status == 'PARTIALLY_PAID' %}bg-amber-100 text-amber-800{% else %}bg-rose-100 text-rose-800{% endif %}">
+          {{ facture.get_status_display }}
+        </span>
+        <a href="{% url "patients:facture_print" facture.pk %}" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#14967F] text-white font-bold text-xs rounded-xl hover:bg-[#0E6A5A] transition-colors shadow-sm">
+          {% include "components/atoms/icon.html" with name="printer" size="w-4 h-4" %}
+          {% trans "Imprimer Reçu / PDF" %}
+        </a>
+      </div>
+    </div>
+
+    <!-- Client / Patient -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 bg-neutral-50 p-4 rounded-xl text-sm">
+      <div>
+        <span class="text-xs font-bold text-neutral-400 uppercase">{% trans "Patient / Bénéficiaire" %}</span>
+        <p class="font-bold text-neutral-900 mt-0.5">{{ facture.patient.full_name }}</p>
+        <p class="text-xs text-neutral-500 font-mono">N° {{ facture.patient.patient_number }}</p>
+        <p class="text-xs text-neutral-500">{{ facture.patient.phone_number }}</p>
+      </div>
+      <div class="text-right sm:text-right">
+        <span class="text-xs font-bold text-neutral-400 uppercase">{% trans "Établissement" %}</span>
+        <p class="font-bold text-neutral-900 mt-0.5">Centre de Santé CS² Health</p>
+        <p class="text-xs text-neutral-500">SantéGeste Care Center</p>
+      </div>
+    </div>
+
+    <!-- Totaux Financiers -->
+    <div class="grid grid-cols-3 gap-4 border-t border-b border-neutral-200 py-4 text-center">
+      <div>
+        <span class="text-xs text-neutral-500 block">{% trans "Montant Total" %}</span>
+        <span class="text-lg font-bold text-neutral-900">{{ facture.total_amount }} FCFA</span>
+      </div>
+      <div>
+        <span class="text-xs text-neutral-500 block">{% trans "Déjà Encaissé" %}</span>
+        <span class="text-lg font-bold text-emerald-600">{{ facture.paid_amount }} FCFA</span>
+      </div>
+      <div>
+        <span class="text-xs text-neutral-500 block">{% trans "Reste à Payer" %}</span>
+        <span class="text-lg font-extrabold text-rose-600">{{ facture.remaining_amount }} FCFA</span>
+      </div>
+    </div>
+
+    <!-- Historique des Paiements -->
+    <div class="space-y-3">
+      <h3 class="text-sm font-bold text-neutral-900 uppercase tracking-wider">{% trans "Règlements Perçus" %}</h3>
+      {% if paiements %}
+        <div class="divide-y divide-neutral-100 text-sm">
+          {% for p in paiements %}
+            <div class="py-2 flex justify-between items-center">
+              <div>
+                <span class="font-bold text-neutral-800">{{ p.amount }} FCFA</span>
+                <span class="text-xs text-neutral-500 ml-2">({{ p.get_payment_method_display }})</span>
+              </div>
+              <span class="text-xs text-neutral-400">{{ p.paid_at|date:"d/m/Y H:i" }} - Caissier: {{ p.cashier.full_name }}</span>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="text-xs text-neutral-500 italic">{% trans "Aucun règlement perçu pour le moment." %}</p>
+      {% endif %}
+    </div>
+
+    <!-- Formulaire de Règlement (si facture non entièrement payée) -->
+    {% if facture.remaining_amount > 0 %}
+      <form method="post" action="{% url "patients:paiement_create" facture.pk %}" class="bg-teal-50/50 p-4 rounded-xl border border-teal-200/60 space-y-3 pt-4">
+        {% csrf_token %}
+        <h4 class="text-sm font-bold text-teal-900">{% trans "Enregistrer un Nouveau Règlement à la Caisse" %}</h4>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {% include "components/molecules/form-field.html" with id="id_amount" name="amount" label="Montant perçu (FCFA) *" value=paiement_form.amount.value required=True %}
+          <div>
+            <label class="block text-xs font-bold text-neutral-700 mb-1">{% trans "Mode de règlement *" %}</label>
+            {{ paiement_form.payment_method }}
+          </div>
+        </div>
+        <button type="submit" class="w-full py-3 bg-[#14967F] text-white font-bold text-sm rounded-xl hover:bg-[#0E6A5A] transition-colors shadow-sm">
+          {% trans "Valider l'Encaissement & Imprimer le Reçu" %}
+        </button>
+      </form>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,92 @@
+{% extends "layouts/dashboard.html" %}
+{% load i18n static %}
+
+{% block title %}{% trans "Mes Rendez-vous Médicaux" %} - SantéGeste{% endblock %}
+
+{% block content_inner %}
+<div class="space-y-6">
+  <!-- En-tête de la page -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-neutral-200/80 shadow-sm">
+    <div>
+      <h1 class="text-2xl font-bold text-neutral-900 font-title tracking-tight flex items-center gap-3">
+        <span class="p-2 rounded-xl bg-teal-50 text-[#14967F]">
+          {% include "components/atoms/icon.html" with name="calendar" size="w-6 h-6" %}
+        </span>
+        {% trans "Mes Rendez-vous Médicaux" %}
+      </h1>
+      <p class="text-sm text-neutral-500 mt-1">
+        {% trans "Consultez votre agenda, vos créneaux du jour et démarrez les consultations médicales." %}
+      </p>
+    </div>
+  </div>
+
+  <!-- Barre de Filtres Rapides -->
+  <div class="bg-white p-4 rounded-2xl border border-neutral-200/80 shadow-sm flex flex-wrap items-center gap-3">
+    <a href="?date_filter=today" class="px-4 py-2 rounded-xl text-sm font-semibold transition-colors {% if date_filter == 'today' %}bg-[#14967F] text-white{% else %}bg-neutral-100 text-neutral-700 hover:bg-neutral-200{% endif %}">
+      {% trans "Aujourd'hui" %}
+    </a>
+    <a href="?date_filter=upcoming" class="px-4 py-2 rounded-xl text-sm font-semibold transition-colors {% if date_filter == 'upcoming' %}bg-[#14967F] text-white{% else %}bg-neutral-100 text-neutral-700 hover:bg-neutral-200{% endif %}">
+      {% trans "À venir" %}
+    </a>
+    <a href="?date_filter=past" class="px-4 py-2 rounded-xl text-sm font-semibold transition-colors {% if date_filter == 'past' %}bg-[#14967F] text-white{% else %}bg-neutral-100 text-neutral-700 hover:bg-neutral-200{% endif %}">
+      {% trans "Historique" %}
+    </a>
+  </div>
+
+  <!-- Tableau des Rendez-vous Praticien -->
+  <div class="bg-white rounded-2xl border border-neutral-200/80 shadow-sm overflow-hidden">
+    {% if appointments %}
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="bg-neutral-50/80 border-b border-neutral-200 text-xs font-bold text-neutral-500 uppercase tracking-wider">
+              <th class="py-3.5 px-6">{% trans "Heure / Date" %}</th>
+              <th class="py-3.5 px-6">{% trans "Patient" %}</th>
+              <th class="py-3.5 px-6">{% trans "Motif" %}</th>
+              <th class="py-3.5 px-6">{% trans "Statut" %}</th>
+              <th class="py-3.5 px-6 text-right">{% trans "Action" %}</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-neutral-200 text-sm">
+            {% for rdv in appointments %}
+              <tr class="hover:bg-neutral-50/50 transition-colors">
+                <td class="py-4 px-6 font-semibold text-neutral-900">
+                  {{ rdv.scheduled_at|date:"d/m/Y H:i" }}
+                </td>
+                <td class="py-4 px-6">
+                  <div class="font-bold text-neutral-900">{{ rdv.patient.full_name }}</div>
+                  <div class="text-xs text-neutral-500 font-mono">{{ rdv.patient.patient_number }}</div>
+                </td>
+                <td class="py-4 px-6 text-neutral-700">
+                  {{ rdv.reason }}
+                </td>
+                <td class="py-4 px-6">
+                  <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold {% if rdv.status == 'COMPLETED' %}bg-emerald-100 text-emerald-800{% elif rdv.status == 'CANCELLED' %}bg-rose-100 text-rose-800{% elif rdv.status == 'IN_CONSULTATION' %}bg-teal-100 text-teal-800{% else %}bg-amber-100 text-amber-800{% endif %}">
+                    {{ rdv.get_status_display }}
+                  </span>
+                </td>
+                <td class="py-4 px-6 text-right">
+                  {% if rdv.consultation %}
+                    <a href="{% url "patients:consultation_detail" rdv.consultation.pk %}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-teal-50 text-[#14967F] font-semibold text-xs hover:bg-teal-100 transition-colors">
+                      {% trans "Voir consultation" %}
+                    </a>
+                  {% else %}
+                    <a href="{% url "patients:consultation_create" %}?appointment={{ rdv.pk }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#14967F] text-white font-semibold text-xs hover:bg-[#0E6A5A] transition-colors shadow-sm">
+                      {% include "components/atoms/icon.html" with name="clipboard-document-list" size="w-4 h-4" %}
+                      {% trans "Démarrer consultation" %}
+                    </a>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="py-12 text-center text-neutral-500">
+        <p class="text-base font-semibold">{% trans "Aucun rendez-vous trouvé pour ce créneau." %}</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

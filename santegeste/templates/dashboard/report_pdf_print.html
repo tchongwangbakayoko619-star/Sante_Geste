@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ title }} - SantéGeste CS² Health</title>
+  <style>
+    body { font-family: system-ui, -apple-system, sans-serif; font-size: 12px; color: #1e293b; padding: 20px; }
+    .header { display: flex; justify-content: space-between; border-bottom: 2px solid #0f766e; padding-bottom: 12px; margin-bottom: 20px; }
+    .logo { font-size: 20px; font-weight: 800; color: #0f766e; }
+    .meta { font-size: 10px; color: #64748b; text-align: right; }
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    th { background: #f1f5f9; text-align: left; padding: 8px; font-size: 10px; font-weight: bold; border-bottom: 1px solid #cbd5e1; }
+    td { padding: 8px; border-bottom: 1px solid #e2e8f0; }
+    .footer { margin-top: 30px; text-align: center; font-size: 9px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 10px; }
+  </style>
+</head>
+<body onload="window.print()">
+  <div class="header">
+    <div>
+      <div class="logo">SantéGeste — CS² Health</div>
+      <h2>{{ title }}</h2>
+    </div>
+    <div class="meta">
+      <p>Imprimé le : {{ printed_at }}</p>
+      <p>Par : {{ printed_by }}</p>
+    </div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        {% for h in headers %}
+          <th>{{ h }}</th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in rows %}
+        <tr>
+          {% for cell in row %}
+            <td>{{ cell }}</td>
+          {% endfor %}
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="footer">
+    SantéGeste CS² Health — Document officiel d'exportation généré le {{ printed_at }}.
+  </div>
+</body>
+</html>
