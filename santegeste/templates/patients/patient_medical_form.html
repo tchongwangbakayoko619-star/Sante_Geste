@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+{% load static i18n %}
+
+{% block title %}{{ title }} - CS² Health{% endblock title %}
+
+{% block content_inner %}
+<div class="max-w-3xl mx-auto space-y-6">
+
+  <!-- Header & Breadcrumb -->
+  <div class="flex items-center justify-between pb-4 border-b border-neutral-200/80">
+    <div>
+      <a href="{{ patient.get_absolute_url }}" class="inline-flex items-center gap-1.5 text-xs font-semibold text-neutral-500 hover:text-[#14967F] transition-colors mb-1">
+        {% include "components/atoms/icons/icon.html" with name="arrow-left" size="w-3.5 h-3.5" %}
+        {% trans "Retour à la fiche patient" %}
+      </a>
+      <div class="flex items-center gap-2 mt-1">
+        <span class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-200">
+          <span class="inline-flex items-center gap-1.5">{% include "components/atoms/icon.html" with name="cross-heartbeat" size="w-3.5 h-3.5" %}{% trans "Espace Personnel Soignant" %}</span>
+        </span>
+      </div>
+      <h1 class="font-title font-extrabold text-2xl text-neutral-900 tracking-tight mt-1.5">
+        {% trans "Mise à jour du profil clinique" %}
+      </h1>
+      <p class="text-xs sm:text-sm text-neutral-500 mt-0.5">
+        {% trans "Déclaration des facteurs de risque vitaux, allergies médicamenteuses et antécédents chroniques." %}
+      </p>
+    </div>
+
+    <span class="font-mono text-xs font-bold px-3 py-1.5 rounded-xl bg-neutral-100 text-neutral-700 border border-neutral-200">
+      {{ patient.patient_number }}
+    </span>
+  </div>
+
+  <!-- Read-only Patient Identity Banner -->
+  <div class="p-5 rounded-3xl bg-neutral-50 border border-neutral-200/80 flex items-center justify-between">
+    <div class="flex items-center gap-4">
+      {% include "components/atoms/avatars/avatar.html" with name=patient.full_name size="lg" %}
+      <div>
+        <h2 class="text-base font-bold text-neutral-900">{{ patient.full_name }}</h2>
+        <div class="flex items-center gap-2 text-xs text-neutral-500 mt-0.5">
+          {% if patient.age %}<span>{{ patient.age }} ans</span> • {% endif %}
+          <span>{{ patient.get_gender_display }}</span> •
+          <span>{{ patient.phone_number }}</span>
+        </div>
+      </div>
+    </div>
+    <div class="text-right hidden sm:block text-xs text-neutral-400">
+      {% trans "Dossier civil géré par l'accueil" %}
+    </div>
+  </div>
+
+  <!-- Section 1 : Allergies Codifiées & Standardisées (Norme OMS / ATC) -->
+  <div class="bg-white border border-neutral-200/80 rounded-3xl p-6 sm:p-8 shadow-xs space-y-5">
+    <div class="flex items-center justify-between pb-3 border-b border-neutral-100">
+      <div>
+        <h2 class="text-base font-bold text-neutral-900 flex items-center gap-2">
+          <span class="inline-flex items-center gap-2">{% include "components/atoms/icon.html" with name="pill" size="w-4 h-4 text-rose-600" %}{% trans "Allergies Médicamenteuses & Substances Codifiées" %}</span>
+        </h2>
+        <p class="text-xs text-neutral-500">{% trans "Permet le croisement automatique et le blocage des prescriptions contre-indiquées." %}</p>
+      </div>
+      <span class="text-xs font-semibold px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200">
+        {% trans "Standard CDSS / ATC" %}
+      </span>
+    </div>
+
+    <!-- Liste des allergies codifiées actives -->
+    {% if patient_allergies %}
+      <div class="space-y-2">
+        <p class="text-xs font-bold text-neutral-700 uppercase tracking-wider">{% trans "Allergies actuellement enregistrées" %} :</p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {% for pa in patient_allergies %}
+            <div class="p-3.5 rounded-2xl border {% if pa.has_life_threatening_risk %}bg-rose-50/60 border-rose-200{% else %}bg-amber-50/40 border-amber-200{% endif %} flex items-start justify-between gap-3">
+              <div class="space-y-1 text-xs">
+                <div class="flex items-center gap-2">
+                  <span class="font-bold text-neutral-900 text-sm">{{ pa.allergen.name }}</span>
+                  {% if pa.criticality == "high" %}
+                    <span class="px-2 py-0.5 rounded text-[10px] font-extrabold bg-rose-600 text-white">{% trans "Risque vital" %}</span>
+                  {% elif pa.criticality == "moderate" %}
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-200 text-amber-900">{% trans "Modérée" %}</span>
+                  {% else %}
+                    <span class="px-2 py-0.5 rounded text-[10px] font-medium bg-neutral-200 text-neutral-700">{{ pa.get_criticality_display }}</span>
+                  {% endif %}
+                </div>
+                <p class="text-[11px] text-neutral-600">
+                  {% if pa.allergen.atc_code %}<span class="font-mono font-semibold">ATC: {{ pa.allergen.atc_code }}</span>{% endif %}
+                  {% if pa.allergen.cross_reactivity_group %} • Famille: {{ pa.allergen.cross_reactivity_group }}{% endif %}
+                </p>
+                {% if pa.reaction %}
+                  <p class="text-[11px] text-neutral-700"><span class="font-medium">{% trans "Réaction" %}:</span> {{ pa.reaction }}</p>
+                {% endif %}
+              </div>
+              <form method="post" action="{% url "patients:patient_allergy_delete" patient.pk pa.pk %}" onsubmit="return confirm("{% trans "Retirer cette allergie codifiée du dossier ?" %}");">
+                {% csrf_token %}
+                <button type="submit" class="text-xs text-rose-600 hover:text-rose-800 font-semibold p-1 rounded-lg hover:bg-rose-100 transition-colors cursor-pointer" title="{% trans "Retirer" %}">
+                  {% include "components/atoms/icon.html" with name="x-mark" size="w-4 h-4" %}
+                </button>
+              </form>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    {% else %}
+      <p class="text-xs text-neutral-500 italic">{% trans "Aucune allergie codifiée n'est enregistrée pour ce patient." %}</p>
+    {% endif %}
+
+    <!-- Formulaire d'ajout rapide d'une allergie codifiée -->
+    <div class="pt-4 border-t border-neutral-100">
+      <details class="group">
+        <summary class="text-xs font-bold text-[#14967F] hover:text-[#0e7462] cursor-pointer flex items-center gap-1.5 transition-colors">
+          <span class="inline-flex items-center gap-1.5">{% include "components/atoms/icon.html" with name="plus" size="w-3.5 h-3.5" %}{% trans "Ajouter une substance allergène codifiée" %}</span>
+        </summary>
+        <form method="post" action="{% url "patients:patient_allergy_create" patient.pk %}" class="mt-4 p-4 rounded-2xl bg-neutral-50 border border-neutral-200/80 space-y-4">
+          {% csrf_token %}
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              {% include "components/molecules/form_fields/django_field.html" with field=allergy_form.allergen %}
+            </div>
+            <div>
+              {% include "components/molecules/form_fields/django_field.html" with field=allergy_form.criticality %}
+            </div>
+            <div>
+              {% include "components/molecules/form_fields/django_field.html" with field=allergy_form.verification_status %}
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              {% include "components/molecules/form_fields/django_field.html" with field=allergy_form.reaction %}
+            </div>
+            <div>
+              {% include "components/molecules/form_fields/django_field.html" with field=allergy_form.notes %}
+            </div>
+          </div>
+          <div class="flex justify-end">
+            <button type="submit" class="btn btn-primary py-2 px-4 text-xs font-bold shadow-xs">
+              {% trans "Valider et ajouter l'allergène" %}
+            </button>
+          </div>
+        </form>
+      </details>
+    </div>
+  </div>
+
+  <!-- Section 2 : Antécédents, Groupe sanguin et Notes libres -->
+  <div class="bg-white border border-neutral-200/80 rounded-3xl p-6 sm:p-8 shadow-xs space-y-6">
+    <div class="flex items-center justify-between pb-4 border-b border-neutral-100">
+      <div>
+        <h2 class="text-base font-bold text-neutral-900">{% trans "Profil Médical Général & Antécédents" %}</h2>
+        <p class="text-xs text-neutral-500">{% trans "Groupe sanguin, antécédents chroniques et observations textuelles libres." %}</p>
+      </div>
+      <span class="text-xs font-bold px-3 py-1 rounded-xl bg-rose-50 text-rose-700 border border-rose-200">
+        {% trans "Accès Soignant Réservé" %}
+      </span>
+    </div>
+
+    <form method="post" class="space-y-6" novalidate>
+      {% csrf_token %}
+
+      {% if form.non_field_errors %}
+        <div class="space-y-2">
+          {% for error in form.non_field_errors %}
+            {% include "components/molecules/alert.html" with variant="error" message=error %}
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <!-- Groupe sanguin -->
+      <div class="max-w-xs">
+        {% include "components/molecules/form_fields/django_field.html" with field=form.blood_group %}
+      </div>
+
+      <!-- Allergies libres -->
+      <div>
+        {% include "components/molecules/form_fields/django_field.html" with field=form.allergies %}
+      </div>
+
+      <!-- Affections chroniques -->
+      <div>
+        {% include "components/molecules/form_fields/django_field.html" with field=form.chronic_diseases %}
+      </div>
+
+      <!-- Actions -->
+      <div class="flex items-center justify-end gap-3 pt-4 border-t border-neutral-100">
+        <a href="{{ patient.get_absolute_url }}" class="btn btn-outline py-2.5 px-5 text-sm font-semibold">
+          {% trans "Retour au dossier" %}
+        </a>
+        <button type="submit" class="btn btn-primary py-2.5 px-6 text-sm font-bold shadow-xs">
+          {% trans "Enregistrer les modifications" %}
+        </button>
+      </div>
+
+    </form>
+
+  </div>
+
+</div>
+{% endblock content_inner %}

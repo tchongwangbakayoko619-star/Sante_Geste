@@ -4,12 +4,32 @@
      -------------------------------------------------------------------------- */
 
   /* Input Base Atom */
-  .input-base {
-    @apply w-full py-3 text-base sm:text-sm text-neutral-900 bg-neutral-50/60 hover:bg-neutral-50 focus:bg-white border border-neutral-200 rounded-xl placeholder:text-neutral-400 transition-all duration-150 ease-in-out focus:outline-none focus:border-[#14967F] focus:ring-2 focus:ring-[#14967F]/20;
+  .input-base,
+  .textarea-base,
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="tel"],
+  input[type="number"],
+  input[type="date"],
+  input[type="datetime-local"],
+  input[type="search"],
+  input[type="url"],
+  input[type="time"],
+  textarea {
+    @apply w-full min-h-[44px] px-4 py-2.5 text-base sm:text-sm text-neutral-900 bg-neutral-50/60 hover:bg-neutral-50 focus:bg-white border border-neutral-300 hover:border-neutral-400 focus:border-[#14967F] focus:ring-2 focus:ring-[#14967F]/20 rounded-xl placeholder:text-neutral-400 transition-all duration-150 ease-in-out focus:outline-none;
   }
 
-  .input-with-icon {
-    @apply pl-11 pr-4;
+  .input-with-icon,
+  input.input-with-icon,
+  input[type="text"].input-with-icon,
+  input[type="email"].input-with-icon,
+  input[type="password"].input-with-icon,
+  input[type="tel"].input-with-icon,
+  input[type="number"].input-with-icon,
+  input[type="search"].input-with-icon {
+    padding-left: 2.75rem !important;
+    padding-right: 1rem;
   }
 
   .input-without-icon {
@@ -17,16 +37,19 @@
   }
 
   .input-error {
-    @apply border-red-500 focus:border-red-500 focus:ring-red-500/20;
+    @apply border-red-500 hover:border-red-600 focus:border-red-500 focus:ring-red-500/20;
   }
 
   /* Select Base Atom */
-  .select-base {
-    @apply w-full py-3 text-base sm:text-sm text-neutral-900 bg-neutral-50/60 hover:bg-neutral-50 focus:bg-white border border-neutral-200 rounded-xl transition-all duration-150 ease-in-out focus:outline-none focus:border-[#14967F] focus:ring-2 focus:ring-[#14967F]/20 cursor-pointer;
+  .select-base,
+  select {
+    @apply w-full min-h-[44px] px-4 py-2.5 text-base sm:text-sm text-neutral-900 bg-neutral-50/60 hover:bg-neutral-50 focus:bg-white border border-neutral-300 hover:border-neutral-400 focus:border-[#14967F] focus:ring-2 focus:ring-[#14967F]/20 rounded-xl transition-all duration-150 ease-in-out focus:outline-none cursor-pointer;
   }
 
-  .select-with-icon {
-    @apply pl-11 pr-10;
+  .select-with-icon,
+  select.select-with-icon {
+    padding-left: 2.75rem !important;
+    padding-right: 2.5rem;
   }
 
   .select-without-icon {

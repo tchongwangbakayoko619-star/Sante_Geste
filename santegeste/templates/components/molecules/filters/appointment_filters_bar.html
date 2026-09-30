@@ -1,0 +1,157 @@
+{# Molecule: Appointment Filters Bar #}
+{# Props: query, selected_status, status_choices, statuses, selected_doctor, doctors, date_filter, date_filter_choices, selected_date, selected_ordering, ordering_choices, active_filters_count #}
+{% load i18n %}
+<div class="p-4 sm:p-6 border-b border-neutral-100 bg-neutral-50/50">
+  <form method="get" action="{% url "patients:appointment_list" %}" class="space-y-4" id="appointment-filters-form">
+    <!-- Top row: Search input + Actions -->
+    <div class="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
+      <!-- Search Input with icon and clear -->
+      <div class="relative flex-1">
+        <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-neutral-400">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+        </div>
+        <input
+          type="search"
+          name="q"
+          value="{{ query|default:'' }}"
+          placeholder="{% trans "Rechercher par patient, praticien, NUP, motif..." %}"
+          class="w-full pl-10 pr-10 py-2.5 rounded-xl border border-neutral-300 bg-neutral-50/60 hover:bg-neutral-50 focus:bg-white hover:border-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#14967F] focus:border-[#14967F] text-sm text-neutral-800 transition-all duration-150 ease-in-out shadow-2xs placeholder:text-neutral-400"
+          autocomplete="off"
+        >
+        {% if query %}
+          <button type="button" onclick="this.form.elements['q'].value=''; this.form.submit();" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-neutral-400 hover:text-neutral-700" title="{% trans "Effacer la recherche" %}">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        {% endif %}
+      </div>
+
+      <!-- Submit & Reset Actions -->
+      <div class="flex items-center gap-2 self-end lg:self-auto shrink-0">
+        <button type="submit" class="btn btn-primary py-2.5 px-4 text-xs font-bold inline-flex items-center gap-2 shadow-2xs">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+          </svg>
+          {% trans "Filtrer" %}
+        </button>
+
+        {% if active_filters_count > 0 %}
+          <a href="{% url "patients:appointment_list" %}" class="btn btn-outline py-2.5 px-3.5 text-xs text-neutral-600 hover:text-rose-600 hover:border-rose-300 hover:bg-rose-50/50 inline-flex items-center gap-1.5 transition-colors">
+            <svg class="w-3.5 h-3.5 text-neutral-400 group-hover:text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+            {% trans "Réinitialiser" %}
+            <span class="inline-flex items-center justify-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-[#14967F] text-white ml-0.5">
+              {{ active_filters_count }}
+            </span>
+          </a>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Filter Selects Grid -->
+    <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2.5 pt-1">
+      <!-- Status Filter -->
+      <div class="relative">
+        <label for="filter-status" class="block text-[11px] font-semibold text-neutral-500 uppercase tracking-wider mb-1">
+          {% trans "Statut clinique" %}
+        </label>
+        <select
+          name="status"
+          id="filter-status"
+          onchange="this.form.submit()"
+          class="w-full text-xs py-2 px-3 pr-8 rounded-xl border border-neutral-300 bg-neutral-50/60 hover:bg-neutral-50 focus:bg-white hover:border-neutral-400 text-neutral-800 focus:outline-none focus:ring-2 focus:ring-[#14967F] focus:border-[#14967F] transition-all duration-150 ease-in-out shadow-2xs appearance-none truncate cursor-pointer"
+        >
+          <option value="">{% trans "Tous les statuts" %}</option>
+          {% for val, label in status_choices|default:statuses %}
+            <option value="{{ val }}" {% if selected_status == val %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+        <div class="absolute inset-y-0 right-0 top-5 pr-2.5 flex items-center pointer-events-none text-neutral-400">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </div>
+      </div>
+
+      <!-- Doctor Filter -->
+      <div class="relative">
+        <label for="filter-doctor" class="block text-[11px] font-semibold text-neutral-500 uppercase tracking-wider mb-1">
+          {% trans "Praticien" %}
+        </label>
+        <select
+          name="doctor"
+          id="filter-doctor"
+          onchange="this.form.submit()"
+          class="w-full text-xs py-2 px-3 pr-8 rounded-xl border border-neutral-300 bg-neutral-50/60 hover:bg-neutral-50 focus:bg-white hover:border-neutral-400 text-neutral-800 focus:outline-none focus:ring-2 focus:ring-[#14967F] focus:border-[#14967F] transition-all duration-150 ease-in-out shadow-2xs appearance-none truncate cursor-pointer"
+        >
+          <option value="">{% trans "Tous les praticiens" %}</option>
+          {% for doc in doctors %}
+            <option value="{{ doc.id }}" {% if selected_doctor == doc.id|stringformat:"s" %}selected{% endif %}>
+              Dr. {{ doc.last_name|upper }} {{ doc.first_name }}
+            </option>
+          {% endfor %}
+        </select>
+        <div class="absolute inset-y-0 right-0 top-5 pr-2.5 flex items-center pointer-events-none text-neutral-400">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </div>
+      </div>
+
+      <!-- Date Period Filter -->
+      <div class="relative">
+        <label for="filter-date-filter" class="block text-[11px] font-semibold text-neutral-500 uppercase tracking-wider mb-1">
+          {% trans "Période" %}
+        </label>
+        <select
+          name="date_filter"
+          id="filter-date-filter"
+          onchange="document.getElementById('filter-exact-date').value=''; this.form.submit();"
+          class="w-full text-xs py-2 px-3 pr-8 rounded-xl border border-neutral-300 bg-neutral-50/60 hover:bg-neutral-50 focus:bg-white hover:border-neutral-400 text-neutral-800 focus:outline-none focus:ring-2 focus:ring-[#14967F] focus:border-[#14967F] transition-all duration-150 ease-in-out shadow-2xs appearance-none truncate cursor-pointer"
+        >
+          {% for val, label in date_filter_choices %}
+            <option value="{{ val }}" {% if date_filter == val and not selected_date %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+        <div class="absolute inset-y-0 right-0 top-5 pr-2.5 flex items-center pointer-events-none text-neutral-400">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </div>
+      </div>
+
+      <!-- Specific Date Picker -->
+      <div class="relative">
+        <label for="filter-exact-date" class="block text-[11px] font-semibold text-neutral-500 uppercase tracking-wider mb-1">
+          {% trans "Date précise" %}
+        </label>
+        <input
+          type="date"
+          id="filter-exact-date"
+          name="date"
+          value="{{ selected_date|default:'' }}"
+          onchange="document.getElementById('filter-date-filter').value=''; this.form.submit();"
+          class="w-full text-xs py-2 px-3 rounded-xl border border-neutral-300 bg-neutral-50/60 hover:bg-neutral-50 focus:bg-white hover:border-neutral-400 text-neutral-800 focus:outline-none focus:ring-2 focus:ring-[#14967F] focus:border-[#14967F] transition-all duration-150 ease-in-out shadow-2xs cursor-pointer"
+        >
+      </div>
+
+      <!-- Ordering Filter -->
+      <div class="relative col-span-2 sm:col-span-2 md:col-span-1">
+        <label for="filter-ordering" class="block text-[11px] font-semibold text-neutral-500 uppercase tracking-wider mb-1">
+          {% trans "Trier par" %}
+        </label>
+        <select
+          name="ordering"
+          id="filter-ordering"
+          onchange="this.form.submit()"
+          class="w-full text-xs py-2 px-3 pr-8 rounded-xl border border-neutral-300 bg-neutral-50/60 hover:bg-neutral-50 focus:bg-white hover:border-neutral-400 text-neutral-800 focus:outline-none focus:ring-2 focus:ring-[#14967F] focus:border-[#14967F] transition-all duration-150 ease-in-out shadow-2xs appearance-none truncate cursor-pointer"
+        >
+          {% for val, label in ordering_choices %}
+            <option value="{{ val }}" {% if selected_ordering == val %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+        <div class="absolute inset-y-0 right-0 top-5 pr-2.5 flex items-center pointer-events-none text-neutral-400">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>

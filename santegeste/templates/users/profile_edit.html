@@ -7,6 +7,7 @@
 {% trans "Prénom" as fname_label %}
 {% trans "Nom" as lname_label %}
 {% trans "Téléphone" as tel_label %}
+{% trans "Photo de profil (Avatar)" as avatar_label %}
 {% trans "Enregistrer les modifications" as save_btn_text %}
 
 <div class="max-w-xl mx-auto space-y-6">
@@ -21,7 +22,7 @@
       </a>
     </div>
 
-    <form method="post" enctype="multipart/form-data" class="space-y-4" novalidate>
+    <form method="post" enctype="multipart/form-data" class="space-y-5" novalidate>
       {% csrf_token %}
 
       {% if form.non_field_errors %}
@@ -31,6 +32,35 @@
           {% endfor %}
         </div>
       {% endif %}
+
+      <!-- Avatar preview & Upload Field -->
+      <div class="flex items-center gap-4 p-4 rounded-2xl bg-emerald-50/50 border border-emerald-100">
+        <div class="shrink-0">
+          {% if user.avatar %}
+            <img src="{{ user.avatar.url }}" alt="{{ user.full_name }}" class="w-16 h-16 rounded-2xl object-cover border border-emerald-200 shadow-xs">
+          {% else %}
+            <div class="w-16 h-16 rounded-2xl bg-[#0B5746] text-white font-black text-xl flex items-center justify-center shadow-xs">
+              {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+            </div>
+          {% endif %}
+        </div>
+        <div class="flex-1 min-w-0">
+          <label for="id_avatar" class="block text-xs font-extrabold text-neutral-900 mb-1">
+            {{ avatar_label }}
+          </label>
+          <input
+            type="file"
+            name="avatar"
+            id="id_avatar"
+            accept="image/*"
+            class="block w-full text-xs text-neutral-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-[#14967F] file:text-white hover:file:bg-[#117F6C] cursor-pointer"
+          >
+          {% if form.avatar.errors %}
+            <p class="mt-1 text-xs font-semibold text-rose-600">{{ form.avatar.errors.0 }}</p>
+          {% endif %}
+          <p class="text-[11px] text-neutral-400 mt-1">{% trans "Formats acceptés : JPG, PNG, WEBP (Max 5 Mo)." %}</p>
+        </div>
+      </div>
 
       {% include "components/molecules/form-field.html" with id="first_name" name="first_name" label=fname_label value=form.first_name.value has_error=form.first_name.errors error_message=form.first_name.errors.0 %}
       {% include "components/molecules/form-field.html" with id="last_name" name="last_name" label=lname_label value=form.last_name.value has_error=form.last_name.errors error_message=form.last_name.errors.0 %}
@@ -44,4 +74,3 @@
   </div>
 </div>
 {% endblock content_inner %}
-

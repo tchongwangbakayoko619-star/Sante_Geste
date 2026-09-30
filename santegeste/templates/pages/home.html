@@ -1,80 +1,45 @@
 {% extends "base.html" %}
 {% load static i18n %}
 
-{% block title %}{% translate "Accueil" %} - CS² Health{% endblock title %}
+{% block title %}
+  {% if request.user.is_authenticated %}
+    {% translate "Dashboard Médical" %} - CS² Health
+  {% else %}
+    {% translate "Accueil" %} - CS² Health
+  {% endif %}
+{% endblock title %}
+
+{% block breadcrumbs %}{% endblock breadcrumbs %}
 
 {% block content_inner %}
-<div class="space-y-8">
+{% if request.user.is_authenticated %}
+  <!-- Authenticated Workspace: Design conforme à la capture d'écran -->
+  <div class="space-y-6 sm:space-y-8">
 
-  {% if request.user.is_authenticated %}
-    <!-- Logged In Welcome Banner (CS² Health Design System) -->
-    <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-health-950 via-health-900 to-health-800 text-white p-6 sm:p-10 shadow-xl border border-white/10">
-      <!-- Ambient Glows & Subtle Grid Pattern -->
-      <div class="absolute -top-24 -right-24 w-80 h-80 bg-emerald-400/20 rounded-full blur-3xl pointer-events-none"></div>
-      <div class="absolute bottom-0 left-10 w-64 h-64 bg-teal-500/20 rounded-full blur-3xl pointer-events-none"></div>
-      <div class="absolute inset-0 bg-[radial-gradient(rgba(255,255,255,0.08)_1px,transparent_1px)] [background-size:20px_20px] pointer-events-none"></div>
+    <!-- 1. Molecule: Welcome Greeting & Period Filter -->
+    {% include "components/molecules/dashboards/dashboard_welcome_header.html" %}
 
-      <div class="relative z-10 space-y-4">
-        <div class="inline-flex items-center gap-2 px-3 py-1 bg-white/15 border border-white/25 rounded-full text-xs font-semibold text-emerald-200 backdrop-blur-xs">
-          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-          <span>{% trans "Espace Professionnel Connecté" %}</span>
-        </div>
+    <!-- 2. Organism: 4 KPI Metrics Row -->
+    {% include "components/organisms/dashboards/kpi_cards_grid.html" %}
 
-        <h1 class="font-title font-extrabold text-2xl sm:text-4xl text-white tracking-tight leading-tight">
-          {% trans "Bienvenue sur SantéGeste," %} <span class="text-emerald-300">{{ request.user.full_name|default:request.user.email }}</span> !
-        </h1>
+    <!-- 3. Organism: Charts Section (Courbe Hebdomadaire & Donut Statuts) -->
+    {% include "components/organisms/dashboards/activity_charts_section.html" %}
 
-        <p class="text-sm sm:text-base text-emerald-100/90 max-w-2xl leading-relaxed">
-          {% trans "Accédez rapidement à vos outils de gestion médicale, vos consultations et la gestion sécurisée des dossiers patients." %}
-        </p>
+    <!-- 4. Organism: Activity Lists (File d'Attente & Patients Récents) -->
+    {% include "components/organisms/dashboards/dashboard_lists_section.html" %}
 
-        <div class="pt-2 flex flex-wrap gap-3">
-          <a href="{% url 'users:profile' %}" class="btn btn-primary bg-emerald-500 hover:bg-emerald-600 text-white text-xs sm:text-sm py-2.5 px-5 shadow-md">
-            {% trans "Mon profil soignant" %}
-          </a>
-        </div>
-      </div>
-    </div>
+  </div>
 
-    <!-- Quick Action Cards Grid -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-      <!-- Card 1: Consultations -->
-      <div class="p-6 bg-white border border-neutral-200/80 rounded-2xl shadow-xs hover:shadow-md transition-all duration-200 group">
-        <div class="w-12 h-12 rounded-xl bg-health-50 border border-health-200 text-[#14967F] flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
-          {% include "components/atoms/icon.html" with name="cross-heartbeat" size="w-6 h-6" %}
-        </div>
-        <h3 class="font-title font-bold text-lg text-neutral-900 mb-1">{% trans "Consultations" %}</h3>
-        <p class="text-xs sm:text-sm text-neutral-500 leading-relaxed">{% trans "Planification et suivi des RDV médicaux de votre centre de santé." %}</p>
-      </div>
-
-      <!-- Card 2: Dossiers Patients -->
-      <div class="p-6 bg-white border border-neutral-200/80 rounded-2xl shadow-xs hover:shadow-md transition-all duration-200 group">
-        <div class="w-12 h-12 rounded-xl bg-health-50 border border-health-200 text-[#14967F] flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
-          {% include "components/atoms/icon.html" with name="briefcase" size="w-6 h-6" %}
-        </div>
-        <h3 class="font-title font-bold text-lg text-neutral-900 mb-1">{% trans "Dossiers Patients" %}</h3>
-        <p class="text-xs sm:text-sm text-neutral-500 leading-relaxed">{% trans "Gestion centralisée et sécurisée des données médicales." %}</p>
-      </div>
-
-      <!-- Card 3: Sécurité & Secret Médical -->
-      <div class="p-6 bg-white border border-neutral-200/80 rounded-2xl shadow-xs hover:shadow-md transition-all duration-200 group">
-        <div class="w-12 h-12 rounded-xl bg-health-50 border border-health-200 text-[#14967F] flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
-          {% include "components/atoms/icon.html" with name="shield-check" size="w-6 h-6" %}
-        </div>
-        <h3 class="font-title font-bold text-lg text-neutral-900 mb-1">{% trans "Sécurité & Secret" %}</h3>
-        <p class="text-xs sm:text-sm text-neutral-500 leading-relaxed">{% trans "Authentification renforcée OTP et chiffrement des données." %}</p>
-      </div>
-    </div>
-
-  {% else %}
-    <!-- Anonymous Landing Hero -->
-    <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-health-950 via-health-900 to-health-800 text-white p-8 sm:p-14 text-center shadow-xl border border-white/10">
+{% else %}
+  <!-- Anonymous Landing Hero (Public) -->
+  <div class="space-y-8">
+    <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0B4D3C] via-[#093F31] to-[#062D23] text-white p-8 sm:p-14 text-center shadow-xl border border-white/10">
       <div class="absolute -top-32 -left-32 w-96 h-96 bg-emerald-400/20 rounded-full blur-3xl pointer-events-none"></div>
       <div class="absolute bottom-0 right-0 w-80 h-80 bg-teal-500/20 rounded-full blur-3xl pointer-events-none"></div>
 
       <div class="relative z-10 max-w-3xl mx-auto space-y-6">
         <div class="inline-flex items-center gap-2 px-3.5 py-1.5 bg-white/15 border border-white/25 rounded-full text-xs font-semibold text-emerald-200 backdrop-blur-xs">
-          <span>✨ {% trans "CS² Health • Système de soin connecté" %}</span>
+          <span class="flex items-center gap-1.5">{% include "components/atoms/icon.html" with name="cross-heartbeat" size="w-3.5 h-3.5" %}{% trans "CS² Health • Système de soin connecté" %}</span>
         </div>
 
         <h1 class="font-title font-extrabold text-3xl sm:text-5xl text-white tracking-tight leading-tight">
@@ -86,17 +51,15 @@
         </p>
 
         <div class="pt-4 flex items-center justify-center gap-4">
-          <a href="{% url 'users:login' %}" class="btn btn-primary text-sm py-3 px-6 shadow-lg">
+          <a href="{% url "users:login" %}" class="btn btn-primary text-sm py-3 px-6 shadow-lg">
             {% trans "Se connecter à mon espace" %}
           </a>
-          <a href="{% url 'users:register' %}" class="btn btn-outline bg-white/10 hover:bg-white/20 border-white/30 text-white text-sm py-3 px-6">
+          <a href="{% url "users:register" %}" class="btn btn-outline bg-white/10 hover:bg-white/20 border-white/30 text-white text-sm py-3 px-6">
             {% trans "Créer un compte soignant" %}
           </a>
         </div>
       </div>
     </div>
-  {% endif %}
-
-</div>
+  </div>
+{% endif %}
 {% endblock content_inner %}
-

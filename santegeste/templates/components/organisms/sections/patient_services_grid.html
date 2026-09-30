@@ -1,0 +1,43 @@
+{# Organism: Patient 360 Integrated Modules (Caisse & Pharmacie) #}
+{% load i18n %}
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+  <!-- Facturation & Caisse Card -->
+  <div class="bg-white border border-neutral-200/80 rounded-3xl p-6 shadow-xs space-y-3">
+    <div class="flex items-center justify-between">
+      <div class="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-sm">
+        {% include "components/atoms/icon.html" with name="credit-card" size="w-4 h-4" %}
+      </div>
+      <span class="text-[11px] font-bold px-2 py-0.5 rounded-md bg-neutral-100 text-neutral-600">
+        {% trans "Module Caisse" %}
+      </span>
+    </div>
+    <h3 class="text-sm font-bold text-neutral-900">{% trans "Facturation & Règlements" %}</h3>
+    <p class="text-xs text-neutral-500">
+      {% trans "Suivi des actes facturés, encaissements et reçus de paiement émis pour ce patient." %}
+    </p>
+    <div class="pt-2 border-t border-neutral-100 flex items-center justify-between text-xs">
+      <span class="text-neutral-400 italic">{% trans "Module prêt pour l'intégration caisse" %}</span>
+    </div>
+  </div>
+
+  <!-- Pharmacie & Délivrance Card -->
+  <div class="bg-white border border-neutral-200/80 rounded-3xl p-6 shadow-xs space-y-3">
+    <div class="flex items-center justify-between">
+      <div class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-sm">
+        {% include "components/atoms/icon.html" with name="pill" size="w-4 h-4" %}
+      </div>
+      <span class="text-[11px] font-bold px-2 py-0.5 rounded-md bg-neutral-100 text-neutral-600">
+        {% trans "Module Pharmacie" %}
+      </span>
+    </div>
+    <h3 class="text-sm font-bold text-neutral-900">{% trans "Prescriptions & Médicaments" %}</h3>
+    <p class="text-xs text-neutral-500">
+      {% trans "Ordonnances délivrées, posologie et historique des sorties du stock pharmacie." %}
+    </p>
+    <div class="pt-2 border-t border-neutral-100 flex items-center justify-between text-xs">
+      <span class="text-neutral-400 italic">{% trans "Module prêt pour l'intégration pharmacie" %}</span>
+    </div>
+  </div>
+
+</div>

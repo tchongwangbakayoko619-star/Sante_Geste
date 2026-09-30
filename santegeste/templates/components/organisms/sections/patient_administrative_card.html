@@ -1,0 +1,86 @@
+{# Organism: Patient Administrative & Emergency Card #}
+{% load i18n %}
+<div class="space-y-6">
+
+  <!-- Coordonnées directes -->
+  <div class="bg-white border border-neutral-200/80 rounded-3xl p-6 shadow-xs space-y-4">
+    <h2 class="text-sm font-extrabold text-neutral-900 uppercase tracking-wider pb-3 border-b border-neutral-100">
+      {% trans "Coordonnées & Résidence" %}
+    </h2>
+
+    <div class="space-y-3 text-xs sm:text-sm">
+      <div>
+        <span class="text-neutral-400 block text-[11px] uppercase font-bold">{% trans "Téléphone" %}</span>
+        <a href="tel:{{ patient.phone_number }}" class="font-bold text-neutral-800 hover:text-[#14967F] inline-flex items-center gap-1.5 mt-0.5 font-mono">
+          <svg class="w-4 h-4 text-[#14967F]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+          </svg>
+          {{ patient.phone_number }}
+        </a>
+      </div>
+
+      {% if patient.email %}
+        <div>
+          <span class="text-neutral-400 block text-[11px] uppercase font-bold">{% trans "Email" %}</span>
+          <a href="mailto:{{ patient.email }}" class="font-medium text-neutral-800 hover:text-[#14967F] inline-flex items-center gap-1.5 mt-0.5">
+            <svg class="w-4 h-4 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+            </svg>
+            {{ patient.email }}
+          </a>
+        </div>
+      {% endif %}
+
+      <div>
+        <span class="text-neutral-400 block text-[11px] uppercase font-bold">{% trans "Adresse de résidence" %}</span>
+        <p class="font-medium text-neutral-700 mt-0.5">
+          {{ patient.address|default:"Non renseignée" }}
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contact d'urgence -->
+  <div class="bg-white border border-neutral-200/80 rounded-3xl p-6 shadow-xs space-y-4">
+    <h2 class="text-sm font-extrabold text-neutral-900 uppercase tracking-wider pb-3 border-b border-neutral-100 flex items-center justify-between">
+      <span>{% trans "Contact d'Urgence" %}</span>
+      {% include "components/atoms/icon.html" with name="alert-triangle" size="w-5 h-5 text-rose-600" %}
+    </h2>
+
+    {% if patient.emergency_contact_name or patient.emergency_contact_phone %}
+      <div class="space-y-3 text-xs sm:text-sm">
+        <div>
+          <span class="text-neutral-400 block text-[11px] uppercase font-bold">{% trans "Nom du proche" %}</span>
+          <p class="font-bold text-neutral-900 mt-0.5">{{ patient.emergency_contact_name }}</p>
+          {% if patient.emergency_contact_relation %}
+            <span class="inline-block mt-0.5 text-xs text-neutral-500 font-medium">({{ patient.emergency_contact_relation }})</span>
+          {% endif %}
+        </div>
+
+        {% if patient.emergency_contact_phone %}
+          <div>
+            <span class="text-neutral-400 block text-[11px] uppercase font-bold">{% trans "Numéro d'urgence" %}</span>
+            <a href="tel:{{ patient.emergency_contact_phone }}" class="inline-flex items-center gap-2 mt-1 px-3 py-1.5 rounded-xl bg-rose-50 text-rose-700 font-bold hover:bg-rose-100 transition-colors text-xs font-mono">
+              <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 4V3z"/>
+              </svg>
+              {{ patient.emergency_contact_phone }}
+            </a>
+          </div>
+        {% endif %}
+      </div>
+    {% else %}
+      <p class="text-xs text-neutral-400 italic">{% trans "Aucun contact d'urgence renseigné." %}</p>
+    {% endif %}
+  </div>
+
+  <!-- Métadonnées dossier -->
+  <div class="bg-neutral-50/70 border border-neutral-200/60 rounded-3xl p-5 text-xs text-neutral-500 space-y-2">
+    <p><strong class="font-semibold text-neutral-700">{% trans "Créé le :" %}</strong> {{ patient.created_at|date:"d/m/Y à H:i" }}</p>
+    {% if patient.created_by %}
+      <p><strong class="font-semibold text-neutral-700">{% trans "Par :" %}</strong> {{ patient.created_by.full_name }}</p>
+    {% endif %}
+    <p><strong class="font-semibold text-neutral-700">{% trans "Dernière mise à jour :" %}</strong> {{ patient.updated_at|date:"d/m/Y à H:i" }}</p>
+  </div>
+
+</div>

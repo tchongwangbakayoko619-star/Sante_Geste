@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% load static i18n %}
+
+{% block title %}{% translate "Planifier un Rendez-vous" %} - CS² Health{% endblock title %}
+
+{% block content_inner %}
+<div class="max-w-2xl mx-auto space-y-6">
+
+  <!-- Header -->
+  <div class="flex items-center justify-between pb-4 border-b border-neutral-200/80">
+    <div>
+      <a href="{% if patient %}{{ patient.get_absolute_url }}{% else %}{% url "patients:appointment_list" %}{% endif %}" class="inline-flex items-center gap-1.5 text-xs font-semibold text-neutral-500 hover:text-[#14967F] transition-colors mb-1">
+        {% include "components/atoms/icons/icon.html" with name="arrow-left" size="w-3.5 h-3.5" %}
+        {% if patient %}{% trans "Retour à la fiche patient" %}{% else %}{% trans "Retour à l'agenda" %}{% endif %}
+      </a>
+      <h1 class="font-title font-extrabold text-2xl text-neutral-900 tracking-tight">
+        {% trans "Planifier un Rendez-vous" %}
+      </h1>
+      <p class="text-xs sm:text-sm text-neutral-500 mt-0.5">
+        {% trans "Attribuez un créneau horaire avec un praticien pour le patient." %}
+      </p>
+    </div>
+  </div>
+
+  <!-- Form Card -->
+  <div class="bg-white border border-neutral-200/80 rounded-3xl p-6 sm:p-8 shadow-xs space-y-6">
+
+    {% if patient %}
+      <!-- Prefilled Patient Banner -->
+      <div class="p-4 rounded-2xl bg-neutral-50 border border-neutral-200 flex items-center gap-3.5">
+        {% include "components/atoms/avatars/avatar.html" with name=patient.full_name size="md" %}
+        <div>
+          <p class="text-xs font-bold text-neutral-500 uppercase tracking-wider">{% trans "Patient sélectionné" %}</p>
+          <h3 class="text-sm font-bold text-neutral-900">{{ patient.full_name }} ({{ patient.patient_number }})</h3>
+        </div>
+      </div>
+    {% endif %}
+
+    <form method="post" class="space-y-4 sm:space-y-5" novalidate>
+      {% csrf_token %}
+
+      {% if form.non_field_errors %}
+        <div class="space-y-2">
+          {% for error in form.non_field_errors %}
+            {% include "components/molecules/alert.html" with variant="error" message=error %}
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <!-- Patient selection -->
+      <div>
+        {% include "components/molecules/form_fields/django_field.html" with field=form.patient %}
+      </div>
+
+      <!-- Praticien / Médecin -->
+      <div>
+        {% include "components/molecules/form_fields/django_field.html" with field=form.doctor %}
+      </div>
+
+      <!-- Date & Heure + Durée -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {% include "components/molecules/form_fields/django_field.html" with field=form.scheduled_at %}
+        {% include "components/molecules/form_fields/django_field.html" with field=form.estimated_duration_minutes %}
+      </div>
+
+      <!-- Motif -->
+      <div>
+        {% include "components/molecules/form_fields/django_field.html" with field=form.reason %}
+      </div>
+
+      <!-- Notes / Consignes -->
+      <div>
+        {% include "components/molecules/form_fields/django_field.html" with field=form.notes %}
+      </div>
+
+      <!-- Submit & Cancel -->
+      <div class="flex items-center justify-end gap-3 pt-4 border-t border-neutral-100">
+        <a href="{% if patient %}{{ patient.get_absolute_url }}{% else %}{% url "patients:appointment_list" %}{% endif %}" class="btn btn-outline py-2.5 px-5 text-sm font-semibold">
+          {% trans "Annuler" %}
+        </a>
+        <button type="submit" class="btn btn-primary py-2.5 px-6 text-sm font-bold shadow-xs">
+          {% trans "Confirmer le rendez-vous" %}
+        </button>
+      </div>
+
+    </form>
+
+  </div>
+
+</div>
+{% endblock content_inner %}
+
+{% block javascript %}
+  {{ block.super }}
+  <script src="{% static "js/components/searchable-select.js" %}" defer></script>
+{% endblock javascript %}
+

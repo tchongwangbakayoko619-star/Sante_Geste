@@ -1,0 +1,17 @@
+{# Organism: Footer (CS² Health Design System) #}
+{% load i18n %}
+
+<footer class="w-full bg-white border-t border-neutral-200/80 py-6 text-center text-xs text-neutral-500 mt-auto">
+  <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+    <div class="flex items-center gap-2">
+      <span class="w-2 h-2 rounded-full bg-[#14967F]"></span>
+      <span class="font-semibold text-neutral-700">CS<sup>2</sup> Health • SantéGeste</span>
+      <span>© 2026. {% trans "Tous droits réservés." %}</span>
+    </div>
+    <div class="flex items-center gap-4 text-neutral-400">
+      <a href="{% url 'about' %}" class="hover:text-neutral-700 transition-colors">{% trans "À propos" %}</a>
+      <span>•</span>
+      <span>{% trans "Santé Numérique & Secret Médical" %}</span>
+    </div>
+  </div>
+</footer>

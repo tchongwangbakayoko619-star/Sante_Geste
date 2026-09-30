@@ -49,7 +49,9 @@
 
   /* Subtle Dotted Background Pattern */
   .auth-pattern {
-    @apply absolute inset-0 bg-[radial-gradient(rgba(255,255,255,0.12)_1px,transparent_1px)] [background-size:24px_24px] pointer-events-none;
+    @apply absolute inset-0 pointer-events-none;
+    background-image: radial-gradient(rgba(255, 255, 255, 0.12) 1px, transparent 1px);
+    background-size: 24px 24px;
   }
 
   /* Auth Card Containers */
@@ -93,7 +95,7 @@
   }
 
   .otp-input-field {
-    @apply w-full text-center py-4 px-4 text-2xl sm:text-3xl font-mono font-bold tracking-[0.35em] text-neutral-900 bg-neutral-50/70 border border-neutral-200 rounded-2xl placeholder:text-neutral-300 focus:outline-none focus:border-[#14967F] focus:ring-2 focus:ring-[#14967F]/20 transition-all shadow-xs;
+    @apply w-full text-center py-4 px-4 text-2xl sm:text-3xl font-mono font-bold tracking-[0.35em] text-neutral-900 bg-neutral-50/70 border border-neutral-200 hover:border-neutral-400 rounded-2xl placeholder:text-neutral-300 focus:outline-none focus:border-[#14967F] focus:ring-2 focus:ring-[#14967F]/20 transition-all shadow-xs;
   }
 
   /* Auth Hero Organism Elements */

@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% load static i18n %}
+
+{% block title %}
+  {% translate "Agenda des Rendez-vous" %} - CS² Health
+{% endblock title %}
+
+{% block content_inner %}
+<div class="space-y-6">
+
+  <!-- Header Section -->
+  <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <div>
+      <div class="flex items-center gap-2">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700">
+          <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+          {% trans "Agenda Complet" %}
+        </span>
+      </div>
+      <h1 class="text-2xl sm:text-3xl font-extrabold text-neutral-900 tracking-tight font-title mt-2">
+        {% trans "Agenda des Rendez-vous" %}
+      </h1>
+      <p class="text-sm text-neutral-500 mt-1">
+        {% trans "Gestion des flux de patients, file d'attente et consultations médicales" %}
+      </p>
+    </div>
+
+    <!-- Quick Action Buttons -->
+    <div class="flex items-center gap-3">
+      <a href="{% url "patients:patient_list" %}" class="btn btn-outline py-2.5 px-4 text-xs sm:text-sm inline-flex items-center gap-2">
+        {% include "components/atoms/icons/icon.html" with name="users" size="w-4 h-4 text-neutral-500" %}
+        {% trans "Dossiers patients" %}
+      </a>
+      <a href="{% url "patients:appointment_create" %}" class="btn btn-primary py-2.5 px-4 text-xs sm:text-sm inline-flex items-center gap-2 shadow-xs font-bold">
+        {% include "components/atoms/icons/icon.html" with name="plus" size="w-4 h-4" %}
+        {% trans "Planifier un RDV" %}
+      </a>
+    </div>
+  </div>
+
+  <!-- Real-time Flow Counters Grid (Molecules) -->
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+    {% trans "Aujourd'hui" as title_today %}
+    {% include "components/molecules/stat_items/stat_card.html" with title=title_today value=today_count icon_name="calendar" variant="neutral" %}
+
+    {% trans "En salle d'attente" as title_waiting %}
+    {% include "components/molecules/stat_items/stat_card.html" with title=title_waiting value=waiting_count icon_name="clock" variant="amber" %}
+
+    {% trans "En consultation" as title_in_consult %}
+    {% include "components/molecules/stat_items/stat_card.html" with title=title_in_consult value=in_consultation_count icon_name="stethoscope" variant="purple" %}
+
+    {% trans "Honorés / Terminés" as title_done %}
+    {% include "components/molecules/stat_items/stat_card.html" with title=title_done value=completed_count icon_name="check-circle" variant="primary" %}
+  </div>
+
+  <!-- Filters & Appointments Table Card -->
+  <div class="bg-white border border-neutral-200/80 rounded-3xl shadow-xs overflow-hidden">
+    <!-- Appointment Filters Bar Molecule -->
+    {% include "components/molecules/filters/appointment_filters_bar.html" with query=query date_filter=date_filter selected_date=selected_date selected_doctor=selected_doctor doctors=doctors selected_status=selected_status status_choices=status_choices statuses=statuses selected_ordering=selected_ordering ordering_choices=ordering_choices active_filters_count=active_filters_count date_filter_choices=date_filter_choices %}
+
+    <!-- Appointment Table Organism -->
+    {% include "components/organisms/tables/appointment_table.html" with appointments=appointments %}
+
+    <!-- Table Pagination Molecule -->
+    {% if is_paginated %}
+      {% include "components/molecules/table_actions/pagination.html" with page_obj=page_obj paginator=paginator date_filter=date_filter %}
+    {% endif %}
+  </div>
+
+</div>
+{% endblock content_inner %}

@@ -1,3 +1,4 @@
+from apps.dashboard.views import DashboardHomeView
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
@@ -7,7 +8,8 @@ from django.views import defaults as default_views
 from django.views.generic import TemplateView
 
 urlpatterns = [
-    path("", TemplateView.as_view(template_name="pages/home.html"), name="home"),
+    path("", DashboardHomeView.as_view(), name="home"),
+    path("dashboard/", include("apps.dashboard.urls", namespace="dashboard")),
     path(
         "about/",
         TemplateView.as_view(template_name="pages/about.html"),
@@ -17,6 +19,8 @@ urlpatterns = [
     path(settings.ADMIN_URL, admin.site.urls),
     # Application Users
     path("users/", include("apps.users.urls", namespace="users")),
+    # Application Patients & Rendez-vous
+    path("patients/", include("apps.patients.urls", namespace="patients")),
     # Media files
     *static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT),
 ]

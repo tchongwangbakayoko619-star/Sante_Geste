@@ -1,0 +1,13 @@
+{# Atom: Textarea (CS² Health Design System) #}
+{% with textarea_id=id|default:name %}
+  <textarea
+    name="{{ name }}"
+    id="{{ textarea_id }}"
+    rows="{{ rows|default:'3' }}"
+    placeholder="{{ placeholder|default:'' }}"
+    {% if required %}required aria-required="true"{% endif %}
+    {% if aria_describedby %}aria-describedby="{{ aria_describedby }}"{% endif %}
+    aria-invalid="{% if has_error or aria_invalid %}true{% else %}false{% endif %}"
+    class="textarea-base resize-none {% if has_error or aria_invalid %}input-error{% endif %} {{ class|default:'' }} {{ custom_classes|default:'' }}"
+  >{{ value|default:'' }}</textarea>
+{% endwith %}

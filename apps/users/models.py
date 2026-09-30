@@ -126,6 +126,31 @@ class User(AbstractBaseUser, PermissionsMixin, BaseModel):
         full = f"{self.first_name} {self.last_name}".strip()
         return full or self.email
 
+    @property
+    def role_display(self) -> str:
+        """Retourne le libellé lisible du rôle principal de l'utilisateur."""
+        if self.is_proprietaire:
+            return str(_("Propriétaire"))
+        if self.is_personnel_medical:
+            return str(_("Personnel médical"))
+        if self.is_responsable_pharmacie:
+            return str(_("Responsable pharmacie"))
+        if self.is_vendeur_pharmacie:
+            return str(_("Vendeur pharmacie"))
+        if self.is_caissier:
+            return str(_("Caissier"))
+        if self.is_agent_accueil:
+            return str(_("Agent d'accueil"))
+        if self.is_superuser:
+            return str(_("Administrateur"))
+        if self.is_staff:
+            return str(_("Personnel"))
+        return str(_("Utilisateur"))
+
+    def get_role_display(self) -> str:
+        """Retourne le libellé d'affichage du rôle (alias méthode)."""
+        return self.role_display
+
     ROLE_FIELD_MAP: dict[UserRoleEnum, str] = {
         UserRoleEnum.PROPRIETAIRE: "is_proprietaire",
         UserRoleEnum.RESPONSABLE_PHARMACIE: "is_responsable_pharmacie",
@@ -206,6 +231,25 @@ class User(AbstractBaseUser, PermissionsMixin, BaseModel):
         from apps.users.services import rbac as rbac_service
 
         return rbac_service.can_validate_sensitive_ops(self)
+
+    def deactivate(self) -> None:
+        """Désactive le compte utilisateur (départ, suspension) tout en préservant l'intégrité clinique."""
+        self.is_active = False
+        self.save(update_fields=["is_active", "updated_at"])
+
+    def delete(self, using=None, keep_parents=False):
+        """Empêche la suppression physique des praticiens et utilisateurs avec historique clinique."""
+        if hasattr(self, "doctor_appointments") and self.doctor_appointments.exists():
+            raise models.ProtectedError(
+                _(
+                    "Suppression impossible : Ce praticien est lié à un historique de consultations et rendez-vous cliniques. "
+                    "Conformément aux exigences médico-légales de non-altération des données de santé, "
+                    "le départ d'un praticien doit être géré en désactivant son compte (is_active = False)."
+                ),
+                self.doctor_appointments.all(),
+            )
+        return super().delete(using=using, keep_parents=keep_parents)
+
 
 
 class MedicalProfile(BaseModel):

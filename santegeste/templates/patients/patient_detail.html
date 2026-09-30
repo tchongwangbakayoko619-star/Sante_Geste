@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% load static i18n %}
+
+{% block title %}{{ patient.full_name }} ({{ patient.patient_number }}) - Fiche 360° - CS² Health{% endblock title %}
+
+{% block content_inner %}
+<div class="space-y-6">
+
+  <!-- Breadcrumb & Top Status Navigation -->
+  <div class="flex items-center justify-between">
+    <a href="{% url "patients:patient_list" %}" class="inline-flex items-center gap-1.5 text-xs font-semibold text-neutral-500 hover:text-[#14967F] transition-colors">
+      {% include "components/atoms/icons/icon.html" with name="arrow-left" size="w-4 h-4" %}
+      {% trans "Retour aux patients" %}
+    </a>
+
+    <!-- Status indicator Molecule -->
+    <div class="flex items-center gap-2">
+      {% include "components/molecules/badges/status_badge.html" with status=patient.status text=patient.get_status_display type="patient" %}
+      {% if patient.status == "deceased" and patient.deceased_at %}
+        <span class="text-xs font-medium text-rose-600 bg-rose-50 border border-rose-200 px-2.5 py-0.5 rounded-lg">
+          {% trans "Décédé le" %} {{ patient.deceased_at|date:"d/m/Y H:i" }}
+        </span>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Hero Header Patient Card Organism -->
+  {% include "components/organisms/header/patient_hero.html" with patient=patient %}
+
+  <!-- Medical Alerts Banner Organism -->
+  {% if patient.has_critical_alerts %}
+    {% include "components/organisms/sections/medical_alerts_banner.html" with patient=patient patient_allergies=patient_allergies can_view_medical_info=can_view_medical_info %}
+  {% endif %}
+
+  <!-- 360° Two-Column Layout -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+    <!-- Left Column Organism: Coordonnées, Urgences & Données administratives -->
+    <div class="space-y-6">
+      {% include "components/organisms/sections/patient_administrative_card.html" with patient=patient %}
+    </div>
+
+    <!-- Right Column Organisms: Timeline 360°, Rendez-vous, Factures, Pharmacie -->
+    <div class="lg:col-span-2 space-y-6">
+      <!-- Appointments Organism -->
+      {% include "components/organisms/sections/patient_appointments_card.html" with appointments=appointments patient=patient %}
+
+      <!-- Integrated Services 360° (Caisse & Pharmacie) Organism -->
+      {% include "components/organisms/sections/patient_services_grid.html" %}
+    </div>
+
+  </div>
+
+</div>
+{% endblock content_inner %}

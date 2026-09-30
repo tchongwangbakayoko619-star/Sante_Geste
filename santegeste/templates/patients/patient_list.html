@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% load static i18n %}
+
+{% block title %}{% translate "Gestion des Patients" %} - CS² Health{% endblock title %}
+
+{% block content_inner %}
+<div class="space-y-6">
+
+  <!-- Header Section -->
+  <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <div>
+      <div class="flex items-center gap-2">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#14967F]/10 text-[#14967F]">
+          <span class="w-1.5 h-1.5 rounded-full bg-[#14967F]"></span>
+          {% trans "Module Réception & Accueil" %}
+        </span>
+      </div>
+      <h1 class="text-2xl sm:text-3xl font-extrabold text-neutral-900 tracking-tight font-title mt-2">
+        {% trans "Dossiers Patients" %}
+      </h1>
+      <p class="text-sm text-neutral-500 mt-1">
+        {% trans "Registre centralisé, recherche rapide et fiches médicales 360°" %}
+      </p>
+    </div>
+
+    <!-- Quick Action Buttons -->
+    <div class="flex items-center gap-3">
+      <a href="{% url "patients:appointment_list" %}" class="btn btn-outline py-2.5 px-4 text-xs sm:text-sm inline-flex items-center gap-2">
+        {% include "components/atoms/icons/icon.html" with name="calendar" size="w-4 h-4 text-neutral-500" %}
+        {% trans "Agenda des RDV" %}
+      </a>
+      {% if request.user.is_agent_accueil or request.user.is_superuser %}
+        <a href="{% url "patients:patient_create" %}" class="btn btn-primary py-2.5 px-4 text-xs sm:text-sm inline-flex items-center gap-2 shadow-xs">
+          {% include "components/atoms/icons/icon.html" with name="plus" size="w-4 h-4" %}
+          {% trans "Nouveau patient" %}
+        </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- KPI Cards Grid (Molecules) -->
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+    {% trans "Total dossiers" as title_total %}
+    {% include "components/molecules/stat_items/stat_card.html" with title=title_total value=total_patients icon_name="users" variant="neutral" %}
+
+    {% trans "Dossiers actifs" as title_active %}
+    {% include "components/molecules/stat_items/stat_card.html" with title=title_active value=active_patients icon_name="check-circle" variant="primary" %}
+
+    {% trans "Nouveaux (30 jours)" as title_new %}
+    {% include "components/molecules/stat_items/stat_card.html" with title=title_new value=new_this_month icon_name="user-plus" variant="blue" %}
+  </div>
+
+  <!-- Search and Table Container -->
+  <div class="bg-white border border-neutral-200/80 rounded-3xl shadow-xs overflow-hidden">
+    <!-- Patient Filters Bar Molecule -->
+    {% include "components/molecules/filters/patient_filters_bar.html" with query=query selected_status=selected_status status_choices=status_choices selected_gender=selected_gender gender_choices=gender_choices selected_blood_group=selected_blood_group blood_group_choices=blood_group_choices selected_period=selected_period period_choices=period_choices selected_ordering=selected_ordering ordering_choices=ordering_choices active_filters_count=active_filters_count %}
+
+    <!-- Patient Table Organism -->
+    {% include "components/organisms/tables/patient_table.html" with patients=patients query=query %}
+
+    <!-- Table Pagination Molecule -->
+    {% if is_paginated %}
+      {% include "components/molecules/table_actions/pagination.html" with page_obj=page_obj paginator=paginator query=query %}
+    {% endif %}
+  </div>
+
+</div>
+{% endblock content_inner %}

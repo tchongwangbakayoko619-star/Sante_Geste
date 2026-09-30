@@ -1,0 +1,126 @@
+{# Organism: Appointment Table #}
+{% load i18n %}
+{% if appointments %}
+  <div class="overflow-x-auto">
+    <table class="w-full text-left border-collapse" aria-label="{% trans "Agenda des rendez-vous" %}">
+      <thead>
+        <tr class="border-b border-neutral-200/80 bg-neutral-50/80 text-[11px] font-bold text-neutral-500 uppercase tracking-wider">
+          <th class="py-3.5 px-4 sm:px-6">{% trans "Date & Heure" %}</th>
+          <th class="py-3.5 px-4 sm:px-6">{% trans "Patient" %}</th>
+          <th class="py-3.5 px-4 sm:px-6">{% trans "Praticien" %}</th>
+          <th class="py-3.5 px-4 sm:px-6">{% trans "Motif" %}</th>
+          <th class="py-3.5 px-4 sm:px-6">{% trans "Statut" %}</th>
+          <th class="py-3.5 px-4 sm:px-6 text-right">{% trans "Actions" %}</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-neutral-100 text-sm">
+        {% for rdv in appointments %}
+          <tr class="hover:bg-neutral-50/80 transition-colors">
+            <!-- Date & Heure -->
+            <td class="py-4 px-4 sm:px-6">
+              <div class="font-bold text-neutral-900 text-xs">
+                {{ rdv.scheduled_at|date:"d/m/Y" }}
+              </div>
+              <div class="text-[#14967F] font-black text-sm">
+                {{ rdv.scheduled_at|date:"H:i" }}
+                <span class="text-neutral-400 font-normal text-xs">({{ rdv.estimated_duration_minutes }}m)</span>
+              </div>
+            </td>
+
+            <!-- Patient -->
+            <td class="py-4 px-4 sm:px-6">
+              <a href="{{ rdv.patient.get_absolute_url }}" class="font-bold text-neutral-900 hover:text-[#14967F] block">
+                {{ rdv.patient.full_name }}
+              </a>
+              <span class="font-mono text-[11px] text-neutral-400">{{ rdv.patient.patient_number }}</span>
+              {% if rdv.patient.phone_number %}
+                <a href="tel:{{ rdv.patient.phone_number }}" class="text-xs text-neutral-500 block hover:underline">
+                  {{ rdv.patient.phone_number }}
+                </a>
+              {% endif %}
+            </td>
+
+            <!-- Praticien -->
+            <td class="py-4 px-4 sm:px-6">
+              <span class="text-xs font-semibold text-neutral-800">
+                Dr. {{ rdv.doctor.full_name|default:rdv.doctor.email }}
+              </span>
+            </td>
+
+            <!-- Motif -->
+            <td class="py-4 px-4 sm:px-6">
+              <p class="text-xs text-neutral-700 max-w-xs truncate font-medium">
+                {{ rdv.reason }}
+              </p>
+              {% if rdv.notes %}
+                <p class="text-[11px] text-neutral-400 truncate mt-0.5">{{ rdv.notes }}</p>
+              {% endif %}
+            </td>
+
+            <!-- Statut -->
+            <td class="py-4 px-4 sm:px-6">
+              {% include "components/molecules/badges/status_badge.html" with status=rdv.status text=rdv.get_status_display type="appointment" %}
+            </td>
+
+            <!-- Quick actions -->
+            <td class="py-4 px-4 sm:px-6 text-right">
+              <div class="inline-flex items-center gap-1.5">
+                {% if rdv.status == "scheduled" %}
+                  <form method="post" action="{% url "patients:appointment_status_update" rdv.pk %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="status" value="waiting">
+                    <button type="submit" class="px-2.5 py-1 text-xs font-bold rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200 transition-colors cursor-pointer" title="{% trans "Patient arrivé" %}">
+                      {% trans "Arrivé" %}
+                    </button>
+                  </form>
+                {% elif rdv.status == "waiting" %}
+                  <form method="post" action="{% url "patients:appointment_status_update" rdv.pk %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="status" value="in_consultation">
+                    <button type="submit" class="px-2.5 py-1 text-xs font-bold rounded-lg bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200 transition-colors cursor-pointer" title="{% trans "Appeler en consultation" %}">
+                      {% trans "Consulter" %}
+                    </button>
+                  </form>
+                {% elif rdv.status == "in_consultation" %}
+                  <form method="post" action="{% url "patients:appointment_status_update" rdv.pk %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="status" value="completed">
+                    <button type="submit" class="px-2.5 py-1 text-xs font-bold rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 transition-colors cursor-pointer" title="{% trans "Terminer la consultation" %}">
+                      {% trans "Terminé" %}
+                    </button>
+                  </form>
+                {% endif %}
+
+                {% if rdv.status != "cancelled" and rdv.status != "completed" %}
+                  <a href="{% url "patients:appointment_cancel" rdv.pk %}?next={{ request.get_full_path|urlencode }}" class="p-1.5 text-neutral-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition-colors cursor-pointer" title="{% trans "Annuler ce rendez-vous" %}" aria-label="{% trans "Annuler le rendez-vous" %}">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                  </a>
+                {% endif %}
+              </div>
+            </td>
+
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  <div class="p-12 text-center space-y-3">
+    <div class="w-16 h-16 rounded-full bg-neutral-100 text-neutral-400 mx-auto flex items-center justify-center">
+      <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+      </svg>
+    </div>
+    <h3 class="text-base font-bold text-neutral-800">{% trans "Aucun rendez-vous sur cette période" %}</h3>
+    <p class="text-xs text-neutral-500 max-w-sm mx-auto">
+      {% trans "Aucune consultation n'est programmée pour le filtre sélectionné." %}
+    </p>
+    <div class="pt-2">
+      <a href="{% url "patients:appointment_create" %}" class="btn btn-primary py-2 px-4 text-xs font-semibold">
+        {% trans "+ Planifier un rendez-vous" %}
+      </a>
+    </div>
+  </div>
+{% endif %}

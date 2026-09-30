@@ -62,9 +62,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     // 3. Format Téléphone (si renseigné)
     else if (field.type === 'tel' && field.value.trim()) {
-      const phoneRegex = /^(\+237|00237|237)?[236][0-9\s.-]{8,15}$/;
-      if (!phoneRegex.test(field.value.trim())) {
-        errorMessage = 'Veuillez saisir un numéro de téléphone valide (ex : 6XX XX XX XX).';
+      const val = field.value.trim();
+      const hasLetters = /[a-zA-Z]/.test(val);
+      const allowedChars = /^[\d\s+\-().]+$/.test(val);
+      const digitsOnly = val.replace(/[\s\-().+]/g, '');
+
+      if (hasLetters || !allowedChars || digitsOnly.length < 8 || digitsOnly.length > 15) {
+        errorMessage = 'Veuillez saisir un numéro de téléphone valide (ex : +237 6XX XX XX XX ou +225 07 XX XX XX).';
       }
     }
     // 4. Confirmation du mot de passe

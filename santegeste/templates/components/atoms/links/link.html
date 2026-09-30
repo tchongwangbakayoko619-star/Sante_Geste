@@ -1,0 +1,14 @@
+{# Atom: Link #}
+{# Props: href, text, icon_left, icon_right, class, custom_classes #}
+<a
+  href="{{ href|default:'#' }}"
+  class="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-neutral-600 hover:text-[#14967F] transition-colors focus-visible:outline-2 focus-visible:outline-[#14967F] {{ class|default:'' }} {{ custom_classes|default:'' }}"
+>
+  {% if icon_left %}
+    {% include "components/atoms/icons/icon.html" with name=icon_left size="w-4 h-4" %}
+  {% endif %}
+  <span>{{ text }}</span>
+  {% if icon_right %}
+    {% include "components/atoms/icons/icon.html" with name=icon_right size="w-4 h-4" %}
+  {% endif %}
+</a>

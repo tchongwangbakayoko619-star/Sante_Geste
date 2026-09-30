@@ -1,0 +1,76 @@
+{# Molecule: Table Pagination (Design System Contiguous Strip) #}
+{# Props: page_obj, paginator #}
+{% load i18n patient_tags %}
+{% if page_obj and page_obj.has_other_pages %}
+  <div class="px-6 py-4 border-t border-neutral-100 flex flex-col sm:flex-row items-center justify-between gap-4 bg-neutral-50/50">
+    <p class="text-xs text-neutral-500">
+      {% blocktrans with start=page_obj.start_index end=page_obj.end_index total=paginator.count %}
+        Affichage de <span class="font-semibold text-neutral-800">{{ start }}</span> à <span class="font-semibold text-neutral-800">{{ end }}</span> sur <span class="font-semibold text-neutral-800">{{ total }}</span> résultats
+      {% endblocktrans %}
+    </p>
+
+    <nav aria-label="{% trans "Pagination des résultats" %}">
+      <ul class="flex -space-x-px text-sm">
+        <!-- Previous Button -->
+        <li>
+          {% if page_obj.has_previous %}
+            <a
+              href="?{% query_transform page=page_obj.previous_page_number %}"
+              class="flex items-center justify-center text-neutral-700 bg-white box-border border border-neutral-200 hover:bg-neutral-100 hover:text-neutral-900 font-medium rounded-s-lg text-sm px-3 h-9 focus:outline-none focus:ring-2 focus:ring-[#14967F]/20 transition-colors"
+              aria-label="{% trans "Page précédente" %}">
+              {% trans "Précédent" %}
+            </a>
+          {% else %}
+            <span
+              class="flex items-center justify-center text-neutral-300 bg-neutral-50 box-border border border-neutral-200 font-medium rounded-s-lg text-sm px-3 h-9 cursor-not-allowed select-none"
+              aria-disabled="true">
+              {% trans "Précédent" %}
+            </span>
+          {% endif %}
+        </li>
+
+        <!-- Numbered Pages & Ellipsis -->
+        {% for page_num in page_obj|get_elided_page_range %}
+          <li>
+            {% if page_num == page_obj.paginator.ELLIPSIS or page_num == "…" %}
+              <span class="flex items-center justify-center text-neutral-400 bg-white box-border border border-neutral-200 font-medium text-sm w-9 h-9 select-none">
+                …
+              </span>
+            {% elif page_num == page_obj.number %}
+              <a
+                href="?{% query_transform page=page_num %}"
+                aria-current="page"
+                class="flex items-center justify-center text-[#14967F] bg-emerald-50/80 box-border border border-emerald-400 hover:text-[#0f7a67] font-bold text-sm w-9 h-9 focus:outline-none z-10 transition-colors">
+                {{ page_num }}
+              </a>
+            {% else %}
+              <a
+                href="?{% query_transform page=page_num %}"
+                class="flex items-center justify-center text-neutral-700 bg-white box-border border border-neutral-200 hover:bg-neutral-100 hover:text-neutral-900 font-medium text-sm w-9 h-9 focus:outline-none focus:ring-2 focus:ring-[#14967F]/20 transition-colors">
+                {{ page_num }}
+              </a>
+            {% endif %}
+          </li>
+        {% endfor %}
+
+        <!-- Next Button -->
+        <li>
+          {% if page_obj.has_next %}
+            <a
+              href="?{% query_transform page=page_obj.next_page_number %}"
+              class="flex items-center justify-center text-neutral-700 bg-white box-border border border-neutral-200 hover:bg-neutral-100 hover:text-neutral-900 font-medium rounded-e-lg text-sm px-3 h-9 focus:outline-none focus:ring-2 focus:ring-[#14967F]/20 transition-colors"
+              aria-label="{% trans "Page suivante" %}">
+              {% trans "Suivant" %}
+            </a>
+          {% else %}
+            <span
+              class="flex items-center justify-center text-neutral-300 bg-neutral-50 box-border border border-neutral-200 font-medium rounded-e-lg text-sm px-3 h-9 cursor-not-allowed select-none"
+              aria-disabled="true">
+              {% trans "Suivant" %}
+            </span>
+          {% endif %}
+        </li>
+      </ul>
+    </nav>
+  </div>
+{% endif %}
