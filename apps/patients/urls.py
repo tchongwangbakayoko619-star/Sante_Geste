@@ -27,6 +27,8 @@ from apps.patients.views import PrestationRealiseeCreateView
 
 from apps.patients.views import FacturePrintView
 from apps.patients.views import OrdonnanceDetailPrintView
+from apps.patients.views import PharmacyOrdonnanceDispenseView
+from apps.patients.views import PharmacyOrdonnanceListView
 
 app_name = "patients"
 
@@ -62,6 +64,10 @@ urlpatterns = [
     path("caisse/factures/<uuid:pk>/", FactureDetailView.as_view(), name="facture_detail"),
     path("caisse/factures/<uuid:pk>/imprimer/", FacturePrintView.as_view(), name="facture_print"),
     path("caisse/factures/<uuid:pk>/payer/", PaiementCreateView.as_view(), name="paiement_create"),
+
+    # Module Pharmacie & Délivrance
+    path("pharmacie/ordonnances/", PharmacyOrdonnanceListView.as_view(), name="pharmacy_ordonnance_list"),
+    path("pharmacie/ordonnances/<uuid:pk>/delivrer/", PharmacyOrdonnanceDispenseView.as_view(), name="pharmacy_ordonnance_dispense"),
 ]
 
 

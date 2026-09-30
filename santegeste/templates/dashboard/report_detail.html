@@ -82,10 +82,20 @@
             {% for obj in items %}
               <tr class="hover:bg-neutral-50/50">
                 <td class="py-3 px-4 font-mono text-xs font-bold text-neutral-800">
-                  {{ obj.invoice_number|default:obj.patient_number|default:obj.pk|truncatechars:15 }}
+                  {% if obj.invoice_number %}
+                    {{ obj.invoice_number|truncatechars:15 }}
+                  {% elif obj.patient %}
+                    {{ obj.patient.patient_number|truncatechars:15 }}
+                  {% else %}
+                    {{ obj.pk|truncatechars:15 }}
+                  {% endif %}
                 </td>
                 <td class="py-3 px-4 font-semibold text-neutral-900">
-                  {{ obj.patient.full_name|default:obj.full_name|default:obj.reason }}
+                  {% if obj.patient %}
+                    {{ obj.patient.full_name }}
+                  {% else %}
+                    {{ obj.full_name|default:obj.reason }}
+                  {% endif %}
                 </td>
                 <td class="py-3 px-4 text-xs text-neutral-500">
                   {{ obj.scheduled_at|default:obj.created_at|default:obj.issued_at|date:"d/m/Y H:i" }}

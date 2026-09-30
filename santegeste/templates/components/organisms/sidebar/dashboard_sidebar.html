@@ -202,6 +202,20 @@
       </div>
       {% endif %}
 
+      <!-- Item 5.5: Pharmacie & Ordonnances -->
+      {% if request.user.is_responsable_pharmacie or request.user.is_vendeur_pharmacie or request.user.is_proprietaire or request.user.is_superuser %}
+      <a
+        href="{% url "patients:pharmacy_ordonnance_list" %}"
+        aria-label="{% trans "Pharmacie & Ordonnances" %}"
+        data-sidebar-tooltip="{% trans "Pharmacie & Ordonnances" %}"
+        class="sidebar-nav-item flex items-center gap-3.5 px-4 py-3 rounded-xl border-l-[5px] text-sm font-semibold transition-all focus-visible:outline-2 focus-visible:outline-emerald-300 {% if current_route == 'pharmacy_ordonnance_list' %}border-emerald-300 bg-teal-400/20 text-white shadow-sm shadow-teal-950/30{% else %}border-transparent text-emerald-100/90 hover:text-white hover:bg-white/10{% endif %}">
+        <div class="w-6 h-6 flex items-center justify-center shrink-0">
+          {% include "components/atoms/icon.html" with name="beaker" size="w-5 h-5 text-emerald-300" %}
+        </div>
+        <span data-sidebar-label>{% trans "Pharmacie & Ordonnances" %}</span>
+      </a>
+      {% endif %}
+
       <!-- Item 6: Rapports & Statistiques -->
       <a
         href="{% url "dashboard:reports_home" %}"

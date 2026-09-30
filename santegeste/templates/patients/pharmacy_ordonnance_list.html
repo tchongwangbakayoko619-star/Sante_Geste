@@ -1,0 +1,116 @@
+{% extends "layouts/dashboard.html" %}
+{% load i18n static %}
+
+{% block title %}{% trans "Pharmacie - Délivrance des Ordonnances" %} - SantéGeste{% endblock %}
+
+{% block content_inner %}
+<div class="space-y-6">
+  <!-- En-tête -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-neutral-200/80 shadow-sm">
+    <div>
+      <h1 class="text-2xl font-bold text-neutral-900 font-title tracking-tight flex items-center gap-3">
+        <span class="p-2 rounded-xl bg-teal-50 text-[#14967F]">
+          {% include "components/atoms/icon.html" with name="beaker" size="w-6 h-6" %}
+        </span>
+        {% trans "Pharmacie - Ordonnances & Délivrance" %}
+      </h1>
+      <p class="text-sm text-neutral-500 mt-1">
+        {% trans "Consultez les prescriptions médicales émises et effectuez la délivrance des médicaments." %}
+      </p>
+    </div>
+  </div>
+
+  <!-- Filtres et Recherche -->
+  <div class="bg-white p-4 rounded-2xl border border-neutral-200/80 shadow-sm flex flex-col md:flex-row gap-4 justify-between items-center">
+    <form method="get" class="flex flex-wrap items-center gap-3 w-full md:w-auto">
+      <input
+        type="text"
+        name="q"
+        value="{{ query }}"
+        placeholder="{% trans "Patient, médecin, médicament..." %}"
+        class="px-4 py-2 rounded-xl border border-neutral-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#14967F] bg-white min-w-[240px]"
+      >
+      <select name="status" class="px-4 py-2 rounded-xl border border-neutral-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#14967F] bg-white">
+        <option value="PENDING" {% if selected_status == 'PENDING' %}selected{% endif %}>{% trans "En attente de délivrance" %}</option>
+        <option value="DELIVERED" {% if selected_status == 'DELIVERED' %}selected{% endif %}>{% trans "Délivrées" %}</option>
+        <option value="ALL" {% if selected_status == 'ALL' %}selected{% endif %}>{% trans "Toutes les ordonnances" %}</option>
+      </select>
+      <button type="submit" class="px-4 py-2 rounded-xl bg-[#14967F] text-white font-bold text-sm hover:bg-[#0E6A5A] transition-colors">
+        {% trans "Filtrer" %}
+      </button>
+    </form>
+  </div>
+
+  <!-- Tableau des Prescriptions Pharmacie -->
+  <div class="bg-white rounded-2xl border border-neutral-200/80 shadow-sm overflow-hidden">
+    {% if ordonnances %}
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="bg-neutral-50/80 border-b border-neutral-200 text-xs font-bold text-neutral-500 uppercase tracking-wider">
+              <th class="py-3.5 px-6">{% trans "Date Prescription" %}</th>
+              <th class="py-3.5 px-6">{% trans "Patient" %}</th>
+              <th class="py-3.5 px-6">{% trans "Médecin Prescripteur" %}</th>
+              <th class="py-3.5 px-6">{% trans "Médicaments Prescrits" %}</th>
+              <th class="py-3.5 px-6">{% trans "Statut" %}</th>
+              <th class="py-3.5 px-6 text-right">{% trans "Action" %}</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-neutral-200 text-sm">
+            {% for ord in ordonnances %}
+              <tr class="hover:bg-neutral-50/50 transition-colors">
+                <td class="py-4 px-6 font-semibold text-neutral-900">
+                  {{ ord.prescription_date|date:"d/m/Y H:i" }}
+                </td>
+                <td class="py-4 px-6">
+                  <div class="font-bold text-neutral-900">{{ ord.patient.full_name }}</div>
+                  <div class="text-xs text-neutral-500 font-mono">{{ ord.patient.patient_number }}</div>
+                </td>
+                <td class="py-4 px-6 text-neutral-700">
+                  Dr. {{ ord.doctor.full_name }}
+                </td>
+                <td class="py-4 px-6">
+                  <ul class="text-xs space-y-1">
+                    {% for line in ord.lines.all %}
+                      <li class="font-medium text-neutral-800">
+                        • <strong>{{ line.medication_name }}</strong> - {{ line.posology }} ({{ line.duration }})
+                      </li>
+                    {% endfor %}
+                  </ul>
+                </td>
+                <td class="py-4 px-6">
+                  <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold {% if ord.status == 'DELIVERED' %}bg-emerald-100 text-emerald-800{% else %}bg-amber-100 text-amber-800{% endif %}">
+                    {{ ord.get_status_display }}
+                  </span>
+                  {% if ord.status == 'DELIVERED' and ord.delivered_by %}
+                    <div class="text-[10px] text-neutral-400 mt-0.5">Par {{ ord.delivered_by.full_name }} le {{ ord.delivered_at|date:"d/m H:i" }}</div>
+                  {% endif %}
+                </td>
+                <td class="py-4 px-6 text-right space-x-2">
+                  <a href="{% url "patients:ordonnance_print" ord.pk %}" target="_blank" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-neutral-100 text-neutral-700 font-bold text-xs hover:bg-neutral-200 transition-colors">
+                    {% include "components/atoms/icon.html" with name="printer" size="w-3.5 h-3.5" %}
+                    {% trans "Imprimer" %}
+                  </a>
+                  {% if ord.status == 'PENDING' %}
+                    <form method="post" action="{% url "patients:pharmacy_ordonnance_dispense" ord.pk %}" class="inline">
+                      {% csrf_token %}
+                      <button type="submit" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-[#14967F] text-white font-bold text-xs hover:bg-[#0E6A5A] transition-colors shadow-sm">
+                        {% include "components/atoms/icon.html" with name="check" size="w-3.5 h-3.5" %}
+                        {% trans "Délivrer" %}
+                      </button>
+                    </form>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="py-12 text-center text-neutral-500">
+        <p class="text-base font-semibold">{% trans "Aucune ordonnance trouvée pour ce filtre." %}</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

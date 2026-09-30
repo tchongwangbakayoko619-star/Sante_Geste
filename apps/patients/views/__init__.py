@@ -26,6 +26,8 @@ from .patient_views import PatientUpdateView
 
 from .caisse_views import FacturePrintView
 from .consultation_views import OrdonnanceDetailPrintView
+from .pharmacy_views import PharmacyOrdonnanceDispenseView
+from .pharmacy_views import PharmacyOrdonnanceListView
 
 __all__ = [
     "AppointmentCancelView",
@@ -52,6 +54,8 @@ __all__ = [
     "PatientListView",
     "PatientMedicalUpdateView",
     "PatientUpdateView",
+    "PharmacyOrdonnanceDispenseView",
+    "PharmacyOrdonnanceListView",
     "PrestationRealiseeCreateView",
 ]
 

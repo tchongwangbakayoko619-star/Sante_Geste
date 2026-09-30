@@ -776,6 +776,29 @@ class Ordonnance(BaseModel):
         default=timezone.now,
         verbose_name=_("Date de prescription"),
     )
+    status = models.CharField(
+        max_length=20,
+        choices=[
+            ("PENDING", _("En attente de délivrance")),
+            ("DELIVERED", _("Délivrée")),
+            ("CANCELLED", _("Annulée")),
+        ],
+        default="PENDING",
+        verbose_name=_("Statut de délivrance"),
+    )
+    delivered_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name=_("Date de délivrance"),
+    )
+    delivered_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="prescriptions_delivrees",
+        verbose_name=_("Pharmacien / Agent de délivrance"),
+    )
     notes = models.TextField(
         blank=True,
         default="",
