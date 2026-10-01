@@ -155,108 +155,75 @@
       </div>
     </div>
 
-    <!-- CONTENU ÉTAPE 2 : Constantes Vitales -->
+    <!-- CONTENU ÉTAPE 2 : Constantes Vitales Dynamiques Définies par le Personnel -->
     <div id="step-pane-2" class="step-pane hidden bg-white p-6 sm:p-8 rounded-2xl border border-neutral-200/80 shadow-xs space-y-6">
-      <div class="border-b border-neutral-100 pb-3">
-        <h2 class="text-base font-bold text-neutral-900 font-title">
-          {% trans "2. Constantes vitales du patient" %}
-        </h2>
-        <p class="text-xs text-neutral-500">
-          {% trans "Saisie des paramètres physiologiques fondamentaux" %}
-        </p>
+      
+      <!-- En-tête Étape 2 avec Bouton d'Ajout de Paramètre -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-neutral-100 pb-4">
+        <div>
+          <h2 class="text-base sm:text-lg font-bold text-neutral-900 font-title flex items-center gap-2">
+            <span class="p-1.5 rounded-lg bg-teal-50 text-[#14967F]">
+              {% include "components/atoms/icon.html" with name="stethoscope" size="w-4 h-4" %}
+            </span>
+            <span>{% trans "2. Constantes vitales du patient" %}</span>
+          </h2>
+          <p class="text-xs text-neutral-500 mt-1">
+            {% trans "Paramètres physiologiques configurables par le personnel soignant avec saisie des valeurs mesurées." %}
+          </p>
+        </div>
+        <button
+          type="button"
+          onclick="addNewCustomVitalCard()"
+          class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-teal-50 hover:bg-teal-100 text-[#14967F] font-bold text-xs border border-teal-200 transition-colors cursor-pointer shadow-2xs shrink-0 self-start sm:self-auto"
+        >
+          {% include "components/atoms/icon.html" with name="plus" size="w-3.5 h-3.5" %}
+          <span>{% trans "Définir un autre paramètre" %}</span>
+        </button>
       </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-        <!-- Tension Artérielle -->
-        <div class="bg-neutral-50/70 p-4 rounded-xl border border-neutral-100 space-y-2">
-          <label for="id_tension" class="block text-xs font-bold text-neutral-800 uppercase tracking-wider">
-            {% trans "Tension artérielle" %}
-          </label>
-          <div class="relative">
-            <input
-              type="text"
-              id="id_tension"
-              name="tension"
-              value="{{ form.tension.value|default:'' }}"
-              placeholder="12/8"
-              class="w-full px-3.5 py-2.5 bg-white border border-neutral-200 rounded-xl text-xs font-bold text-neutral-800 focus:ring-2 focus:ring-[#0d9488] focus:border-transparent outline-none"
-            >
-            <span class="absolute right-3 top-2.5 text-xs text-neutral-400 font-medium">mmHg</span>
-          </div>
+      <!-- Suggestions Rapides de Paramètres Fréquents -->
+      <div class="p-3.5 rounded-2xl bg-neutral-50/80 border border-neutral-100 space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] font-bold text-neutral-500 uppercase tracking-wider">
+            {% trans "Paramètres fréquents à ajouter en 1 clic :" %}
+          </span>
+          <span class="text-[10px] text-neutral-400">
+            {% trans "Cliquez pour insérer" %}
+          </span>
         </div>
-
-        <!-- Poids -->
-        <div class="bg-neutral-50/70 p-4 rounded-xl border border-neutral-100 space-y-2">
-          <label for="id_poids" class="block text-xs font-bold text-neutral-800 uppercase tracking-wider">
-            {% trans "Poids" %}
-          </label>
-          <div class="relative">
-            <input
-              type="text"
-              id="id_poids"
-              name="poids"
-              value="{{ form.poids.value|default:'' }}"
-              placeholder="75"
-              class="w-full px-3.5 py-2.5 bg-white border border-neutral-200 rounded-xl text-xs font-bold text-neutral-800 focus:ring-2 focus:ring-[#0d9488] focus:border-transparent outline-none"
-            >
-            <span class="absolute right-3 top-2.5 text-xs text-neutral-400 font-medium">kg</span>
-          </div>
-        </div>
-
-        <!-- Température -->
-        <div class="bg-neutral-50/70 p-4 rounded-xl border border-neutral-100 space-y-2">
-          <label for="id_temperature" class="block text-xs font-bold text-neutral-800 uppercase tracking-wider">
-            {% trans "Température" %}
-          </label>
-          <div class="relative">
-            <input
-              type="text"
-              id="id_temperature"
-              name="temperature"
-              value="{{ form.temperature.value|default:'' }}"
-              placeholder="37.2"
-              class="w-full px-3.5 py-2.5 bg-white border border-neutral-200 rounded-xl text-xs font-bold text-neutral-800 focus:ring-2 focus:ring-[#0d9488] focus:border-transparent outline-none"
-            >
-            <span class="absolute right-3 top-2.5 text-xs text-neutral-400 font-medium">°C</span>
-          </div>
-        </div>
-
-        <!-- Pouls -->
-        <div class="bg-neutral-50/70 p-4 rounded-xl border border-neutral-100 space-y-2">
-          <label for="id_pouls" class="block text-xs font-bold text-neutral-800 uppercase tracking-wider">
-            {% trans "Pouls (Fréquence cardiaque)" %}
-          </label>
-          <div class="relative">
-            <input
-              type="text"
-              id="id_pouls"
-              name="pouls"
-              value="{{ form.pouls.value|default:'' }}"
-              placeholder="78"
-              class="w-full px-3.5 py-2.5 bg-white border border-neutral-200 rounded-xl text-xs font-bold text-neutral-800 focus:ring-2 focus:ring-[#0d9488] focus:border-transparent outline-none"
-            >
-            <span class="absolute right-3 top-2.5 text-xs text-neutral-400 font-medium">bpm</span>
-          </div>
-        </div>
-
-        <!-- Fréquence respiratoire -->
-        <div class="bg-neutral-50/70 p-4 rounded-xl border border-neutral-100 space-y-2">
-          <label for="id_frequence_respiratoire" class="block text-xs font-bold text-neutral-800 uppercase tracking-wider">
-            {% trans "Fréquence respiratoire" %}
-          </label>
-          <div class="relative">
-            <input
-              type="text"
-              id="id_frequence_respiratoire"
-              name="frequence_respiratoire"
-              value="{{ form.frequence_respiratoire.value|default:'' }}"
-              placeholder="16"
-              class="w-full px-3.5 py-2.5 bg-white border border-neutral-200 rounded-xl text-xs font-bold text-neutral-800 focus:ring-2 focus:ring-[#0d9488] focus:border-transparent outline-none"
-            >
-            <span class="absolute right-3 top-2.5 text-xs text-neutral-400 font-medium">/min</span>
-          </div>
+        <div class="flex flex-wrap items-center gap-2" id="vital-presets-container">
+          <button type="button" onclick="addPresetVital('Saturation O2 (SpO2)', '%', '98')" class="preset-pill px-3 py-1 rounded-xl bg-white hover:bg-teal-50 hover:text-[#14967F] hover:border-teal-200 text-neutral-700 font-semibold text-xs border border-neutral-200 transition shadow-2xs cursor-pointer">
+            + SpO2 (%)
+          </button>
+          <button type="button" onclick="addPresetVital('Glycémie capillaire', 'g/L', '1.05')" class="preset-pill px-3 py-1 rounded-xl bg-white hover:bg-teal-50 hover:text-[#14967F] hover:border-teal-200 text-neutral-700 font-semibold text-xs border border-neutral-200 transition shadow-2xs cursor-pointer">
+            + Glycémie (g/L)
+          </button>
+          <button type="button" onclick="addPresetVital('Taille', 'cm', '170')" class="preset-pill px-3 py-1 rounded-xl bg-white hover:bg-teal-50 hover:text-[#14967F] hover:border-teal-200 text-neutral-700 font-semibold text-xs border border-neutral-200 transition shadow-2xs cursor-pointer">
+            + Taille (cm)
+          </button>
+          <button type="button" onclick="addPresetVital('Tour de taille', 'cm', '80')" class="preset-pill px-3 py-1 rounded-xl bg-white hover:bg-teal-50 hover:text-[#14967F] hover:border-teal-200 text-neutral-700 font-semibold text-xs border border-neutral-200 transition shadow-2xs cursor-pointer">
+            + Tour de taille (cm)
+          </button>
+          <button type="button" onclick="addPresetVital('Douleur (EVA 0-10)', '/10', '0')" class="preset-pill px-3 py-1 rounded-xl bg-white hover:bg-teal-50 hover:text-[#14967F] hover:border-teal-200 text-neutral-700 font-semibold text-xs border border-neutral-200 transition shadow-2xs cursor-pointer">
+            + Douleur (EVA)
+          </button>
+          <button type="button" onclick="addPresetVital('Diurèse', 'mL', '1500')" class="preset-pill px-3 py-1 rounded-xl bg-white hover:bg-teal-50 hover:text-[#14967F] hover:border-teal-200 text-neutral-700 font-semibold text-xs border border-neutral-200 transition shadow-2xs cursor-pointer">
+            + Diurèse (mL)
+          </button>
         </div>
       </div>
+
+      <!-- Grille Dynamique des Constantes Vitales Définies par le Personnel -->
+      <div id="vital-signs-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <!-- Rempli dynamiquement en JavaScript avec les paramètres existants ou par défaut -->
+      </div>
+
+      <!-- Champs cachés de rétrocompatibilité -->
+      <input type="hidden" id="id_tension" name="tension" value="{{ form.tension.value|default:'' }}">
+      <input type="hidden" id="id_poids" name="poids" value="{{ form.poids.value|default:'' }}">
+      <input type="hidden" id="id_temperature" name="temperature" value="{{ form.temperature.value|default:'' }}">
+      <input type="hidden" id="id_pouls" name="pouls" value="{{ form.pouls.value|default:'' }}">
+      <input type="hidden" id="id_frequence_respiratoire" name="frequence_respiratoire" value="{{ form.frequence_respiratoire.value|default:'' }}">
 
       <!-- Navigation Étape 2 -->
       <div class="flex items-center justify-between pt-4 border-t border-neutral-100">
@@ -400,6 +367,190 @@
 <script>
   let currentStep = 1;
 
+  // Données initiales des constantes vitales (soit existantes en BDD, soit paramètres usuels par défaut)
+  const initialVitals = [
+    {% if form.vital_parameters %}
+      {% for p in form.vital_parameters %}
+        { name: "{{ p.name|escapejs }}", value: "{{ p.value|escapejs }}", unit: "{{ p.unit|escapejs }}" },
+      {% endfor %}
+    {% elif form.instance.pk and form.instance.vital_signs %}
+      {% if form.instance.vital_signs.parameters %}
+        {% for p in form.instance.vital_signs.parameters %}
+          { name: "{{ p.name|escapejs }}", value: "{{ p.value|escapejs }}", unit: "{{ p.unit|escapejs }}" },
+        {% endfor %}
+      {% else %}
+        {% if form.tension.value %}{ name: "Tension artérielle", value: "{{ form.tension.value|escapejs }}", unit: "mmHg" },{% endif %}
+        {% if form.poids.value %}{ name: "Poids", value: "{{ form.poids.value|escapejs }}", unit: "kg" },{% endif %}
+        {% if form.temperature.value %}{ name: "Température", value: "{{ form.temperature.value|escapejs }}", unit: "°C" },{% endif %}
+        {% if form.pouls.value %}{ name: "Pouls (Fréquence cardiaque)", value: "{{ form.pouls.value|escapejs }}", unit: "bpm" },{% endif %}
+        {% if form.frequence_respiratoire.value %}{ name: "Fréquence respiratoire", value: "{{ form.frequence_respiratoire.value|escapejs }}", unit: "/min" },{% endif %}
+      {% endif %}
+    {% else %}
+      { name: "Tension artérielle", value: "{{ form.tension.value|default:''|escapejs }}", unit: "mmHg" },
+      { name: "Poids", value: "{{ form.poids.value|default:''|escapejs }}", unit: "kg" },
+      { name: "Température", value: "{{ form.temperature.value|default:''|escapejs }}", unit: "°C" },
+      { name: "Pouls (Fréquence cardiaque)", value: "{{ form.pouls.value|default:''|escapejs }}", unit: "bpm" },
+      { name: "Fréquence respiratoire", value: "{{ form.frequence_respiratoire.value|default:''|escapejs }}", unit: "/min" }
+    {% endif %}
+  ];
+
+  function createVitalCardElement(name = '', value = '', unit = '', isCustom = false) {
+    const card = document.createElement('div');
+    card.className = "vital-param-card relative p-4 rounded-xl border border-neutral-200 bg-white hover:border-teal-300 transition-all shadow-2xs space-y-3 group";
+    
+    card.innerHTML = `
+      <div class="flex items-center justify-between gap-2">
+        <div class="flex-1 min-w-0">
+          <input
+            type="text"
+            name="vital_param_name[]"
+            value="${escapeHtml(name)}"
+            placeholder="{% trans "Nom du paramètre (ex: SpO2, Glycémie...)" %}"
+            class="vital-name-input w-full text-xs font-bold text-neutral-800 bg-transparent border-b border-dashed border-neutral-300 focus:border-[#14967F] focus:outline-none pb-0.5 tracking-tight"
+            oninput="syncVitalsToHiddenFields()"
+            required
+          />
+        </div>
+        <button
+          type="button"
+          onclick="removeVitalCard(this)"
+          class="text-neutral-400 hover:text-rose-500 hover:bg-rose-50 p-1.5 rounded-lg transition-colors cursor-pointer shrink-0"
+          title="{% trans "Supprimer ce paramètre" %}"
+        >
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+        </button>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <div class="relative flex-1">
+          <input
+            type="text"
+            name="vital_param_value[]"
+            value="${escapeHtml(value)}"
+            placeholder="{% trans "Valeur" %}"
+            class="vital-val-input w-full px-3 py-2 rounded-lg border border-neutral-200 text-sm font-semibold text-neutral-900 focus:outline-none focus:ring-2 focus:ring-[#14967F] focus:border-transparent bg-neutral-50/50"
+            oninput="syncVitalsToHiddenFields()"
+          />
+        </div>
+        <div class="w-24 shrink-0">
+          <input
+            type="text"
+            name="vital_param_unit[]"
+            value="${escapeHtml(unit)}"
+            placeholder="{% trans "Unité" %}"
+            class="vital-unit-input w-full px-2.5 py-2 rounded-lg border border-neutral-200 text-xs font-medium text-neutral-600 focus:outline-none focus:ring-2 focus:ring-[#14967F] focus:border-transparent bg-neutral-50/50 text-center"
+            oninput="syncVitalsToHiddenFields()"
+          />
+        </div>
+      </div>
+    `;
+
+    return card;
+  }
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function renderInitialVitals() {
+    const container = document.getElementById('vital-signs-grid');
+    if (!container) return;
+    container.innerHTML = '';
+
+    initialVitals.forEach(item => {
+      container.appendChild(createVitalCardElement(item.name, item.value, item.unit));
+    });
+
+    syncVitalsToHiddenFields();
+  }
+
+  function addNewCustomVitalCard() {
+    const container = document.getElementById('vital-signs-grid');
+    if (!container) return;
+
+    const card = createVitalCardElement('', '', '', true);
+    container.appendChild(card);
+    const nameInput = card.querySelector('.vital-name-input');
+    if (nameInput) {
+      nameInput.focus();
+    }
+    syncVitalsToHiddenFields();
+  }
+
+  function addPresetVital(name, unit, defaultVal) {
+    const container = document.getElementById('vital-signs-grid');
+    if (!container) return;
+
+    // Vérifier si le paramètre existe déjà
+    const existingInputs = container.querySelectorAll('.vital-name-input');
+    for (let input of existingInputs) {
+      if (input.value.trim().toLowerCase() === name.toLowerCase()) {
+        const parent = input.closest('.vital-param-card');
+        const valInput = parent.querySelector('.vital-val-input');
+        if (valInput) {
+          valInput.focus();
+          valInput.classList.add('ring-2', 'ring-[#14967F]');
+          setTimeout(() => valInput.classList.remove('ring-2', 'ring-[#14967F]'), 1200);
+        }
+        return;
+      }
+    }
+
+    const card = createVitalCardElement(name, '', unit);
+    container.appendChild(card);
+    const valInput = card.querySelector('.vital-val-input');
+    if (valInput) {
+      valInput.focus();
+    }
+    syncVitalsToHiddenFields();
+  }
+
+  function removeVitalCard(btn) {
+    const card = btn.closest('.vital-param-card');
+    if (card) {
+      card.remove();
+      syncVitalsToHiddenFields();
+    }
+  }
+
+  function syncVitalsToHiddenFields() {
+    const container = document.getElementById('vital-signs-grid');
+    if (!container) return;
+
+    const cards = container.querySelectorAll('.vital-param-card');
+    let tension = '', poids = '', temp = '', pouls = '', freqResp = '';
+
+    cards.forEach(card => {
+      const name = card.querySelector('.vital-name-input')?.value.trim() || '';
+      const val = card.querySelector('.vital-val-input')?.value.trim() || '';
+      const nLower = name.toLowerCase();
+
+      if (nLower.includes('tension') && !tension) tension = val;
+      else if (nLower.includes('poids') && !poids) poids = val;
+      else if (nLower.includes('tempér') && !temp) temp = val;
+      else if ((nLower.includes('pouls') || nLower.includes('cardiaque')) && !pouls) pouls = val;
+      else if (nLower.includes('respiratoire') && !freqResp) freqResp = val;
+    });
+
+    const hiddenTension = document.getElementById('id_tension');
+    const hiddenPoids = document.getElementById('id_poids');
+    const hiddenTemp = document.getElementById('id_temperature');
+    const hiddenPouls = document.getElementById('id_pouls');
+    const hiddenFreq = document.getElementById('id_frequence_respiratoire');
+
+    if (hiddenTension) hiddenTension.value = tension;
+    if (hiddenPoids) hiddenPoids.value = poids;
+    if (hiddenTemp) hiddenTemp.value = temp;
+    if (hiddenPouls) hiddenPouls.value = pouls;
+    if (hiddenFreq) hiddenFreq.value = freqResp;
+  }
+
   function updateSummary() {
     const reasonInput = document.getElementById('id_reason');
     const diagInput = document.getElementById('id_diagnosis');
@@ -414,18 +565,21 @@
       summaryDiag.textContent = diagInput.value.trim() || "{% trans "Non renseigné" %}";
     }
 
-    const tension = document.getElementById('id_tension')?.value.trim();
-    const poids = document.getElementById('id_poids')?.value.trim();
-    const temp = document.getElementById('id_temperature')?.value.trim();
-    const pouls = document.getElementById('id_pouls')?.value.trim();
-    const freqResp = document.getElementById('id_frequence_respiratoire')?.value.trim();
-
+    // Récupérer toutes les constantes saisies dynamiquement
+    const container = document.getElementById('vital-signs-grid');
     const parts = [];
-    if (tension) parts.push(`TA: ${tension} mmHg`);
-    if (poids) parts.push(`Poids: ${poids} kg`);
-    if (temp) parts.push(`Temp: ${temp} °C`);
-    if (pouls) parts.push(`Pouls: ${pouls} bpm`);
-    if (freqResp) parts.push(`Fréq. Resp: ${freqResp} /min`);
+
+    if (container) {
+      const cards = container.querySelectorAll('.vital-param-card');
+      cards.forEach(card => {
+        const name = card.querySelector('.vital-name-input')?.value.trim();
+        const val = card.querySelector('.vital-val-input')?.value.trim();
+        const unit = card.querySelector('.vital-unit-input')?.value.trim();
+        if (name && val) {
+          parts.push(`${name}: ${val} ${unit || ''}`.trim());
+        }
+      });
+    }
 
     if (summaryVitals) {
       summaryVitals.textContent = parts.length > 0 ? parts.join(' • ') : "{% trans "Aucune constante mesurée." %}";
@@ -466,5 +620,9 @@
 
     window.scrollTo({ top: 100, behavior: 'smooth' });
   }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    renderInitialVitals();
+  });
 </script>
 {% endblock %}

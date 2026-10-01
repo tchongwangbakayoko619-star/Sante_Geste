@@ -90,6 +90,7 @@ class ConsultationForm(forms.ModelForm):
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
+        self.vital_parameters: list[dict[str, str]] = []
         if self.instance and self.instance.pk and self.instance.vital_signs:
             vitals = self.instance.vital_signs or {}
             self.fields["tension"].initial = vitals.get("tension", "")
@@ -98,15 +99,79 @@ class ConsultationForm(forms.ModelForm):
             self.fields["pouls"].initial = vitals.get("pouls", "")
             self.fields["frequence_respiratoire"].initial = vitals.get("frequence_respiratoire", "")
 
+            if "parameters" in vitals and isinstance(vitals["parameters"], list):
+                self.vital_parameters = vitals["parameters"]
+            else:
+                default_defs = [
+                    ("Tension artérielle", "tension", "mmHg"),
+                    ("Poids", "poids", "kg"),
+                    ("Température", "temperature", "°C"),
+                    ("Pouls (Fréquence cardiaque)", "pouls", "bpm"),
+                    ("Fréquence respiratoire", "frequence_respiratoire", "/min"),
+                ]
+                for name, code, unit in default_defs:
+                    val = vitals.get(code, "")
+                    if val:
+                        self.vital_parameters.append({"name": name, "value": str(val), "unit": unit})
+
     def save(self, commit: bool = True) -> Consultation:
         instance: Consultation = super().save(commit=False)
-        instance.vital_signs = {
+        vitals: dict[str, Any] = {
             "tension": self.cleaned_data.get("tension", "").strip(),
             "poids": self.cleaned_data.get("poids", "").strip(),
             "temperature": self.cleaned_data.get("temperature", "").strip(),
             "pouls": self.cleaned_data.get("pouls", "").strip(),
             "frequence_respiratoire": self.cleaned_data.get("frequence_respiratoire", "").strip(),
         }
+
+        # Extraire tous les paramètres personnalisés ou dynamiques définis par le personnel
+        parameters: list[dict[str, str]] = []
+        if self.data:
+            param_names = self.data.getlist("vital_param_name[]") or self.data.getlist("vital_param_name")
+            param_values = self.data.getlist("vital_param_value[]") or self.data.getlist("vital_param_value")
+            param_units = self.data.getlist("vital_param_unit[]") or self.data.getlist("vital_param_unit")
+
+            for name, val, unit in zip(param_names, param_values, param_units):
+                name_clean = str(name).strip()
+                val_clean = str(val).strip()
+                unit_clean = str(unit).strip()
+                if name_clean and val_clean:
+                    parameters.append({
+                        "name": name_clean,
+                        "value": val_clean,
+                        "unit": unit_clean,
+                    })
+                    # Rétrocompatibilité : synchroniser les clés standard
+                    n_lower = name_clean.lower()
+                    if "tension" in n_lower and not vitals["tension"]:
+                        vitals["tension"] = val_clean
+                    elif "poids" in n_lower and not vitals["poids"]:
+                        vitals["poids"] = val_clean
+                    elif "tempér" in n_lower and not vitals["temperature"]:
+                        vitals["temperature"] = val_clean
+                    elif ("pouls" in n_lower or "cardiaque" in n_lower) and not vitals["pouls"]:
+                        vitals["pouls"] = val_clean
+                    elif "respiratoire" in n_lower and not vitals["frequence_respiratoire"]:
+                        vitals["frequence_respiratoire"] = val_clean
+
+        if parameters:
+            vitals["parameters"] = parameters
+        else:
+            default_items = []
+            if vitals["tension"]:
+                default_items.append({"name": "Tension artérielle", "value": vitals["tension"], "unit": "mmHg"})
+            if vitals["poids"]:
+                default_items.append({"name": "Poids", "value": vitals["poids"], "unit": "kg"})
+            if vitals["temperature"]:
+                default_items.append({"name": "Température", "value": vitals["temperature"], "unit": "°C"})
+            if vitals["pouls"]:
+                default_items.append({"name": "Pouls (Fréquence cardiaque)", "value": vitals["pouls"], "unit": "bpm"})
+            if vitals["frequence_respiratoire"]:
+                default_items.append({"name": "Fréquence respiratoire", "value": vitals["frequence_respiratoire"], "unit": "/min"})
+            if default_items:
+                vitals["parameters"] = default_items
+
+        instance.vital_signs = vitals
         if commit:
             instance.save()
         return instance

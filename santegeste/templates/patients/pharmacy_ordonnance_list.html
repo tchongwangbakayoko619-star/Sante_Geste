@@ -5,112 +5,342 @@
 
 {% block content_inner %}
 <div class="space-y-6">
-  <!-- En-tête -->
-  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-neutral-200/80 shadow-sm">
-    <div>
-      <h1 class="text-2xl font-bold text-neutral-900 font-title tracking-tight flex items-center gap-3">
-        <span class="p-2 rounded-xl bg-teal-50 text-[#14967F]">
-          {% include "components/atoms/icon.html" with name="beaker" size="w-6 h-6" %}
+
+  <!-- =========================================================================
+       1. EN-TÊTE PRINCIPAL & STATS RAPIDES
+       ========================================================================= -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-neutral-200/80 shadow-2xs">
+    <div class="flex items-start sm:items-center gap-4">
+      <div class="w-12 h-12 rounded-2xl bg-teal-50 text-[#14967F] flex items-center justify-center shrink-0 border border-teal-100 shadow-2xs">
+        {% include "components/atoms/icon.html" with name="beaker" size="w-6 h-6" %}
+      </div>
+      <div>
+        <h1 class="text-2xl sm:text-3xl font-extrabold text-neutral-900 font-title tracking-tight flex items-center gap-3">
+          {% trans "Pharmacie - Ordonnances & Délivrance" %}
+        </h1>
+        <p class="text-xs sm:text-sm text-neutral-500 mt-1">
+          {% trans "Consultez les prescriptions médicales émises par les praticiens et effectuez la délivrance des médicaments." %}
+        </p>
+      </div>
+    </div>
+
+    <!-- Quick Stat Badges Row -->
+    <div class="flex items-center gap-2 self-start md:self-auto shrink-0 flex-wrap">
+      <a href="?status=PENDING" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-2xl border text-xs font-bold transition shadow-2xs {% if selected_status == 'PENDING' %}bg-amber-500 text-white border-amber-600 shadow-xs{% else %}bg-amber-50/80 text-amber-800 border-amber-200/80 hover:bg-amber-100{% endif %}">
+        <span class="w-2 h-2 rounded-full {% if selected_status == 'PENDING' %}bg-white animate-pulse{% else %}bg-amber-500 animate-ping{% endif %}"></span>
+        <span>{% trans "En attente" %}</span>
+        <span class="px-1.5 py-0.5 rounded-full text-[10px] font-mono font-black {% if selected_status == 'PENDING' %}bg-white/20 text-white{% else %}bg-amber-200 text-amber-900{% endif %}">
+          {{ pending_count }}
         </span>
-        {% trans "Pharmacie - Ordonnances & Délivrance" %}
-      </h1>
-      <p class="text-sm text-neutral-500 mt-1">
-        {% trans "Consultez les prescriptions médicales émises et effectuez la délivrance des médicaments." %}
-      </p>
+      </a>
+
+      <a href="?status=DELIVERED" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-2xl border text-xs font-bold transition shadow-2xs {% if selected_status == 'DELIVERED' %}bg-[#14967F] text-white border-teal-700 shadow-xs{% else %}bg-emerald-50/80 text-emerald-800 border-emerald-200/80 hover:bg-emerald-100{% endif %}">
+        {% include "components/atoms/icon.html" with name="check-circle" size="w-3.5 h-3.5" %}
+        <span>{% trans "Délivrées" %}</span>
+        <span class="px-1.5 py-0.5 rounded-full text-[10px] font-mono font-black {% if selected_status == 'DELIVERED' %}bg-white/20 text-white{% else %}bg-emerald-200 text-emerald-900{% endif %}">
+          {{ delivered_count }}
+        </span>
+      </a>
+
+      <a href="?status=ALL" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-2xl border text-xs font-bold transition shadow-2xs {% if selected_status == 'ALL' %}bg-neutral-800 text-white border-neutral-900 shadow-xs{% else %}bg-neutral-50 text-neutral-700 border-neutral-200 hover:bg-neutral-100{% endif %}">
+        <span>{% trans "Toutes" %}</span>
+        <span class="px-1.5 py-0.5 rounded-full text-[10px] font-mono font-black {% if selected_status == 'ALL' %}bg-white/20 text-white{% else %}bg-neutral-200 text-neutral-800{% endif %}">
+          {{ total_count }}
+        </span>
+      </a>
     </div>
   </div>
 
-  <!-- Filtres et Recherche -->
-  <div class="bg-white p-4 rounded-2xl border border-neutral-200/80 shadow-sm flex flex-col md:flex-row gap-4 justify-between items-center">
-    <form method="get" class="flex flex-wrap items-center gap-3 w-full md:w-auto">
-      <input
-        type="text"
-        name="q"
-        value="{{ query }}"
-        placeholder="{% trans "Patient, médecin, médicament..." %}"
-        class="px-4 py-2 rounded-xl border border-neutral-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#14967F] bg-white min-w-[240px]"
-      >
-      <select name="status" class="px-4 py-2 rounded-xl border border-neutral-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#14967F] bg-white">
-        <option value="PENDING" {% if selected_status == 'PENDING' %}selected{% endif %}>{% trans "En attente de délivrance" %}</option>
-        <option value="DELIVERED" {% if selected_status == 'DELIVERED' %}selected{% endif %}>{% trans "Délivrées" %}</option>
-        <option value="ALL" {% if selected_status == 'ALL' %}selected{% endif %}>{% trans "Toutes les ordonnances" %}</option>
-      </select>
-      <button type="submit" class="px-4 py-2 rounded-xl bg-[#14967F] text-white font-bold text-sm hover:bg-[#0E6A5A] transition-colors">
-        {% trans "Filtrer" %}
-      </button>
+  <!-- =========================================================================
+       2. BARRE DE FILTRES ALIGNÉE SUR UNE MÊME LIGNE
+       ========================================================================= -->
+  <div class="bg-white p-3.5 sm:p-4 rounded-3xl border border-neutral-200/80 shadow-2xs">
+    <form method="get" class="flex flex-col sm:flex-row items-center gap-3 w-full" id="pharmacy-filters-form">
+      
+      <!-- Champ Recherche étendu (flex-1) -->
+      <div class="relative flex-1 w-full min-w-0">
+        <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-neutral-400">
+          {% include "components/atoms/icon.html" with name="search" size="w-4 h-4" %}
+        </div>
+        <input
+          type="search"
+          name="q"
+          value="{{ query }}"
+          placeholder="{% trans "Rechercher par patient, matricule, médecin, médicament..." %}"
+          class="w-full pl-10 pr-9 py-2.5 rounded-xl border border-neutral-200 bg-neutral-50/50 hover:bg-white focus:bg-white focus:border-[#14967F] focus:ring-2 focus:ring-[#14967F]/20 text-xs sm:text-sm text-neutral-800 transition outline-none shadow-2xs placeholder:text-neutral-400"
+          autocomplete="off"
+        >
+        {% if query %}
+          <a
+            href="?status={{ selected_status }}"
+            class="absolute inset-y-0 right-0 pr-3 flex items-center text-neutral-400 hover:text-neutral-700"
+            title="{% trans "Effacer la recherche" %}"
+          >
+            {% include "components/atoms/icon.html" with name="x-mark" size="w-4 h-4" %}
+          </a>
+        {% endif %}
+      </div>
+
+      <!-- Sélecteur de Statut Clinique (shrink-0 sur la même ligne) -->
+      <div class="relative shrink-0 w-full sm:w-64">
+        <select
+          name="status"
+          onchange="this.form.submit()"
+          class="w-full appearance-none pl-3.5 pr-9 py-2.5 rounded-xl border border-neutral-200 bg-neutral-50/50 hover:bg-white focus:bg-white focus:border-[#14967F] focus:ring-2 focus:ring-[#14967F]/20 text-xs sm:text-sm font-semibold text-neutral-800 transition outline-none cursor-pointer shadow-2xs"
+        >
+          <option value="PENDING" {% if selected_status == 'PENDING' %}selected{% endif %}>
+              {% trans "En attente de délivrance" %} ({{ pending_count }})
+          </option>
+          <option value="DELIVERED" {% if selected_status == 'DELIVERED' %}selected{% endif %}>
+              {% trans "Délivrées" %} ({{ delivered_count }})
+          </option>
+          <option value="ALL" {% if selected_status == 'ALL' %}selected{% endif %}>
+              {% trans "Toutes les ordonnances" %} ({{ total_count }})
+          </option>
+        </select>
+        <span class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-neutral-400">
+          {% include "components/atoms/icon.html" with name="chevron-down" size="w-4 h-4" %}
+        </span>
+      </div>
+
+      <!-- Boutons d'Action (Filtrer & Réinitialiser sur la même ligne) -->
+      <div class="flex items-center gap-2 shrink-0 w-full sm:w-auto">
+        <button
+          type="submit"
+          class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#14967F] hover:bg-[#0E6A5A] text-white font-bold text-xs sm:text-sm transition-all shadow-xs cursor-pointer"
+        >
+          {% include "components/atoms/icon.html" with name="filter" size="w-3.5 h-3.5" %}
+          <span>{% trans "Filtrer" %}</span>
+        </button>
+
+        {% if query or selected_status != 'PENDING' %}
+          <a
+            href="{% url "patients:pharmacy_ordonnance_list" %}"
+            class="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-neutral-200 bg-white hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 text-neutral-600 text-xs sm:text-sm font-bold transition shadow-2xs"
+            title="{% trans "Réinitialiser tous les filtres" %}"
+          >
+            {% include "components/atoms/icon.html" with name="x-mark" size="w-3.5 h-3.5" %}
+            <span class="hidden md:inline">{% trans "Réinitialiser" %}</span>
+          </a>
+        {% endif %}
+      </div>
+
     </form>
   </div>
 
-  <!-- Tableau des Prescriptions Pharmacie -->
-  <div class="bg-white rounded-2xl border border-neutral-200/80 shadow-sm overflow-hidden">
+  <!-- =========================================================================
+       3. TABLEAU DES PRESCRIPTIONS & DÉLIVRANCES PHARMACIE
+       ========================================================================= -->
+  <div class="bg-white rounded-3xl border border-neutral-200/80 shadow-2xs overflow-hidden">
     {% if ordonnances %}
       <div class="overflow-x-auto">
         <table class="w-full text-left border-collapse">
           <thead>
-            <tr class="bg-neutral-50/80 border-b border-neutral-200 text-xs font-bold text-neutral-500 uppercase tracking-wider">
-              <th class="py-3.5 px-6">{% trans "Date Prescription" %}</th>
-              <th class="py-3.5 px-6">{% trans "Patient" %}</th>
-              <th class="py-3.5 px-6">{% trans "Médecin Prescripteur" %}</th>
-              <th class="py-3.5 px-6">{% trans "Médicaments Prescrits" %}</th>
-              <th class="py-3.5 px-6">{% trans "Statut" %}</th>
-              <th class="py-3.5 px-6 text-right">{% trans "Action" %}</th>
+            <tr class="bg-neutral-50/80 border-b border-neutral-200/80 text-[11px] font-extrabold text-neutral-500 uppercase tracking-wider">
+              <th scope="col" class="py-3.5 px-5 sm:px-6">{% trans "Date & Heure" %}</th>
+              <th scope="col" class="py-3.5 px-5 sm:px-6">{% trans "Patient" %}</th>
+              <th scope="col" class="py-3.5 px-5 sm:px-6">{% trans "Médecin Prescripteur" %}</th>
+              <th scope="col" class="py-3.5 px-5 sm:px-6">{% trans "Médicaments Prescrits" %}</th>
+              <th scope="col" class="py-3.5 px-5 sm:px-6">{% trans "Statut" %}</th>
+              <th scope="col" class="py-3.5 px-5 sm:px-6 text-right">{% trans "Actions" %}</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-neutral-200 text-sm">
+          <tbody class="divide-y divide-neutral-100 text-xs sm:text-sm">
             {% for ord in ordonnances %}
-              <tr class="hover:bg-neutral-50/50 transition-colors">
-                <td class="py-4 px-6 font-semibold text-neutral-900">
-                  {{ ord.prescription_date|date:"d/m/Y H:i" }}
+              <tr class="hover:bg-neutral-50/60 transition-colors">
+                
+                <!-- Date & Heure Prescription -->
+                <td class="py-4 px-5 sm:px-6 whitespace-nowrap">
+                  <div class="flex items-center gap-2">
+                    <span class="text-neutral-400">
+                      {% include "components/atoms/icon.html" with name="calendar" size="w-4 h-4" %}
+                    </span>
+                    <div>
+                      <p class="font-extrabold text-neutral-900 font-mono text-xs">
+                        {{ ord.prescribed_at|date:"d/m/Y" }}
+                      </p>
+                      <p class="text-[11px] font-mono text-neutral-500">
+                        {{ ord.prescribed_at|date:"H:i" }}
+                      </p>
+                    </div>
+                  </div>
                 </td>
-                <td class="py-4 px-6">
-                  <div class="font-bold text-neutral-900">{{ ord.patient.full_name }}</div>
-                  <div class="text-xs text-neutral-500 font-mono">{{ ord.patient.patient_number }}</div>
+
+                <!-- Patient -->
+                <td class="py-4 px-5 sm:px-6">
+                  <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl bg-teal-50 text-[#14967F] font-black text-xs flex items-center justify-center shrink-0 border border-teal-100 shadow-2xs">
+                      {{ ord.patient.first_name|slice:":1" }}{{ ord.patient.last_name|slice:":1" }}
+                    </div>
+                    <div>
+                      <a href="{% url "patients:patient_detail" ord.patient.pk %}" class="font-extrabold text-neutral-900 hover:text-[#14967F] transition leading-tight block">
+                        {{ ord.patient.full_name }}
+                      </a>
+                      <span class="text-[11px] font-mono text-neutral-500 bg-neutral-100 px-1.5 py-0.5 rounded-md inline-block mt-0.5">
+                        {{ ord.patient.patient_number }}
+                      </span>
+                    </div>
+                  </div>
                 </td>
-                <td class="py-4 px-6 text-neutral-700">
-                  Dr. {{ ord.doctor.full_name }}
+
+                <!-- Médecin Prescripteur -->
+                <td class="py-4 px-5 sm:px-6">
+                  <div class="flex items-center gap-2 text-neutral-800">
+                    <div class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0 border border-emerald-100">
+                      {% include "components/atoms/icon.html" with name="stethoscope" size="w-3.5 h-3.5" %}
+                    </div>
+                    <div>
+                      <span class="font-bold text-neutral-800 text-xs block">
+                        Dr. {{ ord.doctor.full_name }}
+                      </span>
+                      {% if ord.doctor.medical_profile.specialite %}
+                        <span class="text-[10px] text-neutral-500 block">
+                          {{ ord.doctor.medical_profile.specialite }}
+                        </span>
+                      {% endif %}
+                    </div>
+                  </div>
                 </td>
-                <td class="py-4 px-6">
-                  <ul class="text-xs space-y-1">
+
+                <!-- Médicaments Prescrits (Chips & Badges) -->
+                <td class="py-4 px-5 sm:px-6">
+                  <div class="space-y-2 max-w-md">
                     {% for line in ord.lines.all %}
-                      <li class="font-medium text-neutral-800">
-                        • <strong>{{ line.medication_name }}</strong> - {{ line.posology }} ({{ line.duration }})
-                      </li>
+                      <div class="flex flex-wrap items-center gap-1.5 p-2 rounded-xl bg-neutral-50 border border-neutral-200/60 shadow-2xs">
+                        <span class="text-[#14967F]">
+                          {% include "components/atoms/icon.html" with name="pill" size="w-3.5 h-3.5" %}
+                        </span>
+                        <span class="font-bold text-neutral-900 text-xs">
+                          {{ line.medication_name }}
+                        </span>
+                        {% if line.quantity > 1 %}
+                          <span class="text-[10px] font-mono font-bold bg-neutral-200 text-neutral-700 px-1.5 py-0.5 rounded">
+                            x{{ line.quantity }}
+                          </span>
+                        {% endif %}
+                        <span class="text-[10px] font-semibold text-[#14967F] bg-teal-50 border border-teal-100 px-2 py-0.5 rounded-md">
+                          {{ line.posology }}
+                        </span>
+                        {% if line.duration %}
+                          <span class="text-[10px] text-neutral-600 bg-white border border-neutral-200 px-2 py-0.5 rounded-md">
+                            {{ line.duration }}
+                          </span>
+                        {% endif %}
+                      </div>
+                    {% empty %}
+                      <span class="text-xs text-neutral-400 italic">
+                        {% trans "Aucun détail médicamenteux spécifique" %}
+                      </span>
                     {% endfor %}
-                  </ul>
+                    {% if ord.notes %}
+                      <p class="text-[11px] text-neutral-500 italic mt-1 line-clamp-1" title="{{ ord.notes }}">
+                        <span class="font-semibold text-neutral-600">{% trans "Note :" %}</span> {{ ord.notes }}
+                      </p>
+                    {% endif %}
+                  </div>
                 </td>
-                <td class="py-4 px-6">
-                  <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold {% if ord.status == 'DELIVERED' %}bg-emerald-100 text-emerald-800{% else %}bg-amber-100 text-amber-800{% endif %}">
-                    {{ ord.get_status_display }}
-                  </span>
-                  {% if ord.status == 'DELIVERED' and ord.delivered_by %}
-                    <div class="text-[10px] text-neutral-400 mt-0.5">Par {{ ord.delivered_by.full_name }} le {{ ord.delivered_at|date:"d/m H:i" }}</div>
+
+                <!-- Statut de Délivrance -->
+                <td class="py-4 px-5 sm:px-6 whitespace-nowrap">
+                  {% if ord.status == 'DELIVERED' %}
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold bg-emerald-50 text-emerald-800 border border-emerald-200/80 shadow-2xs">
+                      {% include "components/atoms/icon.html" with name="check" size="w-3.5 h-3.5 text-emerald-600" %}
+                      {% trans "Délivrée" %}
+                    </span>
+                    {% if ord.delivered_by %}
+                      <div class="text-[10px] text-neutral-400 mt-1">
+                        {% trans "Par" %} <strong class="text-neutral-600">{{ ord.delivered_by.full_name }}</strong><br>
+                        {{ ord.delivered_at|date:"d/m à H:i" }}
+                      </div>
+                    {% endif %}
+                  {% else %}
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold bg-amber-50 text-amber-800 border border-amber-200/80 shadow-2xs">
+                      <span class="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
+                      {% trans "En attente" %}
+                    </span>
                   {% endif %}
                 </td>
-                <td class="py-4 px-6 text-right space-x-2">
-                  <a href="{% url "patients:ordonnance_print" ord.pk %}" target="_blank" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-neutral-100 text-neutral-700 font-bold text-xs hover:bg-neutral-200 transition-colors">
-                    {% include "components/atoms/icon.html" with name="printer" size="w-3.5 h-3.5" %}
-                    {% trans "Imprimer" %}
-                  </a>
-                  {% if ord.status == 'PENDING' %}
-                    <form method="post" action="{% url "patients:pharmacy_ordonnance_dispense" ord.pk %}" class="inline">
-                      {% csrf_token %}
-                      <button type="submit" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-[#14967F] text-white font-bold text-xs hover:bg-[#0E6A5A] transition-colors shadow-sm">
-                        {% include "components/atoms/icon.html" with name="check" size="w-3.5 h-3.5" %}
-                        {% trans "Délivrer" %}
-                      </button>
-                    </form>
-                  {% endif %}
+
+                <!-- Actions -->
+                <td class="py-4 px-5 sm:px-6 text-right whitespace-nowrap">
+                  <div class="flex items-center justify-end gap-2">
+                    
+                    <!-- Imprimer -->
+                    <a
+                      href="{% url "patients:ordonnance_print" ord.pk %}"
+                      target="_blank"
+                      class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white hover:bg-neutral-50 text-neutral-700 font-bold text-xs border border-neutral-200 shadow-2xs hover:border-neutral-300 transition-colors"
+                      title="{% trans "Imprimer l'ordonnance officielle" %}"
+                    >
+                      {% include "components/atoms/icon.html" with name="printer" size="w-3.5 h-3.5 text-neutral-500" %}
+                      <span>{% trans "Imprimer" %}</span>
+                    </a>
+
+                    <!-- Délivrer (Bouton actif si PENDING) -->
+                    {% if ord.status == 'PENDING' %}
+                      <form
+                        method="post"
+                        action="{% url "patients:pharmacy_ordonnance_dispense" ord.pk %}"
+                        class="inline"
+                        onsubmit="return confirm('{% trans "Confirmer la délivrance complète des médicaments pour ce patient ?" %}');"
+                      >
+                        {% csrf_token %}
+                        <button
+                          type="submit"
+                          class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#14967F] hover:bg-[#0E6A5A] text-white font-bold text-xs shadow-xs hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
+                        >
+                          {% include "components/atoms/icon.html" with name="check" size="w-3.5 h-3.5" %}
+                          <span>{% trans "Délivrer" %}</span>
+                        </button>
+                      </form>
+                    {% endif %}
+
+                  </div>
                 </td>
+
               </tr>
             {% endfor %}
           </tbody>
         </table>
       </div>
+
+      <!-- Pagination -->
+      {% if page_obj and page_obj.has_other_pages %}
+        <div class="border-t border-neutral-100 p-4 bg-neutral-50/40">
+          {% include "components/molecules/table_actions/pagination.html" with page_obj=page_obj paginator=paginator query=query selected_status=selected_status %}
+        </div>
+      {% endif %}
+
     {% else %}
-      <div class="py-12 text-center text-neutral-500">
-        <p class="text-base font-semibold">{% trans "Aucune ordonnance trouvée pour ce filtre." %}</p>
+      <!-- Empty State -->
+      <div class="py-16 px-6 text-center">
+        <div class="w-16 h-16 rounded-3xl bg-neutral-100 text-neutral-400 mx-auto flex items-center justify-center mb-4 shadow-2xs">
+          {% include "components/atoms/icon.html" with name="beaker" size="w-8 h-8" %}
+        </div>
+        <h3 class="text-base font-extrabold text-neutral-800">
+          {% trans "Aucune ordonnance trouvée" %}
+        </h3>
+        <p class="text-xs text-neutral-500 mt-1 max-w-md mx-auto">
+          {% if query or selected_status != 'PENDING' %}
+            {% trans "Aucune prescription ne correspond aux critères de recherche actuels. Essayez de réinitialiser vos filtres." %}
+          {% else %}
+            {% trans "Toutes les prescriptions médicales émises ont été délivrées ou aucune ordonnance n'est actuellement en attente." %}
+          {% endif %}
+        </p>
+        {% if query or selected_status != 'PENDING' %}
+          <div class="mt-4">
+            <a
+              href="{% url "patients:pharmacy_ordonnance_list" %}"
+              class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#14967F] text-white font-bold text-xs hover:bg-[#0E6A5A] transition shadow-xs"
+            >
+              {% include "components/atoms/icon.html" with name="x-mark" size="w-3.5 h-3.5" %}
+              {% trans "Réinitialiser les filtres" %}
+            </a>
+          </div>
+        {% endif %}
       </div>
     {% endif %}
   </div>
+
 </div>
 {% endblock %}

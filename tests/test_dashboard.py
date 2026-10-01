@@ -244,7 +244,8 @@ class TestDashboardViews:
         assert "recent_consultations" in response.context
 
         content = response.content.decode("utf-8")
-        assert "Dr. Paul MARTIN" in content
+        assert "Bonjour," in content
+        assert "Paul MARTIN" in content
         assert "Cardiologie" in content
         assert "MES RDV DU JOUR" in content
         assert "EN SALLE D'ATTENTE" in content

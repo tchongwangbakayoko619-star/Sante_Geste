@@ -4,9 +4,8 @@
   <!-- Greeting & Subtitle -->
   <div>
     <h1 class="text-2xl sm:text-3xl font-extrabold text-neutral-900 tracking-tight font-title">
-      {{ greeting|default:"Bonjour" }}
-      <span class="text-neutral-900">{% if user.is_personnel_medical and not user.is_agent_accueil %}Dr. {% endif %}{% if user.first_name or user.last_name %}{{ user.first_name }} {{ user.last_name|upper }}{% else %}{{ user.email }}{% endif %}</span>
-      <span class="inline-block">👋</span>
+      {{ greeting|default:"Bonjour" }},
+      <span class="text-primary text-[#0d9488]">{% if user.first_name or user.last_name %}{{ user.first_name }} {{ user.last_name|upper }}{% else %}{{ user.email }}{% endif %}</span>
     </h1>
     <p class="text-xs sm:text-sm text-neutral-500 mt-1">
       {% if user.medical_profile.specialite %}

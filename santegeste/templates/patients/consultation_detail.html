@@ -81,22 +81,50 @@
         <span>{% trans "Constantes Vitales" %}</span>
       </h3>
       {% with vitals=consultation.vital_signs %}
-        <div class="flex justify-between items-center py-2 border-b border-neutral-100 text-xs">
-          <span class="text-neutral-500 font-medium">{% trans "Tension artérielle" %}</span>
-          <span class="font-bold text-neutral-900 font-mono">{{ vitals.tension|default:"-" }}</span>
-        </div>
-        <div class="flex justify-between items-center py-2 border-b border-neutral-100 text-xs">
-          <span class="text-neutral-500 font-medium">{% trans "Poids" %}</span>
-          <span class="font-bold text-neutral-900 font-mono">{{ vitals.poids|default:"-" }} kg</span>
-        </div>
-        <div class="flex justify-between items-center py-2 border-b border-neutral-100 text-xs">
-          <span class="text-neutral-500 font-medium">{% trans "Température" %}</span>
-          <span class="font-bold text-neutral-900 font-mono">{{ vitals.temperature|default:"-" }} °C</span>
-        </div>
-        <div class="flex justify-between items-center py-2 text-xs">
-          <span class="text-neutral-500 font-medium">{% trans "Pouls" %}</span>
-          <span class="font-bold text-neutral-900 font-mono">{{ vitals.pouls|default:"-" }} bpm</span>
-        </div>
+        {% if vitals.parameters %}
+          {% for param in vitals.parameters %}
+            <div class="flex justify-between items-center py-2 border-b border-neutral-100 last:border-0 text-xs">
+              <span class="text-neutral-500 font-medium">{{ param.name }}</span>
+              <span class="font-bold text-neutral-900 font-mono">
+                {{ param.value }} {% if param.unit %}<span class="text-[11px] text-neutral-400 font-normal">{{ param.unit }}</span>{% endif %}
+              </span>
+            </div>
+          {% endfor %}
+        {% else %}
+          {% if vitals.tension %}
+            <div class="flex justify-between items-center py-2 border-b border-neutral-100 text-xs">
+              <span class="text-neutral-500 font-medium">{% trans "Tension artérielle" %}</span>
+              <span class="font-bold text-neutral-900 font-mono">{{ vitals.tension }} mmHg</span>
+            </div>
+          {% endif %}
+          {% if vitals.poids %}
+            <div class="flex justify-between items-center py-2 border-b border-neutral-100 text-xs">
+              <span class="text-neutral-500 font-medium">{% trans "Poids" %}</span>
+              <span class="font-bold text-neutral-900 font-mono">{{ vitals.poids }} kg</span>
+            </div>
+          {% endif %}
+          {% if vitals.temperature %}
+            <div class="flex justify-between items-center py-2 border-b border-neutral-100 text-xs">
+              <span class="text-neutral-500 font-medium">{% trans "Température" %}</span>
+              <span class="font-bold text-neutral-900 font-mono">{{ vitals.temperature }} °C</span>
+            </div>
+          {% endif %}
+          {% if vitals.pouls %}
+            <div class="flex justify-between items-center py-2 border-b border-neutral-100 text-xs">
+              <span class="text-neutral-500 font-medium">{% trans "Pouls" %}</span>
+              <span class="font-bold text-neutral-900 font-mono">{{ vitals.pouls }} bpm</span>
+            </div>
+          {% endif %}
+          {% if vitals.frequence_respiratoire %}
+            <div class="flex justify-between items-center py-2 border-b border-neutral-100 last:border-0 text-xs">
+              <span class="text-neutral-500 font-medium">{% trans "Fréquence respiratoire" %}</span>
+              <span class="font-bold text-neutral-900 font-mono">{{ vitals.frequence_respiratoire }} /min</span>
+            </div>
+          {% endif %}
+          {% if not vitals.tension and not vitals.poids and not vitals.temperature and not vitals.pouls and not vitals.frequence_respiratoire %}
+            <p class="text-xs text-neutral-400 italic py-2">{% trans "Aucune constante enregistrée" %}</p>
+          {% endif %}
+        {% endif %}
       {% endwith %}
     </div>
   </div>
