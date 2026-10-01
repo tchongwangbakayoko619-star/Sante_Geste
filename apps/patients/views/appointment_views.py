@@ -192,11 +192,32 @@ class AppointmentCreateView(PatientManagementRequiredMixin, SuccessMessageMixin,
         initial = super().get_initial()
         patient_id = self.request.GET.get("patient")
         if patient_id:
-            patient = get_object_or_404(Patient, pk=patient_id)
-            initial["patient"] = patient
+            try:
+                patient = get_object_or_404(Patient, pk=patient_id)
+                initial["patient"] = patient
+            except Exception:
+                pass
+
+        doctor_id = self.request.GET.get("doctor")
+        if doctor_id:
+            initial["doctor"] = doctor_id
+        elif getattr(self.request.user, "is_personnel_medical", False):
+            initial["doctor"] = self.request.user
+
+        scheduled_at = self.request.GET.get("scheduled_at")
+        if scheduled_at:
+            initial["scheduled_at"] = scheduled_at
+        else:
+            date_param = self.request.GET.get("date")
+            time_param = self.request.GET.get("time")
+            if date_param and time_param:
+                initial["scheduled_at"] = f"{date_param}T{time_param}"
+
         return initial
 
     def form_valid(self, form: AppointmentForm):
+        from django.http import JsonResponse
+
         data = form.cleaned_data
         appointment = create_appointment(
             patient=data["patient"],
@@ -208,22 +229,75 @@ class AppointmentCreateView(PatientManagementRequiredMixin, SuccessMessageMixin,
             created_by=self.request.user,
         )
         self.object = appointment
-        messages.success(
-            self.request,
+        success_message = (
             _("Le rendez-vous pour %(patient)s avec Dr. %(doctor)s a été programmé pour le %(date)s.")
             % {
                 "patient": appointment.patient.full_name,
                 "doctor": appointment.doctor.full_name,
                 "date": timezone.localtime(appointment.scheduled_at).strftime("%d/%m/%Y à %H:%M"),
-            },
+            }
         )
+        messages.success(self.request, success_message)
+
+        is_ajax = (
+            self.request.headers.get("x-requested-with") == "XMLHttpRequest"
+            or self.request.GET.get("format") == "json"
+            or "application/json" in self.request.headers.get("accept", "")
+        )
+        if is_ajax:
+            local_scheduled = timezone.localtime(appointment.scheduled_at)
+            local_end = timezone.localtime(appointment.end_time)
+            return JsonResponse({
+                "success": True,
+                "message": str(success_message),
+                "appointment": {
+                    "id": str(appointment.pk),
+                    "patient_id": str(appointment.patient.pk),
+                    "patient_name": appointment.patient.full_name,
+                    "patient_number": appointment.patient.patient_number,
+                    "doctor_name": appointment.doctor.full_name,
+                    "date_str": local_scheduled.strftime("%Y-%m-%d"),
+                    "start_time_str": local_scheduled.strftime("%H:%M"),
+                    "end_time_str": local_end.strftime("%H:%M"),
+                    "time_range": f"{local_scheduled.strftime('%H:%M')} – {local_end.strftime('%H:%M')}",
+                    "start_hour": local_scheduled.hour,
+                    "start_minute": local_scheduled.minute,
+                    "duration": appointment.estimated_duration_minutes,
+                    "reason": appointment.reason,
+                    "status": appointment.status,
+                    "status_display": appointment.get_status_display(),
+                    "color": "blue",
+                },
+            })
+
+        next_url = self.request.POST.get("next") or self.request.GET.get("next")
+        if next_url:
+            return redirect(next_url)
         return redirect(appointment.patient.get_absolute_url())
+
+    def form_invalid(self, form: AppointmentForm):
+        from django.http import JsonResponse
+
+        is_ajax = (
+            self.request.headers.get("x-requested-with") == "XMLHttpRequest"
+            or self.request.GET.get("format") == "json"
+            or "application/json" in self.request.headers.get("accept", "")
+        )
+        if is_ajax:
+            return JsonResponse({
+                "success": False,
+                "errors": form.errors.get_json_data(),
+            }, status=400)
+        return super().form_invalid(form)
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         patient_id = self.request.GET.get("patient")
         if patient_id:
-            context["patient"] = get_object_or_404(Patient, pk=patient_id)
+            try:
+                context["patient"] = get_object_or_404(Patient, pk=patient_id)
+            except Exception:
+                pass
         return context
 
 

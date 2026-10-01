@@ -4,6 +4,7 @@ from .appointment_forms import AppointmentCancelForm
 from .appointment_forms import AppointmentForm
 from .appointment_forms import AppointmentStatusForm
 from .consultation_forms import ConsultationForm
+from .consultation_forms import FactureUpdateForm
 from .consultation_forms import LigneOrdonnanceForm
 from .consultation_forms import OrdonnanceForm
 from .consultation_forms import PaiementForm
@@ -18,6 +19,7 @@ __all__ = [
     "AppointmentForm",
     "AppointmentStatusForm",
     "ConsultationForm",
+    "FactureUpdateForm",
     "LigneOrdonnanceForm",
     "OrdonnanceForm",
     "PaiementForm",

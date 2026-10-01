@@ -242,3 +242,21 @@ class PaiementForm(forms.ModelForm):
             "payment_method": forms.Select(attrs={"class": "w-full px-4 py-2 rounded-xl border border-neutral-300 bg-white"}),
             "notes": forms.Textarea(attrs={"rows": 2, "placeholder": _("Référence transaction ou notes..."), "class": "resize-none"}),
         }
+
+
+class FactureUpdateForm(forms.ModelForm):
+    """Formulaire de modification d'une facture non réglée."""
+
+    class Meta:
+        model = Facture
+        fields = ["total_amount"]
+        widgets = {
+            "total_amount": forms.NumberInput(
+                attrs={
+                    "step": "100",
+                    "min": "0",
+                    "class": "w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[#14967F]",
+                }
+            ),
+        }
+

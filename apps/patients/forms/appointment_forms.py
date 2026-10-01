@@ -24,6 +24,12 @@ class AppointmentForm(forms.ModelForm):
 
     scheduled_at = forms.DateTimeField(
         label=_("Date et heure"),
+        input_formats=[
+            "%Y-%m-%dT%H:%M",
+            "%Y-%m-%dT%H:%M:%S",
+            "%Y-%m-%d %H:%M:%S",
+            "%Y-%m-%d %H:%M",
+        ],
         widget=forms.DateTimeInput(
             attrs={
                 "type": "datetime-local",

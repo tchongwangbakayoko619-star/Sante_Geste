@@ -17,6 +17,7 @@ from django.views.generic import DetailView
 from django.views.generic import FormView
 from django.views.generic import ListView
 
+from apps.patients.forms import FactureUpdateForm
 from apps.patients.forms import PaiementForm
 from apps.patients.models import Facture
 from apps.patients.models import Paiement
@@ -220,4 +221,72 @@ class FacturePrintView(CaissierRequiredMixin, DetailView):
         if self.object.consultation:
             context["prestations"] = self.object.consultation.prestations.select_related("prestation")
         return context
+
+
+class FactureUpdateView(CaissierRequiredMixin, View):
+    """Modification du montant d'une facture non encore payée."""
+
+    def post(self, request: Any, pk: Any):
+        facture = get_object_or_404(Facture, pk=pk)
+
+        # Règle comptable : interdiction de modifier une facture déjà réglée
+        if facture.status == "PAID" or facture.paid_amount > 0:
+            messages.error(
+                request,
+                _("Impossible de modifier une facture ayant déjà fait l'objet d'un encaissement."),
+            )
+            return redirect("patients:facture_detail", pk=facture.pk)
+
+        if facture.status == "CANCELLED":
+            messages.error(request, _("Impossible de modifier une facture annulée."))
+            return redirect("patients:facture_detail", pk=facture.pk)
+
+        form = FactureUpdateForm(request.POST, instance=facture)
+        if form.is_valid():
+            form.save()
+            messages.success(
+                request,
+                _("Le montant de la facture N° %(num)s a été ajusté avec succès.")
+                % {"num": facture.invoice_number},
+            )
+        else:
+            messages.error(request, _("Veuillez saisir un montant valide."))
+
+        return redirect("patients:facture_detail", pk=facture.pk)
+
+
+class FactureCancelView(CaissierRequiredMixin, View):
+    """Annulation d'une facture de caisse et réouverture des prestations."""
+
+    def post(self, request: Any, pk: Any):
+        facture = get_object_or_404(Facture, pk=pk)
+
+        if facture.status == "PAID" or facture.paid_amount > 0:
+            messages.error(
+                request,
+                _("Impossible d'annuler une facture déjà payée ou partiellement réglée."),
+            )
+            return redirect("patients:facture_detail", pk=facture.pk)
+
+        if facture.status == "CANCELLED":
+            messages.warning(request, _("Cette facture est déjà annulée."))
+            return redirect("patients:facture_detail", pk=facture.pk)
+
+        with transaction.atomic():
+            facture.status = "CANCELLED"
+            facture.save(update_fields=["status", "updated_at"])
+
+            # Si liée à une consultation, remettre les prestations au statut EN_ATTENTE_CAISSE
+            if facture.consultation:
+                facture.consultation.prestations.filter(status="FACTURE").update(
+                    status="EN_ATTENTE_CAISSE"
+                )
+
+        messages.success(
+            request,
+            _("La facture N° %(num)s a été annulée. Les actes associés sont à nouveau disponibles pour facturation.")
+            % {"num": facture.invoice_number},
+        )
+        return redirect("patients:facture_detail", pk=facture.pk)
+
 

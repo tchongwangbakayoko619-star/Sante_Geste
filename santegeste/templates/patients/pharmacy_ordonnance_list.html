@@ -276,6 +276,18 @@
                       <span>{% trans "Imprimer" %}</span>
                     </a>
 
+                    <!-- Modifier l'ordonnance (si en attente de délivrance et praticien) -->
+                    {% if ord.status == 'PENDING' and ord.consultation %}
+                      <a
+                        href="{% url "patients:consultation_detail" ord.consultation.pk %}"
+                        class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white hover:bg-neutral-50 text-neutral-700 font-bold text-xs border border-neutral-200 shadow-2xs hover:border-neutral-300 transition-colors"
+                        title="{% trans "Voir ou modifier sur la consultation" %}"
+                      >
+                        {% include "components/atoms/icon.html" with name="pencil" size="w-3.5 h-3.5 text-neutral-600" %}
+                        <span>{% trans "Modifier" %}</span>
+                      </a>
+                    {% endif %}
+
                     <!-- Délivrer (Bouton actif si PENDING) -->
                     {% if ord.status == 'PENDING' %}
                       <form

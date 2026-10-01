@@ -15,10 +15,10 @@
       <div>
         <div class="flex items-center gap-2">
           <h1 class="text-xl font-bold text-neutral-900 font-title tracking-tight">
-            {% trans "Consultation Médicale" %}
+            {% if is_update %}{% trans "Modifier la consultation" %}{% else %}{% trans "Consultation Médicale" %}{% endif %}
           </h1>
-          <span class="font-mono text-xs font-bold px-2 py-0.5 rounded-lg bg-teal-50 text-[#0d9488] border border-teal-200">
-            {% trans "En cours" %}
+          <span class="font-mono text-xs font-bold px-2 py-0.5 rounded-lg {% if is_update %}bg-amber-50 text-amber-800 border border-amber-200{% else %}bg-teal-50 text-[#0d9488] border border-teal-200{% endif %}">
+            {% if is_update %}{% trans "Mode modification" %}{% else %}{% trans "En cours" %}{% endif %}
           </span>
         </div>
         <p class="text-xs text-neutral-600 mt-1 flex flex-wrap items-center gap-2">

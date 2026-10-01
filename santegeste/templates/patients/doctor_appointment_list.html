@@ -1,289 +1,1059 @@
 {% extends "layouts/dashboard.html" %}
 {% load i18n static patient_tags %}
 
-{% block title %}{% trans "Agenda médical" %} - SantéGeste{% endblock %}
+{% block title %}{% trans "Mon Calendrier" %} - SantéGeste{% endblock %}
 
 {% block content_inner %}
-<div class="space-y-6">
+<style>
+  :root {
+    --slot-height: 56px;
+  }
+  .calendar-grid {
+    --slot-h: var(--slot-height);
+  }
+  .time-slot {
+    height: var(--slot-height);
+  }
+  .appointment-card {
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+  }
+  .appointment-card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.15);
+    z-index: 20;
+  }
+</style>
 
-  <!-- En-tête : Titre & Navigation Date / Vues (Conforme à la maquette) -->
-  <div class="space-y-4">
-    <h1 class="text-2xl font-bold text-neutral-900 font-title tracking-tight">
-      {% trans "Agenda médical" %}
-    </h1>
+<div class="space-y-4">
 
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-      <!-- Date Bar : Aujourd'hui, <, >, Date -->
-      <div class="flex flex-wrap items-center gap-2">
-        <a href="?date={{ today_date }}&date_filter=today" class="px-3.5 py-1.5 rounded-lg border border-neutral-200 bg-white text-xs font-semibold text-neutral-700 hover:bg-neutral-50 shadow-2xs transition-colors">
-          {% trans "Aujourd'hui" %}
+  <!-- Carte Principale "Mon Calendrier" (Fidèle à la maquette) -->
+  <div class="bg-white border border-neutral-200/80 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-xs space-y-4">
+
+    <!-- En-tête : Titre "Mon Calendrier" -->
+    <div class="flex items-center justify-between">
+      <h1 class="text-base sm:text-lg font-bold text-neutral-900 font-title tracking-tight">
+        {% trans "Mon Calendrier" %}
+      </h1>
+      <div class="flex items-center gap-2">
+        <a href="{% url "patients:appointment_create" %}" class="btn btn-primary py-1.5 px-3.5 text-xs font-bold inline-flex items-center gap-1.5 shadow-2xs">
+          {% include "components/atoms/icon.html" with name="plus" size="w-3.5 h-3.5" %}
+          <span>{% trans "Nouveau RDV" %}</span>
         </a>
-        <div class="flex items-center gap-1">
-          <a href="?date={{ prev_date }}" class="w-8 h-8 rounded-lg border border-neutral-200 bg-white flex items-center justify-center text-neutral-500 hover:text-neutral-800 hover:bg-neutral-50 shadow-2xs transition-colors" aria-label="{% trans "Précédent" %}" id="btn-prev-date">
-            {% include "components/atoms/icon.html" with name="arrow-left" size="w-3.5 h-3.5" %}
-          </a>
-          <a href="?date={{ next_date }}" class="w-8 h-8 rounded-lg border border-neutral-200 bg-white flex items-center justify-center text-neutral-500 hover:text-neutral-800 hover:bg-neutral-50 shadow-2xs transition-colors" aria-label="{% trans "Suivant" %}" id="btn-next-date">
-            {% include "components/atoms/icon.html" with name="arrow-right" size="w-3.5 h-3.5" %}
-          </a>
-        </div>
-        <label class="relative inline-flex items-center cursor-pointer group">
+      </div>
+    </div>
+
+    <!-- Barre de Commande : [ Mois Année / Plage ] | [ Mois | Semaine | Jour ] | [ < | Aujourd'hui | > ] -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pt-1 pb-2 border-b border-neutral-100">
+      
+      <!-- Date courante / Période (ex: "janvier 11 – 17") -->
+      <div class="flex items-center gap-3">
+        <h2 class="text-xl sm:text-2xl font-extrabold text-neutral-900 font-title tracking-tight capitalize" id="calendar-period-heading">
+          {{ period_label }}
+        </h2>
+        <!-- Sélecteur rapide de date invisible pour le clic -->
+        <label class="relative inline-flex items-center cursor-pointer p-1.5 rounded-lg hover:bg-neutral-100 text-neutral-400 hover:text-neutral-700 transition-colors" title="{% trans "Choisir une date..." %}">
           <input
             type="date"
-            value="{{ current_date|date:'Y-m-d' }}"
-            onchange="if(this.value) window.location.href='?date=' + this.value"
+            value="{{ current_date_str }}"
+            onchange="if(this.value) window.location.href='?date=' + this.value + '&view={{ view_mode }}'"
             class="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-            id="agenda-date-input"
             aria-label="{% trans "Sélectionner une date" %}"
           >
-          <span class="text-sm font-bold text-neutral-800 ml-1.5 select-none group-hover:text-[#0d9488] transition-colors flex items-center gap-1.5" title="{% trans "Cliquer pour changer de date" %}">
-            <span>{{ current_date|date:"l d F Y"|capfirst }}</span>
-            <svg class="w-4 h-4 text-neutral-400 group-hover:text-[#0d9488]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-          </span>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
         </label>
       </div>
 
-      <!-- Sélecteur de vues : [ Jour | Semaine | Mois ] -->
-      <div class="inline-flex items-center rounded-xl p-1 bg-white border border-neutral-200/80 shadow-2xs self-start md:self-auto" role="tablist">
+      <!-- Segmented Control : [ Mois | Semaine | Jour ] -->
+      <div class="inline-flex items-center rounded-xl p-1 bg-neutral-100/90 border border-neutral-200/70 shadow-2xs self-start md:self-auto" role="tablist">
         <button
           type="button"
-          onclick="switchAgendaView('day')"
-          id="tab-btn-day"
+          onclick="switchCalendarView('month')"
+          id="btn-view-month"
           role="tab"
-          aria-selected="true"
-          class="px-4 py-1.5 rounded-lg text-xs font-bold transition-all bg-[#0d9488] text-white shadow-2xs">
-          {% trans "Jour" %}
+          aria-selected="{% if view_mode == 'month' %}true{% else %}false{% endif %}"
+          class="px-3.5 py-1.5 rounded-lg text-xs transition-all {% if view_mode == 'month' %}bg-white text-neutral-900 font-bold shadow-xs{% else %}text-neutral-600 font-semibold hover:text-neutral-900{% endif %}">
+          {% trans "Mois" %}
         </button>
         <button
           type="button"
-          onclick="switchAgendaView('week')"
-          id="tab-btn-week"
+          onclick="switchCalendarView('week')"
+          id="btn-view-week"
           role="tab"
-          aria-selected="false"
-          class="px-4 py-1.5 rounded-lg text-xs font-semibold text-neutral-600 hover:text-neutral-900 transition-all">
+          aria-selected="{% if view_mode == 'week' %}true{% else %}false{% endif %}"
+          class="px-3.5 py-1.5 rounded-lg text-xs transition-all {% if view_mode == 'week' %}bg-white text-neutral-900 font-bold shadow-xs{% else %}text-neutral-600 font-semibold hover:text-neutral-900{% endif %}">
           {% trans "Semaine" %}
         </button>
         <button
           type="button"
-          onclick="switchAgendaView('month')"
-          id="tab-btn-month"
+          onclick="switchCalendarView('day')"
+          id="btn-view-day"
           role="tab"
-          aria-selected="false"
-          class="px-4 py-1.5 rounded-lg text-xs font-semibold text-neutral-600 hover:text-neutral-900 transition-all">
-          {% trans "Mois" %}
+          aria-selected="{% if view_mode == 'day' %}true{% else %}false{% endif %}"
+          class="px-3.5 py-1.5 rounded-lg text-xs transition-all {% if view_mode == 'day' %}bg-white text-neutral-900 font-bold shadow-xs{% else %}text-neutral-600 font-semibold hover:text-neutral-900{% endif %}">
+          {% trans "Jour" %}
         </button>
       </div>
+
+      <!-- Navigation temporelle : [ < | Aujourd'hui | > ] -->
+      <div class="flex items-center gap-1.5 self-end md:self-auto">
+        <a href="?date={{ prev_date }}&view={{ view_mode }}" class="w-8 h-8 rounded-lg border border-neutral-200/80 bg-white flex items-center justify-center text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50 shadow-2xs transition-colors" title="{% trans "Précédent" %}" id="btn-prev-period">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        </a>
+        <a href="?date={{ today_date }}&view={{ view_mode }}" class="px-3.5 py-1.5 rounded-lg border border-neutral-200/80 bg-white text-xs font-semibold text-neutral-700 hover:text-neutral-900 hover:bg-neutral-50 shadow-2xs transition-colors">
+          {% trans "Aujourd'hui" %}
+        </a>
+        <a href="?date={{ next_date }}&view={{ view_mode }}" class="w-8 h-8 rounded-lg border border-neutral-200/80 bg-white flex items-center justify-center text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50 shadow-2xs transition-colors" title="{% trans "Suivant" %}" id="btn-next-period">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        </a>
+      </div>
+
     </div>
-  </div>
 
-  <!-- VUE 1 : VUE JOUR (Maquette officielle : 2 colonnes) -->
-  <div id="agenda-view-day" class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+    <!-- ============================================================== -->
+    <!-- VUE 1 : VUE SEMAINE (Conforme à l'image fournie)              -->
+    <!-- ============================================================== -->
+    <div id="view-week-container" class="{% if view_mode != 'week' %}hidden{% endif %} overflow-x-auto select-none">
+      <div class="min-w-[850px]">
 
-    <!-- Colonne Gauche (~33% / 4 colonnes) : Mes rendez-vous timeline & liste -->
-    <div class="lg:col-span-4 bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-xs flex flex-col justify-between min-h-[500px]">
-      <div>
-        <div class="pb-3 border-b border-neutral-100 flex items-center justify-between">
-          <div>
-            <h2 class="text-sm font-bold text-neutral-900 font-title">
-              {% trans "Mes rendez-vous" %}
-            </h2>
-            <p class="text-xs text-neutral-400 mt-0.5">
-              {{ appointments|length }} {% trans "rendez-vous" %}
-            </p>
-          </div>
-          {% if date_filter != 'today' or selected_date %}
-            <a href="?date_filter=today" class="text-[11px] font-semibold text-[#0d9488] hover:underline">
-              {% trans "Aujourd'hui" %}
-            </a>
-          {% endif %}
-        </div>
-
-        <!-- Liste des rendez-vous avec puces colorées de la maquette -->
-        <div class="mt-4 space-y-3.5">
-          {% for rdv in appointments %}
-            <div class="flex items-center gap-3 p-1.5 rounded-xl hover:bg-neutral-50 transition-colors group">
-              <!-- Pastille colorée -->
-              <span class="w-2.5 h-2.5 rounded-full shrink-0 {% cycle 'bg-emerald-500' 'bg-blue-600' 'bg-blue-600' 'bg-purple-600' 'bg-rose-500' 'bg-rose-500' %}"></span>
-
-              <!-- Heure -->
-              <span class="text-xs font-bold text-neutral-600 font-mono shrink-0">
-                {{ rdv.scheduled_at|date:"H:i" }}
-              </span>
-
-              <!-- Patient & Lien direct -->
-              <div class="min-w-0 flex-1">
-                <a href="{{ rdv.patient.get_absolute_url }}" class="text-xs font-semibold text-neutral-800 truncate block group-hover:text-[#0d9488] transition-colors">
-                  {{ rdv.patient.full_name }}
-                </a>
-                <span class="text-[11px] text-neutral-400 truncate block">
-                  {{ rdv.reason|default:_("Consultation") }}
+        <!-- En-têtes des 7 colonnes : 11 dim. | 12 lun. | ... | 15 jeu. (Noir) | ... -->
+        <div class="grid grid-cols-[56px_repeat(7,1fr)] border-b border-neutral-200/90 pb-2 text-center text-xs font-semibold">
+          <div class="text-neutral-400"></div>
+          {% for day in week_days %}
+            <div class="flex items-center justify-center py-1">
+              {% if day.is_today %}
+                <!-- Badge Noir élégant pour le jour actuel (comme sur la maquette) -->
+                <span class="inline-flex items-center justify-center bg-neutral-950 text-white font-bold text-xs sm:text-sm px-3.5 py-1 rounded-md shadow-xs">
+                  {{ day.header_label }}
                 </span>
-              </div>
-
-              <!-- Action rapide consultation -->
-              {% if not rdv.consultation and rdv.status != 'CANCELLED' %}
-                <a href="{% url "patients:consultation_create" %}?appointment={{ rdv.pk }}" class="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg bg-teal-50 text-[#0d9488] hover:bg-teal-100 transition-all shrink-0" title="{% trans "Démarrer consultation" %}">
-                  {% include "components/atoms/icon.html" with name="clipboard-document-list" size="w-3.5 h-3.5" %}
-                </a>
+              {% else %}
+                <span class="text-neutral-700 font-semibold hover:text-neutral-900 transition-colors">
+                  {{ day.header_label }}
+                </span>
               {% endif %}
-            </div>
-          {% empty %}
-            <div class="py-10 text-center space-y-2.5">
-              <div class="w-10 h-10 rounded-full bg-neutral-100 text-neutral-400 mx-auto flex items-center justify-center">
-                {% include "components/atoms/icon.html" with name="calendar" size="w-5 h-5" %}
-              </div>
-              <p class="text-xs font-medium text-neutral-500">{% trans "Aucun rendez-vous sur cette journée." %}</p>
-              <div class="pt-1 flex flex-col gap-1 items-center">
-                <a href="?date_filter=upcoming" class="text-xs font-semibold text-[#0d9488] hover:underline">
-                  {% trans "Voir les rendez-vous à venir ->" %}
-                </a>
-              </div>
             </div>
           {% endfor %}
         </div>
-      </div>
 
-      <!-- Action Button en bas de colonne gauche : + Prendre un RDV -->
-      <div class="pt-4 mt-6 border-t border-neutral-100">
-        <a href="{% url "patients:appointment_create" %}" class="w-full bg-[#0d9488] hover:bg-[#0f766e] text-white text-xs font-bold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 shadow-xs transition-colors">
-          {% include "components/atoms/icon.html" with name="plus" size="w-4 h-4" %}
-          <span>{% trans "Prendre un RDV" %}</span>
-        </a>
-      </div>
-    </div>
+        <!-- Corps de la Grille : Heures à gauche + 7 colonnes de jours -->
+        <div class="relative grid grid-cols-[56px_repeat(7,1fr)] divide-x divide-neutral-100 calendar-grid" id="week-grid-body">
 
-    <!-- Colonne Droite (~67% / 8 colonnes) : Grille horaire journalière (08:00 à 17:00) -->
-    <div class="lg:col-span-8 bg-white border border-neutral-200/80 rounded-2xl p-6 shadow-xs">
-      <div class="divide-y divide-neutral-100">
-        {% for hour in hours|default:"08,09,10,11,12,13,14,15,16,17"|split:"," %}
-          <div class="flex items-start gap-4 py-3 min-h-[64px]">
-            <!-- Heure axe vertical -->
-            <div class="w-14 shrink-0 text-xs font-mono font-medium text-neutral-400 pt-1 text-right">
-              {{ hour }}:00
-            </div>
+          <!-- Colonne Heures (Axe Y) -->
+          <div class="divide-y divide-neutral-100/90 text-right pr-2 select-none">
+            {% for hour in hours %}
+              <div class="time-slot flex items-start justify-end pt-1">
+                <span class="text-[11px] font-mono font-medium text-neutral-400 tracking-tight">
+                  {{ hour }}
+                </span>
+              </div>
+            {% endfor %}
+          </div>
 
-            <!-- Emplacement des cartes de rendez-vous pour cette heure -->
-            <div class="flex-1 space-y-2">
-              {% for rdv in appointments %}
-                {% if rdv.scheduled_at|date:"H" == hour %}
-                  <div class="p-3.5 rounded-xl border flex items-center justify-between gap-3 transition-all hover:shadow-xs {% cycle 'bg-emerald-50/70 border-emerald-200/80 text-emerald-950' 'bg-blue-50/70 border-blue-200/80 text-blue-950' 'bg-purple-50/70 border-purple-200/80 text-purple-950' 'bg-amber-50/70 border-amber-200/80 text-amber-950' %}">
-                    <!-- Badge icône + Informations du rendez-vous -->
-                    <div class="flex items-center gap-3.5 min-w-0">
-                      <!-- Badge carré arrondi avec icône -->
-                      <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 text-white shadow-2xs {% cycle 'bg-[#0d9488]' 'bg-[#2563eb]' 'bg-[#8b5cf6]' 'bg-[#f59e0b]' %}">
-                        {% include "components/atoms/icon.html" with name="clipboard-document-list" size="w-4 h-4" %}
-                      </div>
+          <!-- 7 Colonnes des Jours -->
+          {% for day in week_days %}
+            <div
+              class="relative divide-y divide-neutral-100/90 day-column {% if day.is_today %}bg-blue-50/35{% else %}bg-transparent{% endif %}"
+              data-date="{{ day.date_str }}"
+              data-day-index="{{ forloop.counter0 }}">
 
-                      <div class="min-w-0">
-                        <!-- Plage horaire -->
-                        <span class="text-xs font-bold font-mono tracking-tight block {% cycle 'text-[#0d9488]' 'text-[#2563eb]' 'text-[#8b5cf6]' 'text-[#d97706]' %}">
-                          {{ rdv.scheduled_at|date:"H:i" }} - {{ rdv.end_time|default:rdv.scheduled_at|date:"H:i" }}
-                        </span>
-
-                        <!-- Nom du patient -->
-                        <h3 class="text-sm font-bold text-neutral-900 truncate">
-                          {{ rdv.patient.full_name }}
-                        </h3>
-
-                        <!-- Motif / Spécialité -->
-                        <p class="text-xs text-neutral-600 truncate mt-0.5">
-                          {{ rdv.reason|default:_("Consultation générale") }}
-                        </p>
-                      </div>
-                    </div>
-
-                    <!-- Actions -->
-                    <div class="shrink-0 flex items-center gap-2">
-                      {% if rdv.consultation %}
-                        <a href="{% url "patients:consultation_detail" rdv.consultation.pk %}" class="px-3 py-1.5 rounded-lg bg-white text-xs font-semibold text-neutral-700 hover:bg-neutral-100 border border-neutral-200/70 shadow-2xs transition-colors">
-                          {% trans "Détails" %}
-                        </a>
-                      {% else %}
-                        <a href="{% url "patients:consultation_create" %}?appointment={{ rdv.pk }}" class="px-3 py-1.5 rounded-lg bg-[#0d9488] hover:bg-[#0f766e] text-white text-xs font-bold shadow-2xs transition-colors inline-flex items-center gap-1.5">
-                          {% trans "Consulter" %}
-                        </a>
-                      {% endif %}
-                    </div>
+              <!-- Lignes de créneaux horaires cliquables -->
+              {% for hour in hours %}
+                <div
+                  class="time-slot group relative cursor-pointer hover:bg-teal-500/10 transition-colors border-t border-neutral-100/80"
+                  data-date="{{ day.date_str }}"
+                  data-time="{{ hour }}"
+                  onclick="handleSlotClick('{{ day.date_str }}', '{{ hour }}')"
+                  title="{% trans "Cliquer pour planifier un rendez-vous le" %} {{ day.header_label }} {% trans "à" %} {{ hour }}">
+                  <!-- Bouton + subtil au survol -->
+                  <div class="opacity-0 group-hover:opacity-100 absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity">
+                    <span class="inline-flex items-center gap-1 text-[11px] font-bold text-teal-700 bg-white/90 border border-teal-300 shadow-2xs px-2 py-0.5 rounded-md">
+                      + {% trans "Ajouter" %}
+                    </span>
                   </div>
-                {% endif %}
+                </div>
               {% endfor %}
+
+              <!-- Conteneur des cartes de rendez-vous positionnées en absolu -->
+              <div class="absolute inset-0 pointer-events-none appointments-overlay" id="overlay-{{ day.date_str }}">
+                <!-- Les cartes de RDV seront injectées ici dynamiquement ou générées ci-dessous -->
+              </div>
+
             </div>
-          </div>
-        {% endfor %}
+          {% endfor %}
+
+        </div>
+
       </div>
     </div>
 
-  </div>
+    <!-- ============================================================== -->
+    <!-- VUE 2 : VUE JOUR (Détail de la journée sélectionnée)           -->
+    <!-- ============================================================== -->
+    <div id="view-day-container" class="{% if view_mode != 'day' %}hidden{% endif %} overflow-x-auto select-none">
+      <div class="min-w-[500px] max-w-4xl mx-auto">
 
-  <!-- VUE 2 : VUE SEMAINE (Grille multi-colonnes Lundi -> Samedi) -->
-  <div id="agenda-view-week" class="hidden bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-xs overflow-x-auto">
-    <div class="min-w-[700px] grid grid-cols-7 gap-3 text-center border-b border-neutral-200 pb-3">
-      <div class="font-bold text-xs text-neutral-500">{% trans "Heure" %}</div>
-      <div class="font-bold text-xs text-neutral-800">{% trans "Lun" %}</div>
-      <div class="font-bold text-xs text-neutral-800">{% trans "Mar" %}</div>
-      <div class="font-bold text-xs text-neutral-800 bg-teal-50 text-[#0d9488] py-1 rounded-lg">{% trans "Mer (Aujourd'hui)" %}</div>
-      <div class="font-bold text-xs text-neutral-800">{% trans "Jeu" %}</div>
-      <div class="font-bold text-xs text-neutral-800">{% trans "Ven" %}</div>
-      <div class="font-bold text-xs text-neutral-800">{% trans "Sam" %}</div>
-    </div>
-    <div class="min-w-[700px] divide-y divide-neutral-100">
-      {% for hour in hours|default:"08,09,10,11,12,13,14,15,16,17"|split:"," %}
-        <div class="grid grid-cols-7 gap-3 py-3 items-center">
-          <div class="text-xs font-mono text-neutral-400 text-center">{{ hour }}:00</div>
-          <div class="h-10 rounded-lg bg-neutral-50/50"></div>
-          <div class="h-10 rounded-lg bg-neutral-50/50"></div>
-          <div class="h-10 rounded-lg bg-teal-50/40 p-1 flex items-center justify-center text-[10px] font-semibold text-teal-800">
-            {% for rdv in appointments %}{% if rdv.scheduled_at|date:"H" == hour %}{{ rdv.patient.first_name }} {{ rdv.patient.last_name|first }}.{% endif %}{% endfor %}
+        <!-- En-tête Jour -->
+        <div class="border-b border-neutral-200 pb-3 text-center">
+          <span class="inline-flex items-center justify-center bg-neutral-950 text-white font-bold text-sm px-5 py-1.5 rounded-lg shadow-xs">
+            {{ current_date|date:"l d F Y"|capfirst }}
+          </span>
+        </div>
+
+        <!-- Grille Jour -->
+        <div class="grid grid-cols-[64px_1fr] divide-x divide-neutral-100 pt-3 relative calendar-grid" id="day-grid-body">
+          <!-- Axe des heures -->
+          <div class="divide-y divide-neutral-100/90 text-right pr-3 select-none">
+            {% for hour in hours %}
+              <div class="time-slot flex items-start justify-end pt-1">
+                <span class="text-xs font-mono font-medium text-neutral-400">
+                  {{ hour }}
+                </span>
+              </div>
+            {% endfor %}
           </div>
-          <div class="h-10 rounded-lg bg-neutral-50/50"></div>
-          <div class="h-10 rounded-lg bg-neutral-50/50"></div>
-          <div class="h-10 rounded-lg bg-neutral-50/50"></div>
-        </div>
-      {% endfor %}
-    </div>
-  </div>
 
-  <!-- VUE 3 : VUE MOIS (Calendrier mensuel avec pastilles) -->
-  <div id="agenda-view-month" class="hidden bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-xs">
-    <div class="grid grid-cols-7 gap-2 text-center text-xs font-bold text-neutral-500 mb-2">
-      <div>{% trans "Lun" %}</div><div>{% trans "Mar" %}</div><div>{% trans "Mer" %}</div>
-      <div>{% trans "Jeu" %}</div><div>{% trans "Ven" %}</div><div>{% trans "Sam" %}</div><div>{% trans "Dim" %}</div>
-    </div>
-    <div class="grid grid-cols-7 gap-2">
-      {% for day_num in "1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30"|make_list %}
-        <div class="min-h-[70px] p-2 border border-neutral-100 rounded-xl {% if day_num == '24' %}bg-teal-50/80 border-[#0d9488]/40 ring-2 ring-[#0d9488]/20{% else %}bg-neutral-50/30{% endif %}">
-          <span class="text-xs font-bold {% if day_num == '24' %}text-[#0d9488]{% else %}text-neutral-700{% endif %}">{{ day_num }}</span>
-          {% if day_num == '24' %}
-            <div class="mt-1 space-y-1">
-              <span class="block w-full py-0.5 px-1 rounded bg-[#0d9488] text-white text-[9px] font-bold truncate">
-                {{ appointments|length }} RDV
-              </span>
-            </div>
-          {% endif %}
+          <!-- Colonne unique du jour -->
+          <div class="relative divide-y divide-neutral-100/90 day-column bg-white" data-date="{{ current_date_str }}">
+            {% for hour in hours %}
+              <div
+                class="time-slot group relative cursor-pointer hover:bg-teal-500/10 transition-colors border-t border-neutral-100/80"
+                data-date="{{ current_date_str }}"
+                data-time="{{ hour }}"
+                onclick="handleSlotClick('{{ current_date_str }}', '{{ hour }}')"
+                title="{% trans "Cliquer pour planifier un rendez-vous à" %} {{ hour }}">
+                <div class="opacity-0 group-hover:opacity-100 absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity">
+                  <span class="inline-flex items-center gap-1 text-xs font-bold text-teal-700 bg-white/95 border border-teal-300 shadow-2xs px-2.5 py-1 rounded-md">
+                    + {% trans "Ajouter un rendez-vous à" %} {{ hour }}
+                  </span>
+                </div>
+              </div>
+            {% endfor %}
+
+            <!-- Overlay RDV du jour -->
+            <div class="absolute inset-0 pointer-events-none appointments-overlay" id="overlay-day-{{ current_date_str }}"></div>
+          </div>
         </div>
-      {% endfor %}
+
+      </div>
     </div>
+
+    <!-- ============================================================== -->
+    <!-- VUE 3 : VUE MOIS (Calendrier Mensuel avec pastilles)           -->
+    <!-- ============================================================== -->
+    <div id="view-month-container" class="{% if view_mode != 'month' %}hidden{% endif %}">
+      <div class="grid grid-cols-7 gap-2 text-center text-xs font-bold text-neutral-600 mb-2">
+        <div>{% trans "Dim" %}</div>
+        <div>{% trans "Lun" %}</div>
+        <div>{% trans "Mar" %}</div>
+        <div>{% trans "Mer" %}</div>
+        <div>{% trans "Jeu" %}</div>
+        <div>{% trans "Ven" %}</div>
+        <div>{% trans "Sam" %}</div>
+      </div>
+      <div class="grid grid-cols-7 gap-2" id="month-grid-cells">
+        <!-- Rendu dynamique des cellules du mois via JS -->
+      </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- BARRE INFÉRIEURE : ZOOM HORAIRE (Comme sur la maquette)        -->
+    <!-- ============================================================== -->
+    <div class="flex items-center justify-between pt-3 border-t border-neutral-100 text-xs text-neutral-500">
+      <div class="flex items-center gap-3">
+        <span class="inline-flex items-center gap-1.5 text-neutral-600 font-medium">
+          <span class="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
+          {% trans "Consultation standard" %}
+        </span>
+        <span class="inline-flex items-center gap-1.5 text-neutral-600 font-medium">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-600"></span>
+          {% trans "En cours / Honoré" %}
+        </span>
+        <span class="inline-flex items-center gap-1.5 text-neutral-600 font-medium">
+          <span class="w-2.5 h-2.5 rounded-full bg-purple-600"></span>
+          {% trans "Spécialité / Réunion" %}
+        </span>
+      </div>
+
+      <!-- Slider de Zoom avec icônes Loupe - et Loupe + -->
+      <div class="flex items-center gap-2">
+        <!-- Loupe - -->
+        <button type="button" onclick="adjustZoom(-8)" class="text-neutral-400 hover:text-neutral-700 p-1" title="{% trans "Réduire l'échelle" %}" aria-label="{% trans "Dézoomer" %}">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM13 10H7"/></svg>
+        </button>
+
+        <input
+          type="range"
+          min="40"
+          max="96"
+          value="56"
+          id="calendar-zoom-slider"
+          oninput="updateCalendarZoom(this.value)"
+          class="w-24 sm:w-32 h-1.5 bg-neutral-200 rounded-lg appearance-none cursor-pointer accent-teal-600"
+          aria-label="{% trans "Échelle horaire du calendrier" %}"
+        >
+
+        <!-- Loupe + -->
+        <button type="button" onclick="adjustZoom(8)" class="text-neutral-400 hover:text-neutral-700 p-1" title="{% trans "Agrandir l'échelle" %}" aria-label="{% trans "Zoomer" %}">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7"/></svg>
+        </button>
+      </div>
+    </div>
+
   </div>
 
 </div>
 
+<!-- ============================================================== -->
+<!-- MODAL 1 : CRÉATION RAPIDE DE RENDEZ-VOUS SUR CRÉNEAU VIDE      -->
+<!-- ============================================================== -->
+<div
+  id="modal-create-appointment"
+  class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs hidden transition-opacity"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="modal-create-title">
+
+  <div class="bg-white rounded-3xl shadow-2xl border border-neutral-200 max-w-lg w-full overflow-hidden transform transition-all scale-95 opacity-0" id="modal-create-content">
+
+    <!-- En-tête Modale -->
+    <div class="px-6 py-5 bg-gradient-to-r from-teal-50 to-neutral-50 border-b border-neutral-200/80 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-2xl bg-teal-600 text-white flex items-center justify-center shadow-xs">
+          {% include "components/atoms/icon.html" with name="calendar" size="w-5 h-5" %}
+        </div>
+        <div>
+          <h3 class="text-base font-extrabold text-neutral-900 font-title" id="modal-create-title">
+            {% trans "Nouveau Rendez-vous" %}
+          </h3>
+          <p class="text-xs text-teal-800 font-semibold mt-0.5" id="modal-slot-display">
+            <!-- Pré-rempli par JS, ex: Jeudi 15 janvier à 10:00 -->
+          </p>
+        </div>
+      </div>
+      <button type="button" onclick="closeCreateModal()" class="p-2 rounded-xl text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 transition-colors" aria-label="{% trans "Fermer" %}">
+        {% include "components/atoms/icon.html" with name="x-mark" size="w-5 h-5" %}
+      </button>
+    </div>
+
+    <!-- Formulaire de Planification -->
+    <form id="quick-appointment-form" method="post" action="{% url "patients:appointment_create" %}" class="p-6 space-y-4">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ request.get_full_path }}">
+
+      <!-- Patient : Recherche & Sélection -->
+      <div class="space-y-1.5">
+        <div class="flex items-center justify-between">
+          <label for="select-patient" class="block text-xs font-bold text-neutral-700 uppercase tracking-wider">
+            {% trans "Patient" %} <span class="text-rose-500">*</span>
+          </label>
+          <a href="{% url "patients:patient_create" %}" target="_blank" class="text-[11px] font-bold text-teal-700 hover:underline inline-flex items-center gap-1">
+            + {% trans "Nouveau dossier" %}
+          </a>
+        </div>
+        
+        <!-- Input de recherche avec liste déroulante -->
+        <div class="relative">
+          <input
+            type="text"
+            id="patient-search-input"
+            autocomplete="off"
+            placeholder="{% trans "Tapez le nom, prénom ou NUP du patient..." %}"
+            class="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white"
+            oninput="filterPatientList(this.value)"
+            onfocus="showPatientDropdown()"
+          >
+          <input type="hidden" name="patient" id="selected-patient-id" required>
+
+          <!-- Dropdown filtrable des patients -->
+          <div
+            id="patient-dropdown-list"
+            class="absolute left-0 right-0 top-full mt-1 max-h-48 overflow-y-auto bg-white border border-neutral-200 rounded-xl shadow-lg z-30 hidden divide-y divide-neutral-100">
+            {% for pat in active_patients %}
+              <div
+                class="px-3 py-2 text-xs hover:bg-teal-50 cursor-pointer patient-item transition-colors"
+                data-id="{{ pat.pk }}"
+                data-name="{{ pat.full_name }}"
+                data-nup="{{ pat.patient_number }}"
+                onclick="selectPatient('{{ pat.pk }}', '{{ pat.full_name }}', '{{ pat.patient_number }}')">
+                <span class="font-bold text-neutral-900">{{ pat.full_name }}</span>
+                <span class="text-neutral-400 ml-1.5 font-mono">({{ pat.patient_number }})</span>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+        <p class="text-[11px] text-neutral-400" id="selected-patient-badge"></p>
+      </div>
+
+      <!-- Praticien / Médecin -->
+      <div class="space-y-1.5">
+        <label for="select-doctor" class="block text-xs font-bold text-neutral-700 uppercase tracking-wider">
+          {% trans "Praticien / Médecin" %} <span class="text-rose-500">*</span>
+        </label>
+        <select
+          name="doctor"
+          id="select-doctor"
+          required
+          class="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white">
+          {% for doc in doctors %}
+            <option value="{{ doc.pk }}" {% if doc == default_doctor %}selected{% endif %}>
+              Dr. {{ doc.full_name }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Date & Heure (Pré-remplis) -->
+      <div class="grid grid-cols-2 gap-3">
+        <div class="space-y-1.5">
+          <label for="input-date" class="block text-xs font-bold text-neutral-700 uppercase tracking-wider">
+            {% trans "Date" %} <span class="text-rose-500">*</span>
+          </label>
+          <input
+            type="date"
+            name="scheduled_date"
+            id="input-date"
+            required
+            class="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white"
+          >
+        </div>
+        <div class="space-y-1.5">
+          <label for="input-time" class="block text-xs font-bold text-neutral-700 uppercase tracking-wider">
+            {% trans "Heure de début" %} <span class="text-rose-500">*</span>
+          </label>
+          <input
+            type="time"
+            name="scheduled_time"
+            id="input-time"
+            required
+            class="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white"
+          >
+        </div>
+      </div>
+      <!-- Champ datetime-local attendu par AppointmentForm -->
+      <input type="hidden" name="scheduled_at" id="input-scheduled-at">
+
+      <!-- Durée estimée (Boutons rapides 15, 30, 45, 60 min) -->
+      <div class="space-y-1.5">
+        <label class="block text-xs font-bold text-neutral-700 uppercase tracking-wider">
+          {% trans "Durée estimée" %}
+        </label>
+        <div class="flex items-center gap-2">
+          <button type="button" onclick="setDuration(15)" class="duration-btn flex-1 py-1.5 rounded-lg border border-neutral-200 text-xs font-semibold text-neutral-600 hover:bg-neutral-100 transition-colors" data-duration="15">15 min</button>
+          <button type="button" onclick="setDuration(30)" class="duration-btn flex-1 py-1.5 rounded-lg border border-teal-500 bg-teal-50 text-xs font-bold text-teal-800 transition-colors" data-duration="30">30 min</button>
+          <button type="button" onclick="setDuration(45)" class="duration-btn flex-1 py-1.5 rounded-lg border border-neutral-200 text-xs font-semibold text-neutral-600 hover:bg-neutral-100 transition-colors" data-duration="45">45 min</button>
+          <button type="button" onclick="setDuration(60)" class="duration-btn flex-1 py-1.5 rounded-lg border border-neutral-200 text-xs font-semibold text-neutral-600 hover:bg-neutral-100 transition-colors" data-duration="60">60 min</button>
+          <input type="hidden" name="estimated_duration_minutes" id="input-duration" value="30">
+        </div>
+      </div>
+
+      <!-- Motif de Consultation -->
+      <div class="space-y-1.5">
+        <label for="input-reason" class="block text-xs font-bold text-neutral-700 uppercase tracking-wider">
+          {% trans "Motif de consultation" %} <span class="text-rose-500">*</span>
+        </label>
+        <input
+          type="text"
+          name="reason"
+          id="input-reason"
+          required
+          value="{% trans "Consultation générale" %}"
+          placeholder="{% trans "Ex: Consultation générale, Suivi, Contrôle..." %}"
+          class="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white"
+        >
+        <!-- Puces motifs fréquents -->
+        <div class="flex flex-wrap gap-1.5 pt-1">
+          <button type="button" onclick="setReason('Consultation générale')" class="text-[10px] bg-neutral-100 hover:bg-neutral-200 text-neutral-700 px-2 py-0.5 rounded-md font-medium transition-colors">Consultation générale</button>
+          <button type="button" onclick="setReason('Suivi tensionnel / Diabète')" class="text-[10px] bg-neutral-100 hover:bg-neutral-200 text-neutral-700 px-2 py-0.5 rounded-md font-medium transition-colors">Suivi chronique</button>
+          <button type="button" onclick="setReason('Urgence / Symptômes aigus')" class="text-[10px] bg-neutral-100 hover:bg-neutral-200 text-neutral-700 px-2 py-0.5 rounded-md font-medium transition-colors">Urgence</button>
+          <button type="button" onclick="setReason('Contrôle post-traitement')" class="text-[10px] bg-neutral-100 hover:bg-neutral-200 text-neutral-700 px-2 py-0.5 rounded-md font-medium transition-colors">Contrôle</button>
+        </div>
+      </div>
+
+      <!-- Notes / Consignes -->
+      <div class="space-y-1.5">
+        <label for="input-notes" class="block text-xs font-bold text-neutral-700 uppercase tracking-wider">
+          {% trans "Notes / Observations" %}
+        </label>
+        <textarea
+          name="notes"
+          id="input-notes"
+          rows="2"
+          placeholder="{% trans "Consignes préalables ou informations cliniques..." %}"
+          class="w-full px-3.5 py-2 rounded-xl border border-neutral-300 text-xs focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white resize-none"
+        ></textarea>
+      </div>
+
+      <!-- Zone d'erreur -->
+      <div id="modal-form-errors" class="text-xs text-rose-600 bg-rose-50 border border-rose-200 rounded-xl p-3 hidden"></div>
+
+      <!-- Boutons d'Action -->
+      <div class="flex items-center justify-end gap-3 pt-3 border-t border-neutral-100">
+        <button type="button" onclick="closeCreateModal()" class="px-4 py-2 rounded-xl border border-neutral-200 text-xs font-semibold text-neutral-600 hover:bg-neutral-100 transition-colors">
+          {% trans "Annuler" %}
+        </button>
+        <button type="submit" id="btn-submit-appointment" class="btn btn-primary px-5 py-2 text-xs font-bold shadow-xs inline-flex items-center gap-1.5">
+          <span>{% trans "Confirmer le rendez-vous" %}</span>
+        </button>
+      </div>
+
+    </form>
+
+  </div>
+</div>
+
+<!-- ============================================================== -->
+<!-- MODAL 2 : DÉTAIL DU RENDEZ-VOUS EXISTANT                       -->
+<!-- ============================================================== -->
+<div
+  id="modal-view-appointment"
+  class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs hidden transition-opacity"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="modal-view-title">
+
+  <div class="bg-white rounded-3xl shadow-2xl border border-neutral-200 max-w-md w-full overflow-hidden transform transition-all scale-95 opacity-0" id="modal-view-content">
+
+    <!-- En-tête -->
+    <div class="px-6 py-5 bg-gradient-to-r from-blue-50 to-neutral-50 border-b border-neutral-200/80 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-2xl bg-blue-600 text-white flex items-center justify-center shadow-xs" id="view-modal-icon">
+          {% include "components/atoms/icon.html" with name="clipboard-document-list" size="w-5 h-5" %}
+        </div>
+        <div>
+          <span class="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-blue-100 text-blue-800" id="view-status-badge">
+            <!-- Statut -->
+          </span>
+          <h3 class="text-sm font-extrabold text-neutral-900 font-title mt-0.5" id="view-modal-title">
+            <!-- Nom patient -->
+          </h3>
+        </div>
+      </div>
+      <button type="button" onclick="closeViewModal()" class="p-2 rounded-xl text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 transition-colors" aria-label="{% trans "Fermer" %}">
+        {% include "components/atoms/icon.html" with name="x-mark" size="w-5 h-5" %}
+      </button>
+    </div>
+
+    <!-- Contenu -->
+    <div class="p-6 space-y-4">
+      <div class="space-y-2 text-xs">
+        <div class="flex items-center justify-between py-1.5 border-b border-neutral-100">
+          <span class="text-neutral-400 font-medium">{% trans "Date & Horaire" %}</span>
+          <span class="font-bold text-neutral-800 font-mono" id="view-time-range"></span>
+        </div>
+        <div class="flex items-center justify-between py-1.5 border-b border-neutral-100">
+          <span class="text-neutral-400 font-medium">{% trans "Praticien" %}</span>
+          <span class="font-bold text-neutral-800" id="view-doctor-name"></span>
+        </div>
+        <div class="flex items-center justify-between py-1.5 border-b border-neutral-100">
+          <span class="text-neutral-400 font-medium">{% trans "Motif" %}</span>
+          <span class="font-semibold text-neutral-800" id="view-reason"></span>
+        </div>
+        <div class="flex items-center justify-between py-1.5 border-b border-neutral-100">
+          <span class="text-neutral-400 font-medium">{% trans "Dossier patient" %}</span>
+          <a href="#" id="view-patient-link" class="font-bold text-teal-700 hover:underline"></a>
+        </div>
+      </div>
+
+      <!-- Actions Rapides -->
+      <div class="pt-2 flex flex-col gap-2" id="view-actions-container">
+        <!-- Rempli dynamiquement -->
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Injection sécurisée des données de rendez-vous en JSON -->
+{{ serialized_appointments|json_script:"appointments-json-data" }}
+
 <script>
-  function switchAgendaView(view) {
-    const views = ['day', 'week', 'month'];
-    views.forEach(v => {
-      const el = document.getElementById('agenda-view-' + v);
-      const btn = document.getElementById('tab-btn-' + v);
-      if (v === view) {
-        el.classList.remove('hidden');
-        btn.classList.add('bg-[#0d9488]', 'text-white', 'shadow-2xs');
-        btn.classList.remove('text-neutral-600');
-        btn.setAttribute('aria-selected', 'true');
+  // ==============================================================
+  // ÉTAT GLOBAL DU CALENDRIER
+  // ==============================================================
+  const APPOINTMENTS = JSON.parse(document.getElementById('appointments-json-data').textContent || '[]');
+  const CURRENT_DATE = "{{ current_date_str }}";
+  const VIEW_MODE = "{{ view_mode }}";
+  let slotHeight = 56;
+
+  // Initialisation au chargement de la page
+  document.addEventListener('DOMContentLoaded', () => {
+    initZoom();
+    renderWeekAppointments();
+    if (VIEW_MODE === 'day') {
+      renderDayAppointments();
+    } else if (VIEW_MODE === 'month') {
+      renderMonthView();
+    }
+  });
+
+  // ==============================================================
+  // GESTION DU ZOOM D'ÉCHELLE HORAIRE
+  // ==============================================================
+  function initZoom() {
+    const savedZoom = localStorage.getItem('calendar_slot_height');
+    if (savedZoom) {
+      slotHeight = parseInt(savedZoom, 10);
+      const slider = document.getElementById('calendar-zoom-slider');
+      if (slider) slider.value = slotHeight;
+      document.documentElement.style.setProperty('--slot-height', slotHeight + 'px');
+    }
+  }
+
+  function updateCalendarZoom(val) {
+    slotHeight = parseInt(val, 10);
+    document.documentElement.style.setProperty('--slot-height', slotHeight + 'px');
+    localStorage.setItem('calendar_slot_height', slotHeight);
+    // Repositionne les cartes avec la nouvelle hauteur
+    renderWeekAppointments();
+    if (VIEW_MODE === 'day') renderDayAppointments();
+  }
+
+  function adjustZoom(delta) {
+    const slider = document.getElementById('calendar-zoom-slider');
+    if (!slider) return;
+    let nextVal = parseInt(slider.value, 10) + delta;
+    if (nextVal < 40) nextVal = 40;
+    if (nextVal > 96) nextVal = 96;
+    slider.value = nextVal;
+    updateCalendarZoom(nextVal);
+  }
+
+  // ==============================================================
+  // COMMUTATION DE VUE : [ Mois | Semaine | Jour ]
+  // ==============================================================
+  function switchCalendarView(view) {
+    window.location.href = '?date=' + CURRENT_DATE + '&view=' + view;
+  }
+
+  // ==============================================================
+  // RENDU DES CARTES DE RENDEZ-VOUS SUR LA GRILLE SEMAINE
+  // ==============================================================
+  function renderWeekAppointments() {
+    // Nettoie les conteneurs existants
+    document.querySelectorAll('.appointments-overlay').forEach(el => el.innerHTML = '');
+
+    // Regroupe par date
+    const byDate = {};
+    APPOINTMENTS.forEach(app => {
+      if (!byDate[app.date_str]) byDate[app.date_str] = [];
+      byDate[app.date_str].push(app);
+    });
+
+    // Pour chaque jour, positionne les cartes
+    Object.keys(byDate).forEach(dateStr => {
+      const overlay = document.getElementById('overlay-' + dateStr);
+      if (!overlay) return;
+
+      const dayApps = byDate[dateStr];
+      // Tri par heure de début
+      dayApps.sort((a, b) => (a.start_hour * 60 + a.start_minute) - (b.start_hour * 60 + b.start_minute));
+
+      dayApps.forEach(app => {
+        const card = createAppointmentCard(app);
+        overlay.appendChild(card);
+      });
+    });
+  }
+
+  // Création du bloc visuel de rendez-vous (Fidèle à l'image)
+  function createAppointmentCard(app) {
+    // Calcul de la position verticale (grille commence à 07:00)
+    const minutesFrom7h = (app.start_hour - 7) * 60 + app.start_minute;
+    const topPx = Math.max(0, (minutesFrom7h / 60) * slotHeight);
+    const heightPx = Math.max(26, ((app.duration || 30) / 60) * slotHeight - 4);
+
+    // Détermination de la couleur (comme sur l'image)
+    let bgClasses = 'bg-blue-600 text-white border-blue-700/40';
+    if (app.color === 'emerald') {
+      bgClasses = 'bg-emerald-600 text-white border-emerald-700/40';
+    } else if (app.color === 'purple') {
+      bgClasses = 'bg-purple-600 text-white border-purple-700/40';
+    } else if (app.color === 'rose') {
+      bgClasses = 'bg-rose-600 text-white border-rose-700/40';
+    }
+
+    const card = document.createElement('div');
+    card.className = `appointment-card absolute pointer-events-auto cursor-pointer rounded-lg sm:rounded-xl p-1.5 sm:p-2 border shadow-xs overflow-hidden flex flex-col justify-start leading-tight ${bgClasses}`;
+    card.style.top = `${topPx}px`;
+    card.style.height = `${heightPx}px`;
+    card.style.left = '4px';
+    card.style.right = '4px';
+    card.setAttribute('role', 'button');
+    card.setAttribute('tabindex', '0');
+    card.title = `${app.patient_name} (${app.time_range}) - ${app.reason}`;
+
+    // Contenu interne : Horaire en haut + Nom du patient + Motif
+    card.innerHTML = `
+      <div class="flex items-center justify-between gap-1 text-[10px] font-mono opacity-90 truncate">
+        <span>${app.time_range}</span>
+      </div>
+      <div class="text-[11px] sm:text-xs font-bold truncate mt-0.5 tracking-tight">
+        ${escapeHtml(app.patient_name)}
+      </div>
+      ${heightPx > 46 ? `<div class="text-[10px] opacity-85 truncate mt-0.5">${escapeHtml(app.reason || '')}</div>` : ''}
+    `;
+
+    // Clic ouvre les détails du RDV
+    card.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openViewModal(app);
+    });
+
+    return card;
+  }
+
+  // ==============================================================
+  // RENDU DU JOUR SÉLECTIONNÉ
+  // ==============================================================
+  function renderDayAppointments() {
+    const overlay = document.getElementById('overlay-day-' + CURRENT_DATE);
+    if (!overlay) return;
+    overlay.innerHTML = '';
+
+    const dayApps = APPOINTMENTS.filter(app => app.date_str === CURRENT_DATE);
+    dayApps.sort((a, b) => (a.start_hour * 60 + a.start_minute) - (b.start_hour * 60 + b.start_minute));
+
+    dayApps.forEach(app => {
+      const card = createAppointmentCard(app);
+      overlay.appendChild(card);
+    });
+  }
+
+  // ==============================================================
+  // RENDU DE LA VUE MOIS
+  // ==============================================================
+  function renderMonthView() {
+    const container = document.getElementById('month-grid-cells');
+    if (!container) return;
+    container.innerHTML = '';
+
+    const currentDateObj = new Date(CURRENT_DATE + 'T00:00:00');
+    const year = currentDateObj.getFullYear();
+    const month = currentDateObj.getMonth();
+
+    // Premier jour du mois et nombre de jours
+    const firstDayIndex = new Date(year, month, 1).getDay(); // 0 = Dimanche
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    // Cellules vides avant le 1er du mois
+    for (let i = 0; i < firstDayIndex; i++) {
+      const emptyCell = document.createElement('div');
+      emptyCell.className = 'min-h-[85px] p-1.5 rounded-xl bg-neutral-50/40 border border-neutral-100 opacity-40';
+      container.appendChild(emptyCell);
+    }
+
+    // Cellules des jours du mois
+    for (let dayNum = 1; dayNum <= daysInMonth; dayNum++) {
+      const monthStr = String(month + 1).padStart(2, '0');
+      const dayStr = String(dayNum).padStart(2, '0');
+      const dateKey = `${year}-${monthStr}-${dayStr}`;
+
+      const cell = document.createElement('div');
+      const isToday = dateKey === "{{ today_date }}";
+      cell.className = `min-h-[85px] p-2 rounded-xl border transition-all flex flex-col justify-between cursor-pointer hover:border-teal-500 hover:shadow-xs ${isToday ? 'bg-blue-50/50 border-blue-300 ring-2 ring-blue-400/20' : 'bg-white border-neutral-200/70'}`;
+
+      // En-tête jour
+      const dayHeader = document.createElement('div');
+      dayHeader.className = 'flex items-center justify-between text-xs';
+      dayHeader.innerHTML = `<span class="font-bold ${isToday ? 'bg-neutral-950 text-white w-6 h-6 rounded-full flex items-center justify-center text-[11px]' : 'text-neutral-700'}">${dayNum}</span>`;
+      cell.appendChild(dayHeader);
+
+      // Rendez-vous de ce jour
+      const dayApps = APPOINTMENTS.filter(a => a.date_str === dateKey);
+      const appContainer = document.createElement('div');
+      appContainer.className = 'mt-1 space-y-1 overflow-hidden flex-1';
+
+      dayApps.slice(0, 3).forEach(app => {
+        const badge = document.createElement('div');
+        const colorClass = app.color === 'emerald' ? 'bg-emerald-600 text-white' : (app.color === 'purple' ? 'bg-purple-600 text-white' : 'bg-blue-600 text-white');
+        badge.className = `text-[10px] font-semibold px-1.5 py-0.5 rounded truncate ${colorClass}`;
+        badge.textContent = `${app.start_time_str} ${app.patient_name}`;
+        appContainer.appendChild(badge);
+      });
+
+      if (dayApps.length > 3) {
+        const more = document.createElement('span');
+        more.className = 'text-[9px] font-bold text-neutral-500 block';
+        more.textContent = `+${dayApps.length - 3} autre(s)`;
+        appContainer.appendChild(more);
+      }
+
+      cell.appendChild(appContainer);
+
+      // Clic sur un jour : bascule en vue jour ou ouvre la création
+      cell.addEventListener('click', () => {
+        window.location.href = `?date=${dateKey}&view=day`;
+      });
+
+      container.appendChild(cell);
+    }
+  }
+
+  // ==============================================================
+  // CLIC SUR CRÉNEAU VIDE -> OUVERTURE MODAL DE CRÉATION
+  // ==============================================================
+  function handleSlotClick(dateStr, timeStr) {
+    openNewAppointmentModal(dateStr, timeStr);
+  }
+
+  function openNewAppointmentModal(dateStr, timeStr) {
+    const modal = document.getElementById('modal-create-appointment');
+    const content = document.getElementById('modal-create-content');
+    const dateInput = document.getElementById('input-date');
+    const timeInput = document.getElementById('input-time');
+    const slotDisplay = document.getElementById('modal-slot-display');
+    const scheduledAtInput = document.getElementById('input-scheduled-at');
+    const errorBox = document.getElementById('modal-form-errors');
+
+    if (errorBox) {
+      errorBox.classList.add('hidden');
+      errorBox.textContent = '';
+    }
+
+    // Pré-remplissage des champs
+    dateInput.value = dateStr;
+    timeInput.value = timeStr.substring(0, 5); // ex: "10:00"
+    scheduledAtInput.value = `${dateStr}T${timeInput.value}`;
+
+    // Formatage texte en français pour le sous-titre
+    try {
+      const dObj = new Date(dateStr + 'T' + timeInput.value);
+      const options = { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' };
+      slotDisplay.textContent = 'Créneau : ' + dObj.toLocaleDateString('fr-FR', options);
+    } catch (e) {
+      slotDisplay.textContent = `Créneau : ${dateStr} à ${timeStr}`;
+    }
+
+    // Reset du patient sélectionné
+    document.getElementById('patient-search-input').value = '';
+    document.getElementById('selected-patient-id').value = '';
+    document.getElementById('selected-patient-badge').textContent = '';
+
+    // Affichage fluide de la modale
+    modal.classList.remove('hidden');
+    setTimeout(() => {
+      content.classList.remove('scale-95', 'opacity-0');
+      content.classList.add('scale-100', 'opacity-100');
+      document.getElementById('patient-search-input').focus();
+    }, 20);
+  }
+
+  function closeCreateModal() {
+    const modal = document.getElementById('modal-create-appointment');
+    const content = document.getElementById('modal-create-content');
+    content.classList.remove('scale-100', 'opacity-100');
+    content.classList.add('scale-95', 'opacity-0');
+    setTimeout(() => {
+      modal.classList.add('hidden');
+    }, 150);
+  }
+
+  // Synchronisation datetime-local
+  document.getElementById('input-date')?.addEventListener('change', syncScheduledAt);
+  document.getElementById('input-time')?.addEventListener('change', syncScheduledAt);
+
+  function syncScheduledAt() {
+    const d = document.getElementById('input-date').value;
+    const t = document.getElementById('input-time').value;
+    if (d && t) {
+      document.getElementById('input-scheduled-at').value = `${d}T${t}`;
+    }
+  }
+
+  // ==============================================================
+  // RECHERCHE & SÉLECTION DE PATIENT DANS LA MODALE
+  // ==============================================================
+  function showPatientDropdown() {
+    const dropdown = document.getElementById('patient-dropdown-list');
+    if (dropdown) dropdown.classList.remove('hidden');
+  }
+
+  function filterPatientList(query) {
+    const dropdown = document.getElementById('patient-dropdown-list');
+    dropdown.classList.remove('hidden');
+    const q = query.toLowerCase().trim();
+    const items = dropdown.querySelectorAll('.patient-item');
+    let hasMatch = false;
+
+    items.forEach(item => {
+      const name = item.getAttribute('data-name').toLowerCase();
+      const nup = item.getAttribute('data-nup').toLowerCase();
+      if (!q || name.includes(q) || nup.includes(q)) {
+        item.classList.remove('hidden');
+        hasMatch = true;
       } else {
-        el.classList.add('hidden');
-        btn.classList.remove('bg-[#0d9488]', 'text-white', 'shadow-2xs');
-        btn.classList.add('text-neutral-600');
-        btn.setAttribute('aria-selected', 'false');
+        item.classList.add('hidden');
       }
     });
   }
+
+  function selectPatient(id, name, nup) {
+    document.getElementById('selected-patient-id').value = id;
+    document.getElementById('patient-search-input').value = name;
+    document.getElementById('selected-patient-badge').textContent = `Dossier NUP : ${nup}`;
+    document.getElementById('patient-dropdown-list').classList.add('hidden');
+  }
+
+  // Fermer la liste des patients au clic hors champ
+  document.addEventListener('click', (e) => {
+    const container = document.getElementById('patient-search-input');
+    const dropdown = document.getElementById('patient-dropdown-list');
+    if (dropdown && !dropdown.contains(e.target) && e.target !== container) {
+      dropdown.classList.add('hidden');
+    }
+  });
+
+  // Sélection rapide de la durée
+  function setDuration(mins) {
+    document.getElementById('input-duration').value = mins;
+    document.querySelectorAll('.duration-btn').forEach(btn => {
+      if (parseInt(btn.getAttribute('data-duration'), 10) === mins) {
+        btn.classList.add('border-teal-500', 'bg-teal-50', 'text-teal-800', 'font-bold');
+        btn.classList.remove('border-neutral-200', 'text-neutral-600', 'font-semibold');
+      } else {
+        btn.classList.remove('border-teal-500', 'bg-teal-50', 'text-teal-800', 'font-bold');
+        btn.classList.add('border-neutral-200', 'text-neutral-600', 'font-semibold');
+      }
+    });
+  }
+
+  // Sélection rapide de motif
+  function setReason(reasonText) {
+    document.getElementById('input-reason').value = reasonText;
+  }
+
+  // ==============================================================
+  // SOUMISSION AJAX DU FORMULAIRE DE RENDEZ-VOUS
+  // ==============================================================
+  document.getElementById('quick-appointment-form')?.addEventListener('submit', function(e) {
+    e.preventDefault();
+    syncScheduledAt();
+
+    const patientId = document.getElementById('selected-patient-id').value;
+    const errorBox = document.getElementById('modal-form-errors');
+    if (!patientId) {
+      errorBox.textContent = '{% trans "Veuillez sélectionner un patient valide dans la liste." %}';
+      errorBox.classList.remove('hidden');
+      return;
+    }
+
+    const submitBtn = document.getElementById('btn-submit-appointment');
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="inline-block animate-spin mr-1">⌛</span> {% trans "Enregistrement..." %}';
+
+    const formData = new FormData(this);
+
+    fetch(this.action, {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+      }
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        // Succès : ferme la modale et ajoute directement le RDV au calendrier
+        closeCreateModal();
+        if (data.appointment) {
+          APPOINTMENTS.push(data.appointment);
+          renderWeekAppointments();
+          if (VIEW_MODE === 'day') renderDayAppointments();
+        }
+        // Notification toast ou rechargement fluide
+        window.location.reload();
+      } else {
+        submitBtn.disabled = false;
+        submitBtn.textContent = '{% trans "Confirmer le rendez-vous" %}';
+        errorBox.classList.remove('hidden');
+        if (data.errors) {
+          const errList = Object.values(data.errors).map(err => err.map ? err.map(e => e.message || e).join(', ') : err).join('<br>');
+          errorBox.innerHTML = errList || '{% trans "Erreur de validation lors de la création du rendez-vous." %}';
+        } else {
+          errorBox.textContent = data.message || '{% trans "Une erreur est survenue." %}';
+        }
+      }
+    })
+    .catch(err => {
+      console.error(err);
+      // Repli : soumission normale du formulaire
+      document.getElementById('quick-appointment-form').submit();
+    });
+  });
+
+  // ==============================================================
+  // MODALE DÉTAIL D'UN RENDEZ-VOUS EXISTANT
+  // ==============================================================
+  function openViewModal(app) {
+    const modal = document.getElementById('modal-view-appointment');
+    const content = document.getElementById('modal-view-content');
+
+    document.getElementById('view-modal-title').textContent = app.patient_name;
+    document.getElementById('view-time-range').textContent = `${app.date_str} (${app.time_range})`;
+    document.getElementById('view-doctor-name').textContent = app.doctor_name;
+    document.getElementById('view-reason').textContent = app.reason || 'Consultation';
+
+    const pLink = document.getElementById('view-patient-link');
+    pLink.href = app.patient_url;
+    pLink.textContent = `${app.patient_name} (${app.patient_number})`;
+
+    // Statut
+    const badge = document.getElementById('view-status-badge');
+    badge.textContent = app.status_display;
+
+    // Actions disponibles
+    const actions = document.getElementById('view-actions-container');
+    actions.innerHTML = `
+      ${!app.has_consultation && app.status !== 'CANCELLED' ? `
+        <a href="${app.consultation_url}" class="w-full btn btn-primary py-2 px-4 text-xs font-bold flex items-center justify-center gap-2 shadow-xs">
+          {% include "components/atoms/icon.html" with name="clipboard-document-list" size="w-4 h-4" %}
+          <span>{% trans "Démarrer la consultation" %}</span>
+        </a>
+      ` : ''}
+      <a href="${app.patient_url}" class="w-full py-2 px-4 rounded-xl border border-neutral-200 bg-white text-xs font-semibold text-neutral-700 hover:bg-neutral-50 flex items-center justify-center gap-1.5 transition-colors">
+        {% include "components/atoms/icon.html" with name="users" size="w-3.5 h-3.5" %}
+        <span>{% trans "Consulter le dossier médical" %}</span>
+      </a>
+      ${app.status !== 'CANCELLED' && app.status !== 'COMPLETED' ? `
+        <a href="${app.cancel_url}" class="w-full py-1.5 px-3 text-xs font-semibold text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-xl text-center transition-colors">
+          {% trans "Annuler ce rendez-vous" %}
+        </a>
+      ` : ''}
+    `;
+
+    modal.classList.remove('hidden');
+    setTimeout(() => {
+      content.classList.remove('scale-95', 'opacity-0');
+      content.classList.add('scale-100', 'opacity-100');
+    }, 20);
+  }
+
+  function closeViewModal() {
+    const modal = document.getElementById('modal-view-appointment');
+    const content = document.getElementById('modal-view-content');
+    content.classList.remove('scale-100', 'opacity-100');
+    content.classList.add('scale-95', 'opacity-0');
+    setTimeout(() => {
+      modal.classList.add('hidden');
+    }, 150);
+  }
+
+  // Utilitaire d'échappement XSS
+  function escapeHtml(text) {
+    if (!text) return '';
+    return String(text)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  // Fermer les modales avec la touche Échap
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      closeCreateModal();
+      closeViewModal();
+    }
+  });
 </script>
-{% endblock %}
+{% endblock content_inner %}
