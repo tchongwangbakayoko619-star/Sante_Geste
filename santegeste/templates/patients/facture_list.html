@@ -72,11 +72,13 @@
                     </span>
                   {% endif %}
                 </td>
-                <td class="py-3.5 px-5 text-right">
-                  <a href="{% url "patients:facture_detail" f.pk %}" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-teal-50 text-[#0d9488] font-bold text-xs hover:bg-teal-100 transition-colors">
-                    <span>{% trans "Voir" %}</span>
-                    &rarr;
-                  </a>
+                <td class="py-3.5 px-5 text-right whitespace-nowrap">
+                  <div class="flex items-center justify-end gap-2">
+                    <a href="{% url "patients:facture_detail" f.pk %}" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-teal-50 text-[#0d9488] font-bold text-xs hover:bg-teal-100 transition-colors">
+                      <span>{% if f.status == 'UNPAID' and f.paid_amount == 0 %}{% trans "Gérer / Modifier" %}{% else %}{% trans "Voir" %}{% endif %}</span>
+                      &rarr;
+                    </a>
+                  </div>
                 </td>
               </tr>
             {% endfor %}

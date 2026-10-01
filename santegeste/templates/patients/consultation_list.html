@@ -67,11 +67,17 @@
                 <td class="py-3.5 px-5 text-neutral-800 font-medium truncate max-w-xs">
                   {{ c.diagnosis|truncatechars:50|default:"--" }}
                 </td>
-                <td class="py-3.5 px-5 text-right">
-                  <a href="{% url "patients:consultation_detail" c.pk %}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-teal-50 text-[#0d9488] font-bold text-xs hover:bg-teal-100 transition-colors">
-                    <span>{% trans "Voir" %}</span>
-                    &rarr;
-                  </a>
+                <td class="py-3.5 px-5 text-right whitespace-nowrap">
+                  <div class="flex items-center justify-end gap-2">
+                    <a href="{% url "patients:consultation_update" c.pk %}" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-white border border-neutral-300 text-neutral-700 font-bold text-xs hover:bg-neutral-50 transition-colors shadow-2xs" title="{% trans "Modifier" %}">
+                      {% include "components/atoms/icon.html" with name="pencil" size="w-3.5 h-3.5 text-neutral-500" %}
+                      <span>{% trans "Modifier" %}</span>
+                    </a>
+                    <a href="{% url "patients:consultation_detail" c.pk %}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-teal-50 text-[#0d9488] font-bold text-xs hover:bg-teal-100 transition-colors">
+                      <span>{% trans "Voir" %}</span>
+                      &rarr;
+                    </a>
+                  </div>
                 </td>
               </tr>
             {% endfor %}
