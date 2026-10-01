@@ -163,10 +163,17 @@
     <div class="space-y-6">
       {% for ord in ordonnances %}
         <div class="space-y-4">
-          <div class="flex items-center justify-between">
-            <h2 class="text-xl font-bold text-neutral-900 font-title tracking-tight">
-              {% trans "Ordonnance prescrite" %}
-            </h2>
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div class="flex flex-wrap items-center gap-2.5">
+              <h2 class="text-xl font-bold text-neutral-900 font-title tracking-tight">
+                {% trans "Ordonnance prescrite" %}
+              </h2>
+              {% if consultation.diagnosis %}
+                <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-sky-50 text-sky-900 border border-sky-200">
+                  <span class="text-sky-600 font-semibold">{% trans "Diagnostic :" %}</span> {{ consultation.diagnosis }}
+                </span>
+              {% endif %}
+            </div>
           </div>
 
           <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
@@ -174,9 +181,12 @@
             <div class="lg:col-span-8 space-y-5">
               <!-- Carte Médicaments -->
               <div class="bg-white p-6 rounded-2xl border border-neutral-200/80 shadow-xs space-y-4">
-                <h3 class="text-sm font-bold text-neutral-900 font-title">
-                  {% trans "Médicaments" %}
-                </h3>
+                <div class="flex items-center justify-between">
+                  <h3 class="text-sm font-bold text-neutral-900 font-title flex items-center gap-2">
+                    <span class="w-6 h-6 rounded-lg bg-sky-50 text-[#0284c7] flex items-center justify-center text-xs">💊</span>
+                    {% trans "Traitement médicamenteux" %}
+                  </h3>
+                </div>
 
                 <div class="overflow-x-auto">
                   <table class="w-full text-left text-xs border-collapse">
@@ -191,10 +201,15 @@
                     <tbody class="divide-y divide-neutral-100">
                       {% for line in ord.lines.all %}
                         <tr class="hover:bg-neutral-50/50 transition-colors">
-                          <td class="py-3 px-3 font-bold text-neutral-900">{{ line.medication_name }}</td>
-                          <td class="py-3 px-3 text-neutral-700">{{ line.posology }}</td>
-                          <td class="py-3 px-3 text-neutral-600">{{ line.duration }}</td>
-                          <td class="py-3 px-3 text-right font-mono font-bold text-neutral-900">{{ line.quantity }}</td>
+                          <td class="py-3 px-3">
+                            <div class="flex items-center gap-2">
+                              <span class="text-xs">💊</span>
+                              <span class="font-bold text-neutral-900 text-xs sm:text-sm">{{ line.medication_name }}</span>
+                            </div>
+                          </td>
+                          <td class="py-3 px-3 text-neutral-700 font-medium">{{ line.posology }}</td>
+                          <td class="py-3 px-3 text-neutral-600 font-semibold">{{ line.duration }}</td>
+                          <td class="py-3 px-3 text-right font-mono font-bold text-neutral-900 text-sm">x{{ line.quantity }}</td>
                         </tr>
                       {% endfor %}
                     </tbody>
