@@ -1,5 +1,5 @@
 {% extends "layouts/dashboard.html" %}
-{% load i18n static %}
+{% load i18n static patient_tags %}
 
 {% block title %}{% trans "Détail de la Consultation" %} - {{ patient.full_name }} - SantéGeste{% endblock %}
 
@@ -217,15 +217,20 @@
                 </div>
               </div>
 
-              <!-- Carte Conseils au patient -->
+              <!-- Carte Conseils au patient (sous forme de liste propre) -->
               {% if ord.notes %}
                 <div class="bg-white p-5 rounded-2xl border border-neutral-200/80 shadow-xs space-y-2">
-                  <h4 class="text-xs font-bold text-neutral-800 font-title">
-                    {% trans "Conseils au patient" %}
+                  <h4 class="text-xs font-bold text-neutral-800 font-title uppercase tracking-wider">
+                    {% trans "Conseils du médecin" %}
                   </h4>
-                  <p class="text-xs text-neutral-700 bg-neutral-50 p-3 rounded-xl border border-neutral-100 leading-relaxed">
-                    {{ ord.notes }}
-                  </p>
+                  <ul class="text-xs text-neutral-800 space-y-1.5 pl-1">
+                    {% for advice in ord.notes|split_lines %}
+                      <li class="flex items-start gap-2">
+                        <span class="w-1.5 h-1.5 rounded-full bg-[#0d9488] shrink-0 mt-1.5"></span>
+                        <span class="font-medium text-neutral-900 leading-relaxed">{{ advice }}</span>
+                      </li>
+                    {% endfor %}
+                  </ul>
                 </div>
               {% endif %}
             </div>
@@ -372,15 +377,20 @@
 
           <!-- Carte 2 : Conseils au patient -->
           <div class="bg-white p-5 rounded-2xl border border-neutral-200/80 shadow-xs space-y-2">
-            <label for="prescription-notes" class="block text-xs font-bold text-neutral-800 font-title">
-              {% trans "Conseils au patient" %}
-            </label>
+            <div class="flex items-center justify-between">
+              <label for="prescription-notes" class="block text-xs font-bold text-neutral-800 font-title">
+                {% trans "Conseils au patient (un par ligne)" %}
+              </label>
+              <span class="text-[11px] text-neutral-400">
+                {% trans "Saisie sous forme de liste" %}
+              </span>
+            </div>
             <textarea
               id="prescription-notes"
               name="notes"
               rows="3"
-              placeholder="{% trans "Prendre après les repas. Boire beaucoup d'eau." %}"
-              class="w-full px-3.5 py-2.5 border border-neutral-200 rounded-xl text-xs text-neutral-700 placeholder-neutral-400 focus:ring-2 focus:ring-[#0d9488] focus:border-transparent outline-none resize-none"
+              placeholder="Bien respecter la durée du traitement&#10;Surveiller la température et l'état général&#10;Consulter en cas d'aggravation des symptômes"
+              class="w-full px-3.5 py-2.5 border border-neutral-200 rounded-xl text-xs text-neutral-700 placeholder-neutral-400 focus:ring-2 focus:ring-[#0d9488] focus:border-transparent outline-none resize-none leading-relaxed"
             ></textarea>
           </div>
         </div>

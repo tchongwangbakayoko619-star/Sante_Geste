@@ -120,3 +120,20 @@ def split_filter(value: Any, delimiter: str = ",") -> list[str]:
     return [s.strip() for s in str(value).split(delimiter) if s.strip()]
 
 
+@register.filter(name="split_lines")
+def split_lines_filter(value: Any) -> list[str]:
+    """Divise une chaîne multiligne en liste de lignes nettoyées pour listes à puces.
+
+    Usage:
+        {% for line in ordonnance.notes|split_lines %}
+            <li>• {{ line }}</li>
+        {% endfor %}
+    """
+    if not value:
+        return []
+    if isinstance(value, (list, tuple)):
+        return list(value)
+    lines = [line.strip().lstrip("-•*").strip() for line in str(value).splitlines()]
+    return [l for l in lines if l]
+
+
