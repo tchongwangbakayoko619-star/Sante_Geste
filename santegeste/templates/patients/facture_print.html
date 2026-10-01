@@ -5,99 +5,110 @@
 
 {% block content %}
 <div class="min-h-screen bg-neutral-100 p-4 sm:p-8 font-sans print:bg-white print:p-0">
-  <div class="max-w-3xl mx-auto bg-white p-8 sm:p-12 rounded-2xl border border-neutral-200 shadow-md print:shadow-none print:border-none print:max-w-none">
+  <div class="max-w-3xl mx-auto bg-white p-8 sm:p-12 rounded-2xl border border-neutral-200/90 shadow-lg print:shadow-none print:border-none print:max-w-none print:p-0">
     
     <!-- Boutons d'action (masqués à l'impression) -->
-    <div class="flex items-center justify-between border-b border-neutral-200 pb-6 mb-8 print:hidden">
-      <a href="{% url "patients:facture_detail" facture.pk %}" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-neutral-100 text-neutral-700 font-semibold text-sm hover:bg-neutral-200 transition-colors">
-        {% include "components/atoms/icon.html" with name="arrow-left" size="w-4 h-4" %}
+    <div class="flex items-center justify-between border-b border-neutral-200 pb-5 mb-8 print:hidden">
+      <a href="{% url "patients:facture_detail" facture.pk %}" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-neutral-200 text-neutral-700 font-semibold text-xs sm:text-sm hover:bg-neutral-50 transition-colors shadow-2xs">
+        <svg class="w-4 h-4 text-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
         {% trans "Retour au détail de facture" %}
       </a>
-      <button onclick="window.print()" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#14967F] text-white font-bold text-sm hover:bg-[#0E6A5A] transition-colors shadow-sm">
-        {% include "components/atoms/icon.html" with name="printer" size="w-4 h-4" %}
+      <button onclick="window.print()" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#0d9488] hover:bg-[#0f766e] text-white font-bold text-xs sm:text-sm transition-colors shadow-xs cursor-pointer">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
         {% trans "Imprimer le Reçu / PDF" %}
       </button>
     </div>
 
-    <!-- En-tête Reçu -->
-    <div class="flex justify-between items-start border-b-2 border-teal-600 pb-6 mb-8">
-      <div>
-        <h1 class="text-2xl font-black text-neutral-900 font-title tracking-tight flex items-center gap-2">
-          <span class="w-8 h-8 rounded-lg bg-[#14967F] text-white flex items-center justify-center font-bold text-lg">S</span>
-          CS² HEALTH CARE CENTER
-        </h1>
-        <p class="text-xs text-neutral-500 mt-1">Centre de Santé & Caisse Principale</p>
-        <p class="text-xs text-neutral-500">BP 1234 - Yaoundé / Douala, Cameroun</p>
+    <!-- En-tête Reçu avec Logo Officiel SantéGeste -->
+    <div class="flex justify-between items-start border-b-2 border-[#0d9488] pb-6 mb-8">
+      <div class="flex items-start gap-3.5">
+        <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-[#0d9488] via-[#0f766e] to-[#042f2e] text-white flex items-center justify-center shrink-0 shadow-xs">
+          <svg class="w-8 h-8 text-white" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M19 6C19 4.89543 19.8954 4 21 4H27C28.1046 4 29 4.89543 29 6V18H41C42.1046 18 43 18.8954 43 20V26C43 27.1046 42.1046 28 41 28H29V42C29 43.1046 28.1046 44 27 44H21C19.8954 44 19 43.1046 19 42V28H7C5.89543 28 5 27.1046 5 26V20C5 18.8954 5.89543 18 7 18H19V6Z" fill="white"/>
+            <path d="M4 24H15L18 17L22 31L26 21L28 25L30 24H44" stroke="#0d9488" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-xl font-extrabold text-[#0f766e] font-title tracking-tight">
+            SantéGeste
+          </h1>
+          <p class="text-xs font-semibold text-[#0d9488]">Service de Caisse & Facturation Médicale</p>
+          <p class="text-[11px] text-neutral-500">12, avenue de la Santé • BP 1234, Yaoundé</p>
+        </div>
       </div>
+
       <div class="text-right">
-        <h2 class="text-xl font-extrabold text-neutral-900">{% trans "REÇU / FACTURE N°" %} {{ facture.invoice_number }}</h2>
-        <p class="text-xs text-neutral-600 mt-1"><strong>{% trans "Date d'émission" %} :</strong> {{ facture.issued_at|date:"d/m/Y H:i" }}</p>
-        <span class="inline-block mt-2 px-3 py-1 rounded-full text-xs font-bold {% if facture.status == 'PAID' %}bg-emerald-100 text-emerald-800{% elif facture.status == 'PARTIALLY_PAID' %}bg-amber-100 text-amber-800{% else %}bg-rose-100 text-rose-800{% endif %}">
+        <h2 class="text-lg font-bold text-neutral-900 font-title uppercase">{% trans "REÇU / FACTURE" %}</h2>
+        <p class="text-xs font-mono font-bold text-[#0d9488]">{{ facture.invoice_number }}</p>
+        <p class="text-xs text-neutral-500 mt-1 font-mono">{{ facture.issued_at|date:"d/m/Y - H:i" }}</p>
+        <span class="inline-block mt-2 px-2.5 py-0.5 rounded-lg text-xs font-bold {% if facture.status == 'PAID' %}bg-emerald-50 text-emerald-800 border border-emerald-200{% elif facture.status == 'PARTIALLY_PAID' %}bg-amber-50 text-amber-800 border border-amber-200{% else %}bg-rose-50 text-rose-800 border border-rose-200{% endif %}">
           {{ facture.get_status_display }}
         </span>
       </div>
     </div>
 
-    <!-- Patient / Client -->
-    <div class="grid grid-cols-2 gap-6 bg-neutral-50 p-6 rounded-xl border border-neutral-200 text-sm mb-8">
+    <!-- Patient & Caissier -->
+    <div class="grid grid-cols-2 gap-6 bg-teal-50/40 p-5 rounded-2xl border border-teal-100 text-xs sm:text-sm mb-8">
       <div>
-        <span class="text-xs font-bold text-neutral-400 uppercase block mb-1">{% trans "Patient / Client" %}</span>
-        <p class="font-bold text-neutral-900 text-base">{{ facture.patient.full_name }}</p>
-        <p class="text-xs text-neutral-600 mt-0.5">N° Patient : {{ facture.patient.patient_number }}</p>
-        <p class="text-xs text-neutral-600">{{ facture.patient.phone_number }}</p>
+        <span class="text-[10px] font-bold text-neutral-400 uppercase tracking-wider block mb-1">{% trans "Patient / Bénéficiaire" %}</span>
+        <p class="font-extrabold text-neutral-900 text-sm sm:text-base">{{ facture.patient.full_name }}</p>
+        <p class="text-xs text-neutral-600 font-mono mt-0.5">N° {{ facture.patient.patient_number }}</p>
+        <p class="text-xs text-neutral-500">{{ facture.patient.phone_number }}</p>
       </div>
       <div class="text-right">
-        <span class="text-xs font-bold text-neutral-400 uppercase block mb-1">{% trans "Agent Émetteur / Caissier" %}</span>
-        <p class="font-bold text-neutral-900 text-base">{{ facture.issued_by.full_name }}</p>
-        <p class="text-xs text-neutral-600 mt-0.5">Service Caisse & Encaissement</p>
+        <span class="text-[10px] font-bold text-neutral-400 uppercase tracking-wider block mb-1">{% trans "Agent Émetteur / Caisse" %}</span>
+        <p class="font-extrabold text-neutral-900 text-sm sm:text-base">{{ facture.issued_by.full_name }}</p>
+        <p class="text-xs text-neutral-600 mt-0.5">Service Caisse Principale</p>
       </div>
     </div>
 
     <!-- Tableau des Prestations Facturées -->
-    <div class="space-y-4 mb-8">
-      <h3 class="text-sm font-bold text-neutral-900 uppercase tracking-wider border-b border-neutral-200 pb-2">
-        {% trans "Détail des Actes & Prestations" %}
+    <div class="space-y-3 mb-8">
+      <h3 class="text-xs font-bold text-[#0f766e] uppercase tracking-wider border-b border-teal-200 pb-2">
+        {% trans "Détail des Actes & Prestations Médicales" %}
       </h3>
       {% if prestations %}
-        <table class="w-full text-left border-collapse">
-          <thead>
-            <tr class="border-b-2 border-neutral-200 text-xs font-bold text-neutral-500 uppercase">
-              <th class="py-3 px-2">{% trans "Code" %}</th>
-              <th class="py-3 px-2">{% trans "Prestation / Acte" %}</th>
-              <th class="py-3 px-2 text-center">{% trans "Qté" %}</th>
-              <th class="py-3 px-2 text-right">{% trans "Prix Unitaire" %}</th>
-              <th class="py-3 px-2 text-right">{% trans "Total FCFA" %}</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-neutral-200 text-sm">
-            {% for item in prestations %}
-              <tr>
-                <td class="py-3.5 px-2 font-mono text-xs text-neutral-500">{{ item.prestation.code }}</td>
-                <td class="py-3.5 px-2 font-bold text-neutral-900">{{ item.prestation.name }}</td>
-                <td class="py-3.5 px-2 text-center">{{ item.quantity }}</td>
-                <td class="py-3.5 px-2 text-right text-neutral-700">{{ item.unit_price }}</td>
-                <td class="py-3.5 px-2 text-right font-bold text-neutral-900">{{ item.total_price }}</td>
+        <div class="border border-neutral-200 rounded-xl overflow-hidden">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="bg-neutral-50/80 border-b border-neutral-200 text-[11px] font-bold text-neutral-600 uppercase tracking-wider">
+                <th class="py-3 px-3">{% trans "Code" %}</th>
+                <th class="py-3 px-3">{% trans "Prestation / Acte" %}</th>
+                <th class="py-3 px-3 text-center">{% trans "Qté" %}</th>
+                <th class="py-3 px-3 text-right">{% trans "Prix Unitaire" %}</th>
+                <th class="py-3 px-3 text-right">{% trans "Total FCFA" %}</th>
               </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+            </thead>
+            <tbody class="divide-y divide-neutral-100 text-xs">
+              {% for item in prestations %}
+                <tr class="hover:bg-neutral-50/50">
+                  <td class="py-3 px-3 font-mono text-neutral-500 font-semibold">{{ item.prestation.code }}</td>
+                  <td class="py-3 px-3 font-bold text-neutral-900">{{ item.prestation.name }}</td>
+                  <td class="py-3 px-3 text-center font-bold">x{{ item.quantity }}</td>
+                  <td class="py-3 px-3 text-right font-mono text-neutral-700">{{ item.unit_price }} FCFA</td>
+                  <td class="py-3 px-3 text-right font-mono font-bold text-neutral-900">{{ item.total_price }} FCFA</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
       {% endif %}
     </div>
 
     <!-- Récapitulatif Financier -->
     <div class="flex justify-end mb-8">
-      <div class="w-full sm:w-1/2 bg-neutral-50 p-4 rounded-xl border border-neutral-200 space-y-2 text-sm">
+      <div class="w-full sm:w-1/2 bg-neutral-50/80 p-4 rounded-xl border border-neutral-200 space-y-2 text-xs">
         <div class="flex justify-between font-bold text-neutral-900 border-b border-neutral-200 pb-2">
           <span>{% trans "Montant Total" %} :</span>
-          <span class="text-base">{{ facture.total_amount }} FCFA</span>
+          <span class="text-sm font-mono">{{ facture.total_amount }} FCFA</span>
         </div>
         <div class="flex justify-between text-emerald-700 font-semibold">
           <span>{% trans "Montant Encaissé" %} :</span>
-          <span>{{ facture.paid_amount }} FCFA</span>
+          <span class="font-mono">{{ facture.paid_amount }} FCFA</span>
         </div>
         <div class="flex justify-between text-rose-600 font-bold border-t border-neutral-200 pt-2">
           <span>{% trans "Reste à Payer" %} :</span>
-          <span class="text-base">{{ facture.remaining_amount }} FCFA</span>
+          <span class="text-sm font-mono">{{ facture.remaining_amount }} FCFA</span>
         </div>
       </div>
     </div>
@@ -105,11 +116,11 @@
     <!-- Règlements perçus -->
     {% if paiements %}
       <div class="mb-8">
-        <h4 class="text-xs font-bold text-neutral-400 uppercase tracking-wider mb-2">{% trans "Historique des Encaissements" %}</h4>
+        <h4 class="text-[10px] font-bold text-neutral-400 uppercase tracking-wider mb-2">{% trans "Historique des Règlements" %}</h4>
         <div class="divide-y divide-neutral-100 text-xs">
           {% for p in paiements %}
-            <div class="py-1.5 flex justify-between">
-              <span>{{ p.paid_at|date:"d/m/Y H:i" }} - {{ p.get_payment_method_display }} (Caissier: {{ p.cashier.full_name }})</span>
+            <div class="py-1.5 flex justify-between font-mono">
+              <span class="text-neutral-600">{{ p.paid_at|date:"d/m/Y - H:i" }} • {{ p.get_payment_method_display }} ({{ p.cashier.full_name }})</span>
               <span class="font-bold text-neutral-900">{{ p.amount }} FCFA</span>
             </div>
           {% endfor %}
@@ -117,16 +128,16 @@
       </div>
     {% endif %}
 
-    <!-- Cachet & Tampon -->
-    <div class="grid grid-cols-2 gap-8 pt-6 border-t border-neutral-200">
+    <!-- Cadre de validation / Signature & Cachet de la caisse -->
+    <div class="grid grid-cols-2 gap-8 pt-6 border-t border-neutral-200 items-end">
       <div class="text-xs text-neutral-500">
-        <p class="font-bold">{% trans "Remarque" %} :</p>
-        <p class="mt-1">{% trans "Document officiel d'encaissement délivré par la caisse du Centre de Santé CS² Health." %}</p>
+        <p class="font-bold text-neutral-700">{% trans "Mention officielle" %} :</p>
+        <p class="mt-0.5 text-[11px]">{% trans "Reçu d'encaissement délivré par SantéGeste Medical Systems. Conserver ce document pour tout remboursement d'assurance." %}</p>
       </div>
-      <div class="text-center space-y-10">
-        <p class="text-xs font-bold text-neutral-700 uppercase">{% trans "Cachet de la Caisse" %}</p>
-        <div class="border-b border-dashed border-neutral-400 w-3/4 mx-auto"></div>
-        <p class="text-xs text-neutral-500 font-bold">{{ facture.issued_by.full_name }}</p>
+      <div class="text-center space-y-8">
+        <p class="text-[10px] font-bold text-neutral-500 uppercase tracking-wider">{% trans "Signature & Cachet de la Caisse" %}</p>
+        <div class="border-b border-dashed border-teal-300 w-3/4 mx-auto"></div>
+        <p class="text-xs text-neutral-600 font-bold">{{ facture.issued_by.full_name }}</p>
       </div>
     </div>
 
