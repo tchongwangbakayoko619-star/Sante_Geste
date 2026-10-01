@@ -7,28 +7,27 @@
     class="flex items-center gap-3 p-1 sm:px-2.5 sm:py-1.5 rounded-2xl hover:bg-neutral-100 transition-colors focus:outline-none focus:ring-2 focus:ring-[#14967F]/30"
     aria-expanded="false"
     aria-haspopup="true">
-    <!-- Avatar circle with active status indicator dot -->
+    <!-- Avatar circle -->
     <div class="relative shrink-0">
       {% if user.avatar %}
-        <img src="{{ user.avatar.url }}" alt="{{ user.full_name }}" class="w-9 h-9 rounded-full object-cover border border-emerald-300">
+        <img src="{{ user.avatar.url }}" alt="{{ user.full_name }}" class="w-9 h-9 rounded-full object-cover border border-neutral-200">
       {% else %}
-        <div class="w-9 h-9 rounded-full bg-emerald-100 text-[#14967F] font-bold flex items-center justify-center text-xs border border-emerald-300">
+        <div class="w-9 h-9 rounded-full bg-teal-50 text-[#0d9488] font-bold flex items-center justify-center text-xs border border-teal-200">
           {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
         </div>
       {% endif %}
-      <span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white" aria-label="En ligne"></span>
     </div>
 
     <!-- User details -->
     <div class="hidden sm:block text-left">
       <div class="flex items-center gap-1">
         <span class="text-xs font-bold text-neutral-800 leading-tight">
-          {{ user.first_name }} {{ user.last_name|title|default:user.email }}
+          {% if user.is_personnel_medical %}Dr. {% endif %}{{ user.first_name }} {{ user.last_name|default:user.email }}
         </span>
         {% include "components/atoms/icon.html" with name="chevron-down" size="w-3 h-3 text-neutral-400" %}
       </div>
       <span class="text-[11px] text-neutral-500 block leading-tight">
-        {{ user.role_display }}
+        {{ user.medical_profile.specialite|default:user.role_display }}
       </span>
     </div>
   </button>

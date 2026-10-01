@@ -6,12 +6,13 @@
 {% block content_inner %}
 <div class="space-y-6">
   <!-- En-tête -->
-  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-neutral-200/80 shadow-sm">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-neutral-200/80 shadow-xs">
     <div>
-      <a href="{% url "dashboard:reports_home" %}" class="inline-flex items-center gap-1 text-xs font-bold text-[#14967F] hover:underline mb-2">
-        ← {% trans "Retour aux rapports" %}
+      <a href="{% url "dashboard:reports_home" %}" class="inline-flex items-center gap-1.5 text-xs font-bold text-[#0d9488] hover:underline mb-2">
+        {% include "components/atoms/icons/icon.html" with name="arrow-left" size="w-3.5 h-3.5" %}
+        <span>{% trans "Retour aux rapports" %}</span>
       </a>
-      <h1 class="text-2xl font-bold text-neutral-900 font-title tracking-tight">
+      <h1 class="text-xl font-bold text-neutral-900 font-title tracking-tight">
         {{ title }}
       </h1>
       <p class="text-xs text-neutral-500 mt-1">
@@ -21,33 +22,33 @@
 
     <!-- Actions d'Export -->
     <div class="flex flex-wrap items-center gap-2">
-      <a href="{% url "dashboard:report_export" report_code "csv" %}?period={{ period }}" class="px-3.5 py-2 rounded-xl bg-neutral-100 text-neutral-700 font-bold text-xs hover:bg-neutral-200 transition-colors flex items-center gap-1.5">
-        {% include "components/atoms/icon.html" with name="document" size="w-4 h-4" %}
-        CSV
+      <a href="{% url "dashboard:report_export" report_code "csv" %}?period={{ period }}" class="px-3.5 py-2 rounded-xl bg-neutral-100 text-neutral-700 font-bold text-xs hover:bg-neutral-200 transition-colors flex items-center gap-1.5 shadow-2xs">
+        {% include "components/atoms/icon.html" with name="document" size="w-3.5 h-3.5 text-neutral-500" %}
+        <span>CSV</span>
       </a>
-      <a href="{% url "dashboard:report_export" report_code "excel" %}?period={{ period }}" class="px-3.5 py-2 rounded-xl bg-emerald-100 text-emerald-800 font-bold text-xs hover:bg-emerald-200 transition-colors flex items-center gap-1.5">
-        {% include "components/atoms/icon.html" with name="table-cells" size="w-4 h-4" %}
-        Excel
+      <a href="{% url "dashboard:report_export" report_code "excel" %}?period={{ period }}" class="px-3.5 py-2 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold text-xs hover:bg-emerald-100 transition-colors flex items-center gap-1.5 shadow-2xs">
+        {% include "components/atoms/icon.html" with name="table-cells" size="w-3.5 h-3.5 text-emerald-600" %}
+        <span>Excel</span>
       </a>
-      <a href="{% url "dashboard:report_export" report_code "pdf" %}?period={{ period }}" target="_blank" class="px-3.5 py-2 rounded-xl bg-rose-100 text-rose-800 font-bold text-xs hover:bg-rose-200 transition-colors flex items-center gap-1.5">
-        {% include "components/atoms/icon.html" with name="arrow-down-tray" size="w-4 h-4" %}
-        PDF
+      <a href="{% url "dashboard:report_export" report_code "pdf" %}?period={{ period }}" target="_blank" class="px-3.5 py-2 rounded-xl bg-rose-50 text-rose-700 border border-rose-200 font-bold text-xs hover:bg-rose-100 transition-colors flex items-center gap-1.5 shadow-2xs">
+        {% include "components/atoms/icon.html" with name="arrow-down-tray" size="w-3.5 h-3.5 text-rose-600" %}
+        <span>PDF</span>
       </a>
     </div>
   </div>
 
   <!-- Barre de Filtres Temporels -->
-  <form method="get" class="bg-white p-4 rounded-2xl border border-neutral-200/80 shadow-sm flex flex-wrap items-center gap-3">
-    <a href="?period=today" class="px-4 py-2 rounded-xl text-xs font-semibold {% if period == 'today' %}bg-[#14967F] text-white{% else %}bg-neutral-100 text-neutral-700 hover:bg-neutral-200{% endif %}">
+  <form method="get" class="bg-white p-2.5 rounded-2xl border border-neutral-200/80 shadow-xs flex flex-wrap items-center gap-2">
+    <a href="?period=today" class="px-4 py-2 rounded-xl text-xs font-bold transition-all {% if period == 'today' %}bg-[#0d9488] text-white shadow-xs{% else %}bg-neutral-50 text-neutral-600 hover:bg-neutral-100{% endif %}">
       {% trans "Aujourd'hui" %}
     </a>
-    <a href="?period=week" class="px-4 py-2 rounded-xl text-xs font-semibold {% if period == 'week' %}bg-[#14967F] text-white{% else %}bg-neutral-100 text-neutral-700 hover:bg-neutral-200{% endif %}">
+    <a href="?period=week" class="px-4 py-2 rounded-xl text-xs font-bold transition-all {% if period == 'week' %}bg-[#0d9488] text-white shadow-xs{% else %}bg-neutral-50 text-neutral-600 hover:bg-neutral-100{% endif %}">
       {% trans "Cette semaine" %}
     </a>
-    <a href="?period=month" class="px-4 py-2 rounded-xl text-xs font-semibold {% if period == 'month' %}bg-[#14967F] text-white{% else %}bg-neutral-100 text-neutral-700 hover:bg-neutral-200{% endif %}">
+    <a href="?period=month" class="px-4 py-2 rounded-xl text-xs font-bold transition-all {% if period == 'month' %}bg-[#0d9488] text-white shadow-xs{% else %}bg-neutral-50 text-neutral-600 hover:bg-neutral-100{% endif %}">
       {% trans "Ce mois" %}
     </a>
-    <a href="?period=year" class="px-4 py-2 rounded-xl text-xs font-semibold {% if period == 'year' %}bg-[#14967F] text-white{% else %}bg-neutral-100 text-neutral-700 hover:bg-neutral-200{% endif %}">
+    <a href="?period=year" class="px-4 py-2 rounded-xl text-xs font-bold transition-all {% if period == 'year' %}bg-[#0d9488] text-white shadow-xs{% else %}bg-neutral-50 text-neutral-600 hover:bg-neutral-100{% endif %}">
       {% trans "Cette année" %}
     </a>
   </form>
@@ -56,22 +57,24 @@
   {% if kpis %}
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
       {% for kpi in kpis %}
-        <div class="bg-white p-5 rounded-2xl border border-neutral-200/80 shadow-sm space-y-1">
-          <span class="text-xs font-bold text-neutral-400 uppercase tracking-wider block">{{ kpi.label }}</span>
-          <span class="text-2xl font-extrabold text-neutral-900 block">{{ kpi.value }}</span>
+        <div class="bg-white p-5 rounded-2xl border border-neutral-200/80 shadow-xs space-y-1">
+          <span class="text-[10px] font-bold text-neutral-400 uppercase tracking-wider block">{{ kpi.label }}</span>
+          <span class="text-2xl font-extrabold text-neutral-900 block font-title">{{ kpi.value }}</span>
         </div>
       {% endfor %}
     </div>
   {% endif %}
 
   <!-- Tableau des Données -->
-  <div class="bg-white rounded-2xl border border-neutral-200/80 shadow-sm overflow-hidden p-6">
-    <h3 class="text-sm font-bold text-neutral-900 uppercase tracking-wider mb-4">{% trans "Données Détaillées" %}</h3>
+  <div class="bg-white rounded-2xl border border-neutral-200/80 shadow-xs overflow-hidden p-6 space-y-4">
+    <h3 class="text-xs font-bold text-neutral-900 uppercase tracking-wider font-title">
+      {% trans "Données Détaillées" %}
+    </h3>
     {% if items %}
       <div class="overflow-x-auto">
-        <table class="w-full text-left text-sm divide-y divide-neutral-200">
+        <table class="w-full text-left text-xs border-collapse">
           <thead>
-            <tr class="bg-neutral-50 text-xs font-bold text-neutral-500 uppercase">
+            <tr class="bg-neutral-50/70 border-b border-neutral-200 text-[11px] font-bold text-neutral-500 uppercase tracking-wider">
               <th class="py-3 px-4">{% trans "Identifiant / N°" %}</th>
               <th class="py-3 px-4">{% trans "Intitulé / Patient" %}</th>
               <th class="py-3 px-4">{% trans "Date" %}</th>
@@ -80,7 +83,7 @@
           </thead>
           <tbody class="divide-y divide-neutral-100">
             {% for obj in items %}
-              <tr class="hover:bg-neutral-50/50">
+              <tr class="hover:bg-neutral-50/50 transition-colors">
                 <td class="py-3 px-4 font-mono text-xs font-bold text-neutral-800">
                   {% if obj.invoice_number %}
                     {{ obj.invoice_number|truncatechars:15 }}
@@ -93,15 +96,35 @@
                 <td class="py-3 px-4 font-semibold text-neutral-900">
                   {% if obj.patient %}
                     {{ obj.patient.full_name }}
+                  {% elif obj.full_name %}
+                    {{ obj.full_name }}
+                  {% elif obj.reason %}
+                    {{ obj.reason }}
                   {% else %}
-                    {{ obj.full_name|default:obj.reason }}
+                    -
                   {% endif %}
                 </td>
-                <td class="py-3 px-4 text-xs text-neutral-500">
-                  {{ obj.scheduled_at|default:obj.created_at|default:obj.issued_at|date:"d/m/Y H:i" }}
+                <td class="py-3 px-4 text-xs text-neutral-500 font-mono">
+                  {% if obj.scheduled_at %}
+                    {{ obj.scheduled_at|date:"d/m/Y - H:i" }}
+                  {% elif obj.created_at %}
+                    {{ obj.created_at|date:"d/m/Y - H:i" }}
+                  {% elif obj.issued_at %}
+                    {{ obj.issued_at|date:"d/m/Y - H:i" }}
+                  {% else %}
+                    -
+                  {% endif %}
                 </td>
-                <td class="py-3 px-4 text-right font-bold text-neutral-800">
-                  {{ obj.get_status_display|default:obj.total_amount|default:"-" }}
+                <td class="py-3 px-4 text-right font-bold text-neutral-900">
+                  {% if obj.get_status_display %}
+                    <span class="inline-block px-2.5 py-0.5 rounded-lg text-[11px] font-bold bg-neutral-100 text-neutral-700">
+                      {{ obj.get_status_display }}
+                    </span>
+                  {% elif obj.total_amount != None %}
+                    <span class="font-mono">{{ obj.total_amount }} FCFA</span>
+                  {% else %}
+                    -
+                  {% endif %}
                 </td>
               </tr>
             {% endfor %}
@@ -109,7 +132,7 @@
         </table>
       </div>
     {% else %}
-      <p class="text-center text-sm text-neutral-500 py-8">{% trans "Aucune donnée enregistrée sur cette période." %}</p>
+      <p class="text-center text-xs text-neutral-400 py-8">{% trans "Aucune donnée enregistrée sur cette période." %}</p>
     {% endif %}
   </div>
 </div>

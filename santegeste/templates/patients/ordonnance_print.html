@@ -9,29 +9,29 @@
     
     <!-- Boutons d'action (masqués à l'impression) -->
     <div class="flex items-center justify-between border-b border-neutral-200 pb-6 mb-8 print:hidden">
-      <a href="{% url "patients:consultation_detail" ordonnance.consultation.pk %}" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-neutral-100 text-neutral-700 font-semibold text-sm hover:bg-neutral-200 transition-colors">
+      <a href="{% url "patients:consultation_detail" ordonnance.consultation.pk %}" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-neutral-100 text-neutral-700 font-semibold text-xs sm:text-sm hover:bg-neutral-200 transition-colors">
         {% include "components/atoms/icon.html" with name="arrow-left" size="w-4 h-4" %}
         {% trans "Retour à la consultation" %}
       </a>
-      <button onclick="window.print()" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#14967F] text-white font-bold text-sm hover:bg-[#0E6A5A] transition-colors shadow-sm">
+      <button onclick="window.print()" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#0d9488] hover:bg-[#0f766e] text-white font-bold text-xs sm:text-sm transition-colors shadow-xs cursor-pointer">
         {% include "components/atoms/icon.html" with name="printer" size="w-4 h-4" %}
         {% trans "Imprimer / Télécharger PDF" %}
       </button>
     </div>
 
     <!-- En-tête Médical -->
-    <div class="flex justify-between items-start border-b-2 border-teal-600 pb-6 mb-8">
+    <div class="flex justify-between items-start border-b-2 border-[#0d9488] pb-6 mb-8">
       <div>
         <h1 class="text-2xl font-black text-neutral-900 font-title tracking-tight flex items-center gap-2">
-          <span class="w-8 h-8 rounded-lg bg-[#14967F] text-white flex items-center justify-center font-bold text-lg">S</span>
+          <span class="w-8 h-8 rounded-lg bg-[#0d9488] text-white flex items-center justify-center font-bold text-lg">S</span>
           CS² HEALTH CARE CENTER
         </h1>
         <p class="text-xs text-neutral-500 mt-1">SantéGeste Medical Management System</p>
         <p class="text-xs text-neutral-500">BP 1234 - Yaoundé / Douala, Cameroun</p>
       </div>
       <div class="text-right">
-        <h2 class="text-xl font-bold text-[#14967F] uppercase tracking-wider">{% trans "ORDONNANCE MÉDICALE" %}</h2>
-        <p class="text-xs text-neutral-600 mt-1"><strong>{% trans "Date" %} :</strong> {{ ordonnance.prescription_date|date:"d/m/Y à H:i" }}</p>
+        <h2 class="text-xl font-bold text-[#0d9488] uppercase tracking-wider">{% trans "ORDONNANCE MÉDICALE" %}</h2>
+        <p class="text-xs text-neutral-600 mt-1"><strong>{% trans "Date" %} :</strong> {{ ordonnance.prescribed_at|default:ordonnance.created_at|date:"d/m/Y à H:i" }}</p>
       </div>
     </div>
 

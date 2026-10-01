@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from datetime import datetime
+from datetime import timedelta
 from typing import Any
 
 from django.contrib import messages
@@ -45,7 +47,7 @@ class DoctorAppointmentListView(PersonnelMedicalRequiredMixin, ListView):
     model = Appointment
     template_name = "patients/doctor_appointment_list.html"
     context_object_name = "appointments"
-    paginate_by = 20
+    paginate_by = 50
 
     def get_queryset(self) -> QuerySet[Appointment]:
         # Le personnel médical ne voit QUE ses propres rendez-vous sauf s'il est superuser/propriétaire
@@ -60,13 +62,27 @@ class DoctorAppointmentListView(PersonnelMedicalRequiredMixin, ListView):
             qs = qs.filter(status=status)
 
         # Filtre par date
+        date_param = self.request.GET.get("date", "").strip()
         date_filter = self.request.GET.get("date_filter", "today").strip()
         now = timezone.now()
-        today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
-        today_end = today_start + timezone.timedelta(days=1)
 
-        if date_filter == "today":
-            qs = qs.filter(scheduled_at__gte=today_start, scheduled_at__lt=today_end)
+        if date_param:
+            try:
+                target_date = datetime.strptime(date_param, "%Y-%m-%d").date()
+                day_start = timezone.make_aware(datetime.combine(target_date, datetime.min.time()))
+                day_end = day_start + timedelta(days=1)
+                qs = qs.filter(scheduled_at__gte=day_start, scheduled_at__lt=day_end)
+            except (ValueError, TypeError):
+                pass
+        elif date_filter == "today":
+            today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+            today_end = today_start + timedelta(days=1)
+            today_qs = qs.filter(scheduled_at__gte=today_start, scheduled_at__lt=today_end)
+            if not today_qs.exists() and qs.exists():
+                # Si aucun RDV aujourd'hui mais qu'il y en a dans la base, on affiche l'ensemble pour éviter un agenda vide
+                qs = qs
+            else:
+                qs = today_qs
         elif date_filter == "upcoming":
             qs = qs.filter(scheduled_at__gte=now)
         elif date_filter == "past":
@@ -76,6 +92,21 @@ class DoctorAppointmentListView(PersonnelMedicalRequiredMixin, ListView):
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
+        now = timezone.now()
+        date_param = self.request.GET.get("date", "").strip()
+        if date_param:
+            try:
+                current_date = datetime.strptime(date_param, "%Y-%m-%d").date()
+            except (ValueError, TypeError):
+                current_date = now.date()
+        else:
+            current_date = now.date()
+
+        context["current_date"] = current_date
+        context["prev_date"] = (current_date - timedelta(days=1)).strftime("%Y-%m-%d")
+        context["next_date"] = (current_date + timedelta(days=1)).strftime("%Y-%m-%d")
+        context["today_date"] = now.date().strftime("%Y-%m-%d")
+        context["hours"] = ["08", "09", "10", "11", "12", "13", "14", "15", "16", "17"]
         context["selected_status"] = self.request.GET.get("status", "").strip()
         context["date_filter"] = self.request.GET.get("date_filter", "today").strip()
         context["status_choices"] = AppointmentStatusEnum.choices
@@ -267,11 +298,19 @@ class OrdonnanceCreateView(PersonnelMedicalRequiredMixin, View):
         consultation = get_object_or_404(Consultation, pk=pk)
         notes = request.POST.get("notes", "").strip()
 
+        action = request.POST.get("action", "").strip()
+        status = "DELIVERED" if action == "dispense" else "PENDING"
+        delivered_at = timezone.now() if action == "dispense" else None
+        delivered_by = request.user if action == "dispense" else None
+
         ordonnance = Ordonnance.objects.create(
             consultation=consultation,
             patient=consultation.patient,
             doctor=request.user,
             notes=notes,
+            status=status,
+            delivered_at=delivered_at,
+            delivered_by=delivered_by,
         )
 
         # Récupération dynamique des lignes de médicaments transmises dans la requête
@@ -297,11 +336,18 @@ class OrdonnanceCreateView(PersonnelMedicalRequiredMixin, View):
                 )
                 lines_created += 1
 
-        messages.success(
-            request,
-            _("L'ordonnance médicale a été générée avec %(count)d médicament(s).")
-            % {"count": lines_created},
-        )
+        if action == "dispense":
+            messages.success(
+                request,
+                _("L'ordonnance médicale a été générée et délivrée avec %(count)d médicament(s).")
+                % {"count": lines_created},
+            )
+        else:
+            messages.success(
+                request,
+                _("L'ordonnance médicale a été générée avec %(count)d médicament(s).")
+                % {"count": lines_created},
+            )
         return redirect("patients:consultation_detail", pk=consultation.pk)
 
 

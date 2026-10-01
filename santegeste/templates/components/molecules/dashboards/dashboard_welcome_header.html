@@ -4,17 +4,15 @@
   <!-- Greeting & Subtitle -->
   <div>
     <h1 class="text-2xl sm:text-3xl font-extrabold text-neutral-900 tracking-tight font-title">
-      {{ greeting|default:"Bonjour" }},
-      <span class="text-[#14967F]">
-        {% if user.first_name or user.last_name %}
-          {{ user.first_name }} {{ user.last_name|upper }}
-        {% else %}
-          {{ user.email }}
-        {% endif %}
-      </span>
+      {{ greeting|default:"Bonjour" }}
+      <span class="text-neutral-900">{% if user.is_personnel_medical and not user.is_agent_accueil %}Dr. {% endif %}{% if user.first_name or user.last_name %}{{ user.first_name }} {{ user.last_name|upper }}{% else %}{{ user.email }}{% endif %}</span>
+      <span class="inline-block">👋</span>
     </h1>
     <p class="text-xs sm:text-sm text-neutral-500 mt-1">
-      {% trans "Aperçu en temps réel des arrivées patients, des rendez-vous et des convocations du jour." %}
+      {% if user.medical_profile.specialite %}
+        <span class="font-semibold text-neutral-700">{{ user.medical_profile.specialite }} • </span>
+      {% endif %}
+      {% trans "Voici un aperçu de votre activité aujourd'hui." %}
     </p>
   </div>
 

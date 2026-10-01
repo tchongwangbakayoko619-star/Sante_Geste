@@ -63,9 +63,10 @@ class PharmacyOrdonnanceListView(RoleRequiredMixin, ListView):
 
 
 class PharmacyOrdonnanceDispenseView(RoleRequiredMixin, View):
-    """Validation et délivrance effective d'une ordonnance à la pharmacie."""
+    """Validation et délivrance effective d'une ordonnance à la pharmacie ou en consultation."""
 
     required_roles = [
+        UserRoleEnum.PERSONNEL_MEDICAL,
         UserRoleEnum.RESPONSABLE_PHARMACIE,
         UserRoleEnum.VENDEUR_PHARMACIE,
         UserRoleEnum.PROPRIETAIRE,
@@ -74,9 +75,12 @@ class PharmacyOrdonnanceDispenseView(RoleRequiredMixin, View):
 
     def post(self, request: Any, pk: Any):
         ordonnance = get_object_or_404(Ordonnance, pk=pk)
+        next_url = request.POST.get("next") or request.GET.get("next")
         
         if ordonnance.status == "DELIVERED":
             messages.info(request, _("Cette ordonnance a déjà été délivrée."))
+            if next_url:
+                return redirect(next_url)
             return redirect("patients:pharmacy_ordonnance_list")
 
         ordonnance.status = "DELIVERED"
@@ -86,7 +90,9 @@ class PharmacyOrdonnanceDispenseView(RoleRequiredMixin, View):
 
         messages.success(
             request,
-            _("L'ordonnance du patient %(patient)s a été marquée comme délivrée à la pharmacie par %(pharmacist)s.")
-            % {"patient": ordonnance.patient.full_name, "pharmacist": request.user.full_name},
+            _("L'ordonnance du patient %(patient)s a été marquée comme délivrée par %(user)s.")
+            % {"patient": ordonnance.patient.full_name, "user": request.user.full_name},
         )
+        if next_url:
+            return redirect(next_url)
         return redirect("patients:pharmacy_ordonnance_list")

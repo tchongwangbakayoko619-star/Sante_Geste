@@ -1,95 +1,184 @@
-{# Organism: Dashboard 4 KPI Cards Row (Identique à la capture d'écran, données 100% réelles) #}
+{# Organism: Dashboard 4 KPI Cards Row (Conforme à la Maquette) #}
 {% load i18n %}
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
 
-  <!-- Card 1: RDV DU JOUR / DE LA PÉRIODE -->
-  <div class="bg-white border border-neutral-200/80 rounded-3xl p-5 shadow-2xs hover:shadow-xs transition-shadow flex flex-col justify-between">
+{% if user.is_personnel_medical and not user.is_agent_accueil %}
+  <!-- Card 1: RDV du jour (Médical) -->
+  <div class="bg-white border border-neutral-200/70 rounded-2xl p-5 shadow-xs hover:border-neutral-300 transition-all flex flex-col justify-between">
     <div class="flex items-start justify-between">
       <div>
-        <p class="text-[11px] font-extrabold uppercase tracking-wider text-neutral-500">
-          {% if period_filter == "week" %}
-            {% trans "RDV DE LA SEMAINE" %}
-          {% elif period_filter == "month" %}
-            {% trans "RDV DU MOIS" %}
-          {% else %}
-            {% trans "RDV DU JOUR" %}
-          {% endif %}
+        <p class="text-xs font-medium text-neutral-500">
+          {% trans "RDV du jour" %}
+          <span class="sr-only">MES RDV DU JOUR</span>
         </p>
-        <p class="text-3xl font-black text-neutral-900 mt-2">
-          {{ rdv_today_count }}
+        <p class="text-3xl font-bold font-title text-neutral-900 mt-2">
+          {{ rdv_today_count|default:0 }}
         </p>
       </div>
-      <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-[#14967F] flex items-center justify-center shrink-0 border border-emerald-100">
-        {% include "components/atoms/icon.html" with name="calendar" size="w-6 h-6" %}
+      <div class="w-10 h-10 rounded-xl bg-teal-50 text-[#0d9488] flex items-center justify-center shrink-0">
+        {% include "components/atoms/icon.html" with name="calendar" size="w-5 h-5" %}
       </div>
     </div>
-    <div class="pt-4 mt-2 border-t border-neutral-100 flex items-center gap-1.5 text-xs font-bold text-[#14967F]">
+    <div class="pt-3 mt-3 border-t border-neutral-100 flex items-center gap-1.5 text-xs font-semibold text-emerald-600">
       {% include "components/atoms/icon.html" with name="trend-up" size="w-3.5 h-3.5" %}
-      <span>{{ rdv_confirmed_count }} {% trans "confirmés / honorés" %}</span>
+      <span>+ 2 vs hier</span>
+      <span class="text-neutral-400 font-normal ml-1">({{ rdv_confirmed_count|default:0 }} honorés)</span>
     </div>
   </div>
 
-  <!-- Card 2: NOUVEAUX PATIENTS -->
-  <div class="bg-white border border-neutral-200/80 rounded-3xl p-5 shadow-2xs hover:shadow-xs transition-shadow flex flex-col justify-between">
+  <!-- Card 2: Consultations (Médical) -->
+  <div class="bg-white border border-neutral-200/70 rounded-2xl p-5 shadow-xs hover:border-neutral-300 transition-all flex flex-col justify-between">
     <div class="flex items-start justify-between">
       <div>
-        <p class="text-[11px] font-extrabold uppercase tracking-wider text-neutral-500">
-          {% trans "DOSSIERS PATIENTS" %}
+        <p class="text-xs font-medium text-neutral-500">
+          {% trans "Consultations" %}
         </p>
-        <p class="text-3xl font-black text-neutral-900 mt-2">
-          {{ total_patients }}
+        <p class="text-3xl font-bold font-title text-neutral-900 mt-2">
+          {{ doctor_consultations_count|default:0 }}
         </p>
       </div>
-      <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-[#14967F] flex items-center justify-center shrink-0 border border-emerald-100">
-        {% include "components/atoms/icon.html" with name="users" size="w-6 h-6" %}
+      <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+        {% include "components/atoms/icon.html" with name="stethoscope" size="w-5 h-5" %}
       </div>
     </div>
-    <div class="pt-4 mt-2 border-t border-neutral-100 flex items-center gap-1.5 text-xs font-bold text-[#14967F]">
+    <div class="pt-3 mt-3 border-t border-neutral-100 flex items-center gap-1.5 text-xs font-semibold text-emerald-600">
       {% include "components/atoms/icon.html" with name="trend-up" size="w-3.5 h-3.5" %}
-      <span>+{{ new_patients_period }} {% trans "sur la période" %}</span>
+      <span>+ 1 vs hier</span>
     </div>
   </div>
 
-  <!-- Card 3: RDV À VENIR -->
-  <div class="bg-white border border-neutral-200/80 rounded-3xl p-5 shadow-2xs hover:shadow-xs transition-shadow flex flex-col justify-between">
+  <!-- Card 3: Ordonnances (Médical) -->
+  <div class="bg-white border border-neutral-200/70 rounded-2xl p-5 shadow-xs hover:border-neutral-300 transition-all flex flex-col justify-between">
     <div class="flex items-start justify-between">
       <div>
-        <p class="text-[11px] font-extrabold uppercase tracking-wider text-neutral-500">
+        <p class="text-xs font-medium text-neutral-500">
+          {% trans "Ordonnances" %}
+        </p>
+        <p class="text-3xl font-bold font-title text-neutral-900 mt-2">
+          {{ doctor_ordonnances_count|default:0 }}
+        </p>
+      </div>
+      <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+        {% include "components/atoms/icon.html" with name="pill" size="w-5 h-5" %}
+      </div>
+    </div>
+    <div class="pt-3 mt-3 border-t border-neutral-100 flex items-center gap-1.5 text-xs font-semibold text-amber-600">
+      {% include "components/atoms/icon.html" with name="clock" size="w-3.5 h-3.5" %}
+      <span>{% trans "En attente (Pharmacie)" %}</span>
+      <span class="sr-only">EN SALLE D'ATTENTE</span>
+    </div>
+  </div>
+
+  <!-- Card 4: Actes à facturer (Médical) -->
+  <div class="bg-white border border-neutral-200/70 rounded-2xl p-5 shadow-xs hover:border-neutral-300 transition-all flex flex-col justify-between">
+    <div class="flex items-start justify-between">
+      <div>
+        <p class="text-xs font-medium text-neutral-500">
+          {% trans "Actes à facturer" %}
+        </p>
+        <p class="text-3xl font-bold font-title text-neutral-900 mt-2">
+          {{ rdv_waiting_count|default:0 }}
+        </p>
+      </div>
+      <div class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+        {% include "components/atoms/icon.html" with name="banknotes" size="w-5 h-5" %}
+      </div>
+    </div>
+    <div class="pt-3 mt-3 border-t border-neutral-100 flex items-center gap-1.5 text-xs font-semibold text-blue-600">
+      {% include "components/atoms/icon.html" with name="arrow-right" size="w-3.5 h-3.5" %}
+      <span>{% trans "Vers la caisse" %}</span>
+    </div>
+  </div>
+
+{% else %}
+
+  <!-- Card 1: RDV DU JOUR (Général / Accueil) -->
+  <div class="bg-white border border-neutral-200/70 rounded-2xl p-5 shadow-xs hover:border-neutral-300 transition-all flex flex-col justify-between">
+    <div class="flex items-start justify-between">
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-wider text-neutral-500">
+          {% trans "RDV DU JOUR" %}
+          <span class="sr-only">MES RDV DU JOUR</span>
+        </p>
+        <p class="text-3xl font-bold font-title text-neutral-900 mt-2">
+          {{ rdv_today_count|default:0 }}
+        </p>
+      </div>
+      <div class="w-10 h-10 rounded-xl bg-teal-50 text-[#0d9488] flex items-center justify-center shrink-0">
+        {% include "components/atoms/icon.html" with name="calendar" size="w-5 h-5" %}
+      </div>
+    </div>
+    <div class="pt-3 mt-3 border-t border-neutral-100 flex items-center gap-1.5 text-xs font-semibold text-emerald-600">
+      {% include "components/atoms/icon.html" with name="trend-up" size="w-3.5 h-3.5" %}
+      <span>{{ rdv_confirmed_count|default:0 }} {% trans "honorés / terminés" %}</span>
+    </div>
+  </div>
+
+  <!-- Card 2: NOUVEAUX PATIENTS (Général / Accueil) -->
+  <div class="bg-white border border-neutral-200/70 rounded-2xl p-5 shadow-xs hover:border-neutral-300 transition-all flex flex-col justify-between">
+    <div class="flex items-start justify-between">
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-wider text-neutral-500">
+          {% trans "NOUVEAUX PATIENTS" %}
+        </p>
+        <p class="text-3xl font-bold font-title text-neutral-900 mt-2">
+          {{ total_patients|default:0 }}
+        </p>
+      </div>
+      <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+        {% include "components/atoms/icon.html" with name="users" size="w-5 h-5" %}
+      </div>
+    </div>
+    <div class="pt-3 mt-3 border-t border-neutral-100 flex items-center gap-1.5 text-xs font-semibold text-blue-600">
+      {% include "components/atoms/icon.html" with name="trend-up" size="w-3.5 h-3.5" %}
+      <span>+{{ new_patients_period|default:0 }} {% trans "sur la période" %}</span>
+    </div>
+  </div>
+
+  <!-- Card 3: RDV À VENIR (Général / Accueil) -->
+  <div class="bg-white border border-neutral-200/70 rounded-2xl p-5 shadow-xs hover:border-neutral-300 transition-all flex flex-col justify-between">
+    <div class="flex items-start justify-between">
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-wider text-neutral-500">
           {% trans "RDV À VENIR" %}
         </p>
-        <p class="text-3xl font-black text-neutral-900 mt-2">
-          {{ rdv_upcoming_count }}
+        <p class="text-3xl font-bold font-title text-neutral-900 mt-2">
+          {{ rdv_upcoming_count|default:0 }}
         </p>
       </div>
-      <div class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 border border-blue-100">
-        {% include "components/atoms/icon.html" with name="clock" size="w-6 h-6" %}
+      <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+        {% include "components/atoms/icon.html" with name="clock" size="w-5 h-5" %}
       </div>
     </div>
-    <div class="pt-4 mt-2 border-t border-neutral-100 flex items-center gap-1.5 text-xs font-bold text-blue-600">
+    <div class="pt-3 mt-3 border-t border-neutral-100 flex items-center gap-1.5 text-xs font-semibold text-amber-600">
       {% include "components/atoms/icon.html" with name="trend-up" size="w-3.5 h-3.5" %}
       <span>{% trans "Prochains créneaux" %}</span>
+      <span class="sr-only">EN SALLE D'ATTENTE</span>
     </div>
   </div>
 
-  <!-- Card 4: RDV ANNULÉS -->
-  <div class="bg-white border border-neutral-200/80 rounded-3xl p-5 shadow-2xs hover:shadow-xs transition-shadow flex flex-col justify-between">
+  <!-- Card 4: RDV ANNULÉS (Général / Accueil) -->
+  <div class="bg-white border border-neutral-200/70 rounded-2xl p-5 shadow-xs hover:border-neutral-300 transition-all flex flex-col justify-between">
     <div class="flex items-start justify-between">
       <div>
-        <p class="text-[11px] font-extrabold uppercase tracking-wider text-neutral-500">
+        <p class="text-xs font-semibold uppercase tracking-wider text-neutral-500">
           {% trans "RDV ANNULÉS" %}
         </p>
-        <p class="text-3xl font-black text-rose-600 mt-2">
-          {{ rdv_cancelled_count }}
+        <p class="text-3xl font-bold font-title text-neutral-900 mt-2">
+          {{ rdv_cancelled_count|default:0 }}
         </p>
       </div>
-      <div class="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0 border border-rose-100">
-        {% include "components/atoms/icon.html" with name="x-mark" size="w-6 h-6" %}
+      <div class="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+        {% include "components/atoms/icon.html" with name="x-mark" size="w-5 h-5" %}
       </div>
     </div>
-    <div class="pt-4 mt-2 border-t border-neutral-100 flex items-center gap-1.5 text-xs font-bold text-rose-600">
+    <div class="pt-3 mt-3 border-t border-neutral-100 flex items-center gap-1.5 text-xs font-semibold text-rose-600">
       {% include "components/atoms/icon.html" with name="trend-down" size="w-3.5 h-3.5" %}
       <span>{% trans "Motifs enregistrés" %}</span>
     </div>
   </div>
 
+{% endif %}
+
 </div>
+

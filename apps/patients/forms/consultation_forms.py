@@ -39,6 +39,11 @@ class ConsultationForm(forms.ModelForm):
         required=False,
         widget=forms.TextInput(attrs={"placeholder": "75"}),
     )
+    frequence_respiratoire = forms.CharField(
+        label=_("Fréquence respiratoire (/min)"),
+        required=False,
+        widget=forms.TextInput(attrs={"placeholder": "16"}),
+    )
 
     class Meta:
         model = Consultation
@@ -91,6 +96,7 @@ class ConsultationForm(forms.ModelForm):
             self.fields["poids"].initial = vitals.get("poids", "")
             self.fields["temperature"].initial = vitals.get("temperature", "")
             self.fields["pouls"].initial = vitals.get("pouls", "")
+            self.fields["frequence_respiratoire"].initial = vitals.get("frequence_respiratoire", "")
 
     def save(self, commit: bool = True) -> Consultation:
         instance: Consultation = super().save(commit=False)
@@ -99,6 +105,7 @@ class ConsultationForm(forms.ModelForm):
             "poids": self.cleaned_data.get("poids", "").strip(),
             "temperature": self.cleaned_data.get("temperature", "").strip(),
             "pouls": self.cleaned_data.get("pouls", "").strip(),
+            "frequence_respiratoire": self.cleaned_data.get("frequence_respiratoire", "").strip(),
         }
         if commit:
             instance.save()

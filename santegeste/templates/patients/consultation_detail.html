@@ -1,120 +1,136 @@
 {% extends "layouts/dashboard.html" %}
 {% load i18n static %}
 
-{% block title %}{% trans "Détail de la Consultation" %} - SantéGeste{% endblock %}
+{% block title %}{% trans "Détail de la Consultation" %} - {{ patient.full_name }} - SantéGeste{% endblock %}
 
 {% block content_inner %}
-<div class="max-w-5xl mx-auto space-y-6">
-  <!-- En-tête -->
-  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-neutral-200/80 shadow-sm">
-    <div>
-      <span class="inline-block px-3 py-1 rounded-full text-xs font-bold bg-teal-100 text-teal-800 mb-2">
-        {{ consultation.get_status_display }}
-      </span>
-      <h1 class="text-2xl font-bold text-neutral-900 font-title tracking-tight">
-        {% trans "Consultation du" %} {{ consultation.consultation_date|date:"d/m/Y à H:i" }}
-      </h1>
-      <p class="text-sm text-neutral-500 mt-1">
-        {% trans "Patient" %} : <strong class="text-neutral-800">{{ patient.full_name }}</strong> | {% trans "Praticien" %} : Dr. {{ consultation.doctor.full_name }}
-      </p>
+<div class="max-w-6xl mx-auto space-y-6">
+
+  <!-- En-tête Patient (Conforme à la maquette de prescription) -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-5 rounded-2xl border border-neutral-200/80 shadow-xs">
+    <div class="flex items-center gap-3.5">
+      <!-- Avatar cercle bleu clair -->
+      <div class="w-12 h-12 rounded-full bg-sky-100 text-sky-700 flex items-center justify-center font-bold text-base shrink-0 border border-sky-200 shadow-2xs">
+        <svg class="w-6 h-6 text-sky-700" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
+        </svg>
+      </div>
+
+      <div>
+        <div class="flex items-center gap-2.5">
+          <h1 class="text-base sm:text-lg font-bold text-neutral-900 font-title tracking-tight">
+            {{ patient.full_name }}
+          </h1>
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-[#0d9488] border border-emerald-200/60">
+            {% trans "Ordonnance" %}
+          </span>
+        </div>
+        <p class="text-xs text-neutral-400 font-medium mt-0.5">
+          ID: <span class="font-mono text-neutral-600 font-semibold">{{ patient.patient_number }}</span>
+          {% if patient.age %} • {{ patient.age }} ans{% endif %}
+          {% if patient.gender %} • {{ patient.get_gender_display }}{% endif %}
+        </p>
+      </div>
     </div>
+
+    <!-- Actions navigation rapide -->
     <div class="flex items-center gap-2">
-      <a href="{% url "patients:patient_detail" patient.pk %}" class="px-4 py-2 rounded-xl bg-neutral-100 text-neutral-700 font-semibold text-sm hover:bg-neutral-200 transition-colors">
+      <a href="{% url "patients:patient_detail" patient.pk %}" class="px-3.5 py-2 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-700 font-semibold text-xs transition-colors">
         {% trans "Fiche patient" %}
       </a>
-      <a href="{% url "patients:consultation_list" %}" class="px-4 py-2 rounded-xl bg-teal-50 text-[#14967F] font-semibold text-sm hover:bg-teal-100 transition-colors">
+      <a href="{% url "patients:consultation_list" %}" class="px-3.5 py-2 rounded-xl bg-teal-50 hover:bg-teal-100 text-[#0d9488] font-semibold text-xs transition-colors">
         {% trans "Toutes les consultations" %}
       </a>
     </div>
   </div>
 
-  <!-- Résumé clinique -->
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-    <div class="md:col-span-2 bg-white p-6 rounded-2xl border border-neutral-200/80 shadow-sm space-y-4">
+  <!-- Résumé clinique & Constantes -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2 bg-white p-6 rounded-2xl border border-neutral-200/80 shadow-xs space-y-4">
       <div>
-        <h3 class="text-xs font-bold text-neutral-400 uppercase tracking-wider">{% trans "Motif de consultation" %}</h3>
-        <p class="text-base font-bold text-neutral-900 mt-1">{{ consultation.reason }}</p>
+        <span class="text-[11px] font-bold text-neutral-400 uppercase tracking-wider block">{% trans "Motif de consultation" %}</span>
+        <p class="text-sm font-bold text-neutral-900 mt-1">{{ consultation.reason }}</p>
       </div>
 
       {% if consultation.symptoms %}
       <div>
-        <h3 class="text-xs font-bold text-neutral-400 uppercase tracking-wider">{% trans "Symptômes & Constatations" %}</h3>
-        <p class="text-sm text-neutral-700 mt-1 whitespace-pre-line">{{ consultation.symptoms }}</p>
+        <span class="text-[11px] font-bold text-neutral-400 uppercase tracking-wider block">{% trans "Symptômes & Constatations" %}</span>
+        <p class="text-xs text-neutral-700 mt-1 whitespace-pre-line leading-relaxed">{{ consultation.symptoms }}</p>
       </div>
       {% endif %}
 
       <div>
-        <h3 class="text-xs font-bold text-neutral-400 uppercase tracking-wider">{% trans "Diagnostic Médical" %}</h3>
-        <p class="text-sm font-semibold text-teal-900 bg-teal-50/50 p-3 rounded-xl border border-teal-200/60 mt-1">
+        <span class="text-[11px] font-bold text-neutral-400 uppercase tracking-wider block">{% trans "Diagnostic Médical" %}</span>
+        <p class="text-xs font-semibold text-teal-950 bg-teal-50/60 p-3 rounded-xl border border-teal-200/70 mt-1 leading-relaxed">
           {{ consultation.diagnosis }}
         </p>
       </div>
 
       {% if consultation.notes %}
       <div>
-        <h3 class="text-xs font-bold text-neutral-400 uppercase tracking-wider">{% trans "Notes & Conseils" %}</h3>
-        <p class="text-sm text-neutral-600 mt-1 italic">{{ consultation.notes }}</p>
+        <span class="text-[11px] font-bold text-neutral-400 uppercase tracking-wider block">{% trans "Notes & Recommandations" %}</span>
+        <p class="text-xs text-neutral-600 mt-1 italic">{{ consultation.notes }}</p>
       </div>
       {% endif %}
     </div>
 
     <!-- Carte des Constantes Vitales -->
-    <div class="bg-white p-6 rounded-2xl border border-neutral-200/80 shadow-sm space-y-3">
-      <h3 class="text-sm font-bold text-neutral-900 border-b border-neutral-200 pb-2 flex items-center gap-2">
+    <div class="bg-white p-6 rounded-2xl border border-neutral-200/80 shadow-xs space-y-3">
+      <h3 class="text-xs font-bold text-neutral-900 border-b border-neutral-100 pb-2.5 flex items-center gap-2 uppercase tracking-wider font-title">
         {% include "components/atoms/icon.html" with name="heart" size="w-4 h-4 text-rose-500" %}
-        {% trans "Constantes Vitales" %}
+        <span>{% trans "Constantes Vitales" %}</span>
       </h3>
       {% with vitals=consultation.vital_signs %}
-        <div class="flex justify-between items-center py-1.5 border-b border-neutral-100 text-sm">
-          <span class="text-neutral-500">{% trans "Tension" %}</span>
-          <span class="font-bold text-neutral-900">{{ vitals.tension|default:"-" }}</span>
+        <div class="flex justify-between items-center py-2 border-b border-neutral-100 text-xs">
+          <span class="text-neutral-500 font-medium">{% trans "Tension artérielle" %}</span>
+          <span class="font-bold text-neutral-900 font-mono">{{ vitals.tension|default:"-" }}</span>
         </div>
-        <div class="flex justify-between items-center py-1.5 border-b border-neutral-100 text-sm">
-          <span class="text-neutral-500">{% trans "Poids" %}</span>
-          <span class="font-bold text-neutral-900">{{ vitals.poids|default:"-" }} kg</span>
+        <div class="flex justify-between items-center py-2 border-b border-neutral-100 text-xs">
+          <span class="text-neutral-500 font-medium">{% trans "Poids" %}</span>
+          <span class="font-bold text-neutral-900 font-mono">{{ vitals.poids|default:"-" }} kg</span>
         </div>
-        <div class="flex justify-between items-center py-1.5 border-b border-neutral-100 text-sm">
-          <span class="text-neutral-500">{% trans "Température" %}</span>
-          <span class="font-bold text-neutral-900">{{ vitals.temperature|default:"-" }} °C</span>
+        <div class="flex justify-between items-center py-2 border-b border-neutral-100 text-xs">
+          <span class="text-neutral-500 font-medium">{% trans "Température" %}</span>
+          <span class="font-bold text-neutral-900 font-mono">{{ vitals.temperature|default:"-" }} °C</span>
         </div>
-        <div class="flex justify-between items-center py-1.5 text-sm">
-          <span class="text-neutral-500">{% trans "Pouls" %}</span>
-          <span class="font-bold text-neutral-900">{{ vitals.pouls|default:"-" }} bpm</span>
+        <div class="flex justify-between items-center py-2 text-xs">
+          <span class="text-neutral-500 font-medium">{% trans "Pouls" %}</span>
+          <span class="font-bold text-neutral-900 font-mono">{{ vitals.pouls|default:"-" }} bpm</span>
         </div>
       {% endwith %}
     </div>
   </div>
 
-  <!-- Prestations / Actes réalisés transmises à la Caisse -->
-  <div class="bg-white p-6 rounded-2xl border border-neutral-200/80 shadow-sm space-y-4">
-    <div class="flex items-center justify-between border-b border-neutral-200 pb-3">
-      <h3 class="text-base font-bold text-neutral-900 flex items-center gap-2">
-        {% include "components/atoms/icon.html" with name="sparkles" size="w-5 h-5 text-amber-500" %}
-        {% trans "Prestations & Actes Réalisés (Transmis à la Caisse)" %}
+  <!-- Prestations & Actes Réalisés -->
+  <div class="bg-white p-6 rounded-2xl border border-neutral-200/80 shadow-xs space-y-4">
+    <div class="flex items-center justify-between border-b border-neutral-100 pb-3">
+      <h3 class="text-sm font-bold text-neutral-900 flex items-center gap-2 font-title">
+        {% include "components/atoms/icon.html" with name="banknotes" size="w-4 h-4 text-[#0d9488]" %}
+        <span>{% trans "Actes & Prestations (Transmis à la Caisse)" %}</span>
       </h3>
     </div>
 
     {% if prestations %}
       <div class="overflow-x-auto">
-        <table class="w-full text-left text-sm">
+        <table class="w-full text-left text-xs border-collapse">
           <thead>
-            <tr class="text-xs font-bold text-neutral-400 border-b border-neutral-200">
-              <th class="py-2">{% trans "Acte" %}</th>
-              <th class="py-2">{% trans "Quantité" %}</th>
-              <th class="py-2">{% trans "Prix Unitaire" %}</th>
-              <th class="py-2">{% trans "Total" %}</th>
-              <th class="py-2 text-right">{% trans "Statut Caisse" %}</th>
+            <tr class="text-[11px] font-bold text-neutral-400 uppercase tracking-wider border-b border-neutral-100 bg-neutral-50/50">
+              <th class="py-2.5 px-3">{% trans "Acte" %}</th>
+              <th class="py-2.5 px-3">{% trans "Quantité" %}</th>
+              <th class="py-2.5 px-3">{% trans "Prix Unitaire" %}</th>
+              <th class="py-2.5 px-3">{% trans "Total" %}</th>
+              <th class="py-2.5 px-3 text-right">{% trans "Statut Caisse" %}</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-neutral-100">
             {% for item in prestations %}
-              <tr>
-                <td class="py-3 font-semibold text-neutral-900">{{ item.prestation.name }}</td>
-                <td class="py-3 text-neutral-700">x{{ item.quantity }}</td>
-                <td class="py-3 text-neutral-700">{{ item.unit_price }} FCFA</td>
-                <td class="py-3 font-bold text-neutral-900">{{ item.total_price }} FCFA</td>
-                <td class="py-3 text-right">
-                  <span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-bold {% if item.status == 'PAYE' %}bg-emerald-100 text-emerald-800{% else %}bg-amber-100 text-amber-800{% endif %}">
+              <tr class="hover:bg-neutral-50/50 transition-colors">
+                <td class="py-3 px-3 font-semibold text-neutral-900">{{ item.prestation.name }}</td>
+                <td class="py-3 px-3 text-neutral-600 font-mono">x{{ item.quantity }}</td>
+                <td class="py-3 px-3 text-neutral-600 font-mono">{{ item.unit_price }} FCFA</td>
+                <td class="py-3 px-3 font-bold text-neutral-900 font-mono">{{ item.total_price }} FCFA</td>
+                <td class="py-3 px-3 text-right">
+                  <span class="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold {% if item.status == 'PAYE' %}bg-emerald-50 text-emerald-800 border border-emerald-200{% else %}bg-amber-50 text-amber-900 border border-amber-200{% endif %}">
                     {{ item.get_status_display }}
                   </span>
                 </td>
@@ -136,69 +152,342 @@
         <label class="block text-xs font-bold text-neutral-700 mb-1">{% trans "Qté" %}</label>
         {{ prestation_form.quantity }}
       </div>
-      <button type="submit" class="px-4 py-2 bg-[#14967F] text-white rounded-xl font-bold text-sm hover:bg-[#0E6A5A] transition-colors">
+      <button type="submit" class="px-4 py-2 bg-[#0d9488] hover:bg-[#0f766e] text-white rounded-xl font-bold text-xs shadow-xs transition-colors">
         {% trans "+ Ajouter" %}
       </button>
     </form>
   </div>
 
-  <!-- Ordonnances Médicales (si can_prescribe) -->
-  <div class="bg-white p-6 rounded-2xl border border-neutral-200/80 shadow-sm space-y-4">
-    <div class="flex items-center justify-between border-b border-neutral-200 pb-3">
-      <h3 class="text-base font-bold text-neutral-900 flex items-center gap-2">
-        {% include "components/atoms/icon.html" with name="beaker" size="w-5 h-5 text-teal-600" %}
-        {% trans "Ordonnances Médicales" %}
-      </h3>
-    </div>
+  <!-- SECTION ORDONNANCES MÉDICALES (Fidèle à la maquette media_1790818046921.png) -->
+  {% if ordonnances %}
+    <div class="space-y-6">
+      {% for ord in ordonnances %}
+        <div class="space-y-4">
+          <div class="flex items-center justify-between">
+            <h2 class="text-xl font-bold text-neutral-900 font-title tracking-tight">
+              {% trans "Ordonnance prescrite" %}
+            </h2>
+          </div>
 
-    {% if ordonnances %}
-      <div class="space-y-4">
-        {% for ord in ordonnances %}
-          <div class="bg-teal-50/30 p-4 rounded-xl border border-teal-100 space-y-2">
-            <div class="flex justify-between items-center border-b border-teal-100 pb-2">
-              <span class="text-xs font-bold text-teal-900">{% trans "Prescription du" %} {{ ord.prescription_date|date:"d/m/Y H:i" }}</span>
-              <div class="flex items-center gap-2">
-                <span class="text-xs text-neutral-500">Dr. {{ ord.doctor.full_name }}</span>
-                <a href="{% url "patients:ordonnance_print" ord.pk %}" target="_blank" class="inline-flex items-center gap-1 px-2.5 py-1 bg-white border border-teal-300 text-[#14967F] font-bold text-xs rounded-lg hover:bg-teal-50 transition-colors">
-                  {% include "components/atoms/icon.html" with name="printer" size="w-3.5 h-3.5" %}
-                  {% trans "Imprimer / PDF" %}
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            <!-- Colonne Gauche (~65% / 8 colonnes) : Médicaments prescrits & Conseils -->
+            <div class="lg:col-span-8 space-y-5">
+              <!-- Carte Médicaments -->
+              <div class="bg-white p-6 rounded-2xl border border-neutral-200/80 shadow-xs space-y-4">
+                <h3 class="text-sm font-bold text-neutral-900 font-title">
+                  {% trans "Médicaments" %}
+                </h3>
+
+                <div class="overflow-x-auto">
+                  <table class="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr class="border-b border-neutral-200 bg-neutral-50/70 text-[11px] font-bold text-neutral-500 uppercase tracking-wider">
+                        <th class="py-3 px-3">{% trans "Médicament & Dosage" %}</th>
+                        <th class="py-3 px-3">{% trans "Posologie" %}</th>
+                        <th class="py-3 px-3">{% trans "Durée" %}</th>
+                        <th class="py-3 px-3 text-right">{% trans "Quantité" %}</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-neutral-100">
+                      {% for line in ord.lines.all %}
+                        <tr class="hover:bg-neutral-50/50 transition-colors">
+                          <td class="py-3 px-3 font-bold text-neutral-900">{{ line.medication_name }}</td>
+                          <td class="py-3 px-3 text-neutral-700">{{ line.posology }}</td>
+                          <td class="py-3 px-3 text-neutral-600">{{ line.duration }}</td>
+                          <td class="py-3 px-3 text-right font-mono font-bold text-neutral-900">{{ line.quantity }}</td>
+                        </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Carte Conseils au patient -->
+              {% if ord.notes %}
+                <div class="bg-white p-5 rounded-2xl border border-neutral-200/80 shadow-xs space-y-2">
+                  <h4 class="text-xs font-bold text-neutral-800 font-title">
+                    {% trans "Conseils au patient" %}
+                  </h4>
+                  <p class="text-xs text-neutral-700 bg-neutral-50 p-3 rounded-xl border border-neutral-100 leading-relaxed">
+                    {{ ord.notes }}
+                  </p>
+                </div>
+              {% endif %}
+            </div>
+
+            <!-- Colonne Droite (~35% / 4 colonnes) : Résumé & Actions -->
+            <div class="lg:col-span-4 space-y-4">
+              <div class="bg-white p-5 rounded-2xl border border-neutral-200/80 shadow-xs space-y-4">
+                <h3 class="text-sm font-bold text-neutral-900 font-title pb-2 border-b border-neutral-100">
+                  {% trans "Résumé" %}
+                </h3>
+
+                <!-- Statut -->
+                <div class="space-y-1">
+                  <span class="text-[11px] font-semibold text-neutral-400 block uppercase tracking-wider">
+                    {% trans "Statut" %}
+                  </span>
+                  <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold {% if ord.status == 'DELIVERED' %}bg-emerald-50 text-emerald-800 border border-emerald-200{% elif ord.status == 'CANCELLED' %}bg-rose-50 text-rose-800 border border-rose-200{% else %}bg-amber-50 text-amber-900 border border-amber-200{% endif %}">
+                    <svg class="w-3.5 h-3.5 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+                    <span>{{ ord.get_status_display }}</span>
+                  </span>
+                </div>
+
+                <!-- Date -->
+                <div class="space-y-1">
+                  <span class="text-[11px] font-semibold text-neutral-400 block uppercase tracking-wider">
+                    {% trans "Date" %}
+                  </span>
+                  <p class="text-xs font-bold text-neutral-800 font-mono">
+                    {{ ord.prescribed_at|default:ord.created_at|date:"d/m/Y - H:i" }}
+                  </p>
+                </div>
+
+                <!-- Médecin -->
+                <div class="space-y-1">
+                  <span class="text-[11px] font-semibold text-neutral-400 block uppercase tracking-wider">
+                    {% trans "Médecin" %}
+                  </span>
+                  <div class="flex items-center gap-2">
+                    <div class="w-6 h-6 rounded-lg bg-teal-50 text-[#0d9488] flex items-center justify-center font-bold text-[10px]">
+                      🩺
+                    </div>
+                    <p class="text-xs font-bold text-neutral-900">
+                      Dr. {{ ord.doctor.full_name }}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Boutons d'actions verticaux -->
+              <div class="space-y-2.5">
+                {% if ord.status == "PENDING" %}
+                  <form method="post" action="{% url "patients:pharmacy_ordonnance_dispense" ord.pk %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                    <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 shadow-xs transition-colors cursor-pointer">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                      <span>{% trans "Délivrer l'ordonnance" %}</span>
+                    </button>
+                  </form>
+                {% endif %}
+
+                <a href="{% url "patients:ordonnance_print" ord.pk %}" target="_blank" class="w-full bg-white hover:bg-neutral-50 text-neutral-800 border border-neutral-200/90 font-semibold text-xs py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 shadow-2xs transition-colors">
+                  {% include "components/atoms/icon.html" with name="printer" size="w-4 h-4 text-neutral-500" %}
+                  <span>{% trans "Imprimer" %}</span>
+                </a>
+
+                <a href="{% url "patients:ordonnance_print" ord.pk %}" target="_blank" class="w-full bg-white hover:bg-neutral-50 text-neutral-800 border border-neutral-200/90 font-semibold text-xs py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 shadow-2xs transition-colors">
+                  {% include "components/atoms/icon.html" with name="download" size="w-4 h-4 text-neutral-500" %}
+                  <span>{% trans "Exporter PDF" %}</span>
                 </a>
               </div>
             </div>
-            {% if ord.notes %}<p class="text-xs text-neutral-600 italic">{{ ord.notes }}</p>{% endif %}
-            <ul class="divide-y divide-teal-100 text-sm pt-1">
-              {% for line in ord.lines.all %}
-                <li class="py-1.5 flex justify-between">
-                  <span class="font-bold text-neutral-800">{{ line.medication_name }}</span>
-                  <span class="text-neutral-600">{{ line.posology }} ({{ line.duration }})</span>
-                </li>
-              {% endfor %}
-            </ul>
           </div>
-        {% endfor %}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <!-- FORMULAIRE NOUVELLE ORDONNANCE (Conforme à media_1790818046921.png) -->
+  {% if can_prescribe %}
+    <div class="space-y-4 pt-4 border-t border-neutral-200/80">
+      <div class="flex items-center justify-between">
+        <h2 class="text-xl font-bold text-neutral-900 font-title tracking-tight">
+          {% trans "Nouvelle ordonnance" %}
+        </h2>
       </div>
-    {% endif %}
 
-    {% if can_prescribe %}
-      <!-- Formulaire rapide de prescription ordonnance -->
-      <form method="post" action="{% url "patients:ordonnance_create" consultation.pk %}" class="space-y-3 pt-3 border-t border-neutral-100">
+      <form method="post" action="{% url "patients:ordonnance_create" consultation.pk %}" id="prescription-form" class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {% csrf_token %}
-        <h4 class="text-xs font-bold text-neutral-700 uppercase">{% trans "Nouvelle Ordonnance" %}</h4>
-        <input type="text" name="notes" placeholder="{% trans "Instructions générales ou conseils d'administration..." %}" class="w-full px-4 py-2 rounded-xl border border-neutral-300 text-sm">
 
-        <!-- Ligne 1 -->
-        <div class="grid grid-cols-1 sm:grid-cols-4 gap-2">
-          <input type="text" name="medication_name" placeholder="{% trans "Médicament (ex: Amoxicilline 1g)" %}" class="px-3 py-1.5 rounded-lg border border-neutral-300 text-xs">
-          <input type="text" name="posology" placeholder="{% trans "Posologie (ex: 1 cp 2x/jour)" %}" class="px-3 py-1.5 rounded-lg border border-neutral-300 text-xs">
-          <input type="text" name="duration" placeholder="{% trans "Durée (ex: 7 jours)" %}" class="px-3 py-1.5 rounded-lg border border-neutral-300 text-xs">
-          <input type="number" name="quantity" value="1" min="1" class="px-3 py-1.5 rounded-lg border border-neutral-300 text-xs">
+        <!-- Colonne Gauche (~65% / 8 colonnes) : Médicaments & Conseils -->
+        <div class="lg:col-span-8 space-y-5">
+          <!-- Carte 1 : Médicaments -->
+          <div class="bg-white p-6 rounded-2xl border border-neutral-200/80 shadow-xs space-y-4">
+            <h3 class="text-sm font-bold text-neutral-900 font-title">
+              {% trans "Médicaments" %}
+            </h3>
+
+            <!-- Table des lignes -->
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr class="border-b border-neutral-200 bg-neutral-50/70 text-[11px] font-bold text-neutral-500 uppercase tracking-wider">
+                    <th class="py-3 px-3">{% trans "Médicament & Dosage" %}</th>
+                    <th class="py-3 px-3">{% trans "Posologie" %}</th>
+                    <th class="py-3 px-3">{% trans "Durée" %}</th>
+                    <th class="py-3 px-3">{% trans "Quantité" %}</th>
+                    <th class="py-3 px-2 w-10 text-center"></th>
+                  </tr>
+                </thead>
+                <tbody id="medication-tbody" class="divide-y divide-neutral-100">
+                  <!-- Ligne 1 par défaut -->
+                  <tr class="medication-row group hover:bg-neutral-50/50 transition-colors">
+                    <td class="py-2.5 px-3">
+                      <input type="text" name="medication_name" required placeholder="ex: Amoxicilline 500 mg" class="w-full px-3 py-2 border border-neutral-200 rounded-xl text-xs font-semibold text-neutral-800 placeholder-neutral-400 focus:ring-2 focus:ring-[#0d9488] focus:border-transparent outline-none">
+                    </td>
+                    <td class="py-2.5 px-3">
+                      <input type="text" name="posology" placeholder="ex: 1 comprimé 3 fois/jour" class="w-full px-3 py-2 border border-neutral-200 rounded-xl text-xs text-neutral-700 placeholder-neutral-400 focus:ring-2 focus:ring-[#0d9488] focus:border-transparent outline-none">
+                    </td>
+                    <td class="py-2.5 px-3">
+                      <input type="text" name="duration" placeholder="ex: 7 jours" class="w-full px-3 py-2 border border-neutral-200 rounded-xl text-xs text-neutral-700 placeholder-neutral-400 focus:ring-2 focus:ring-[#0d9488] focus:border-transparent outline-none">
+                    </td>
+                    <td class="py-2.5 px-3 w-20">
+                      <input type="number" name="quantity" value="1" min="1" class="w-full px-3 py-2 border border-neutral-200 rounded-xl text-xs font-bold text-center text-neutral-800 focus:ring-2 focus:ring-[#0d9488] focus:border-transparent outline-none">
+                    </td>
+                    <td class="py-2.5 px-2 text-center">
+                      <button type="button" onclick="removeMedRow(this)" class="remove-row-btn p-1.5 rounded-lg text-neutral-400 hover:text-rose-600 hover:bg-rose-50 transition-colors" title="{% trans "Supprimer la ligne" %}">
+                        {% include "components/atoms/icon.html" with name="trash" size="w-4 h-4" %}
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Bouton Ajouter un médicament -->
+            <div class="pt-2">
+              <button type="button" id="add-row-btn" class="bg-[#0d9488] hover:bg-[#0f766e] text-white text-xs font-bold py-2.5 px-4 rounded-xl inline-flex items-center gap-2 shadow-xs transition-colors cursor-pointer">
+                {% include "components/atoms/icon.html" with name="plus" size="w-4 h-4" %}
+                <span>{% trans "Ajouter un médicament" %}</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Carte 2 : Conseils au patient -->
+          <div class="bg-white p-5 rounded-2xl border border-neutral-200/80 shadow-xs space-y-2">
+            <label for="prescription-notes" class="block text-xs font-bold text-neutral-800 font-title">
+              {% trans "Conseils au patient" %}
+            </label>
+            <textarea
+              id="prescription-notes"
+              name="notes"
+              rows="3"
+              placeholder="{% trans "Prendre après les repas. Boire beaucoup d'eau." %}"
+              class="w-full px-3.5 py-2.5 border border-neutral-200 rounded-xl text-xs text-neutral-700 placeholder-neutral-400 focus:ring-2 focus:ring-[#0d9488] focus:border-transparent outline-none resize-none"
+            ></textarea>
+          </div>
         </div>
 
-        <button type="submit" class="px-4 py-2 bg-emerald-600 text-white rounded-xl font-bold text-xs hover:bg-emerald-700 transition-colors">
-          {% trans "Générer & Signer l'ordonnance" %}
-        </button>
+        <!-- Colonne Droite (~35% / 4 colonnes) : Résumé & Actions -->
+        <div class="lg:col-span-4 space-y-4">
+          <!-- Carte Résumé -->
+          <div class="bg-white p-5 rounded-2xl border border-neutral-200/80 shadow-xs space-y-4">
+            <h3 class="text-sm font-bold text-neutral-900 font-title pb-2 border-b border-neutral-100">
+              {% trans "Résumé" %}
+            </h3>
+
+            <!-- Statut -->
+            <div class="space-y-1">
+              <span class="text-[11px] font-semibold text-neutral-400 block uppercase tracking-wider">
+                {% trans "Statut" %}
+              </span>
+              <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-50 text-amber-900 border border-amber-200">
+                <svg class="w-3.5 h-3.5 text-amber-600 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+                <span>{% trans "En attente de délivrance" %}</span>
+              </span>
+            </div>
+
+            <!-- Date -->
+            <div class="space-y-1">
+              <span class="text-[11px] font-semibold text-neutral-400 block uppercase tracking-wider">
+                {% trans "Date" %}
+              </span>
+              <p class="text-xs font-bold text-neutral-800 font-mono">
+                {{ consultation.consultation_date|date:"d/m/Y - H:i" }}
+              </p>
+            </div>
+
+            <!-- Médecin -->
+            <div class="space-y-1">
+              <span class="text-[11px] font-semibold text-neutral-400 block uppercase tracking-wider">
+                {% trans "Médecin" %}
+              </span>
+              <div class="flex items-center gap-2">
+                <div class="w-6 h-6 rounded-lg bg-teal-50 text-[#0d9488] flex items-center justify-center font-bold text-[10px]">
+                  🩺
+                </div>
+                <p class="text-xs font-bold text-neutral-900">
+                  Dr. {{ consultation.doctor.full_name|default:request.user.full_name }}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Boutons d'actions verticaux de la maquette -->
+          <div class="space-y-2.5">
+            <button type="submit" name="action" value="save" class="w-full bg-[#0d9488] hover:bg-[#0f766e] text-white font-bold text-xs py-3 px-4 rounded-xl flex items-center justify-center gap-2 shadow-xs transition-colors cursor-pointer">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+              <span>{% trans "Enregistrer" %}</span>
+            </button>
+
+            <button type="submit" name="action" value="dispense" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-3 px-4 rounded-xl flex items-center justify-center gap-2 shadow-xs transition-colors cursor-pointer">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              <span>{% trans "Délivrer directement" %}</span>
+            </button>
+
+            <button type="submit" name="action" value="pharmacy" class="w-full bg-[#0f766e] hover:bg-[#115e59] text-white font-bold text-xs py-3 px-4 rounded-xl flex items-center justify-center gap-2 shadow-xs transition-colors cursor-pointer">
+              {% include "components/atoms/icon.html" with name="beaker" size="w-4 h-4" %}
+              <span>{% trans "Transmettre à la pharmacie" %}</span>
+            </button>
+
+            {% if ordonnances %}
+              {% with latest_ord=ordonnances.first %}
+                <a href="{% url "patients:ordonnance_print" latest_ord.pk %}" target="_blank" class="w-full bg-white hover:bg-neutral-50 text-neutral-800 border border-neutral-200/90 font-semibold text-xs py-3 px-4 rounded-xl flex items-center justify-center gap-2 shadow-2xs transition-colors">
+                  {% include "components/atoms/icon.html" with name="printer" size="w-4 h-4 text-neutral-500" %}
+                  <span>{% trans "Imprimer" %}</span>
+                </a>
+
+                <a href="{% url "patients:ordonnance_print" latest_ord.pk %}" target="_blank" class="w-full bg-white hover:bg-neutral-50 text-neutral-800 border border-neutral-200/90 font-semibold text-xs py-3 px-4 rounded-xl flex items-center justify-center gap-2 shadow-2xs transition-colors">
+                  {% include "components/atoms/icon.html" with name="download" size="w-4 h-4 text-neutral-500" %}
+                  <span>{% trans "Exporter PDF" %}</span>
+                </a>
+              {% endwith %}
+            {% endif %}
+          </div>
+        </div>
       </form>
-    {% endif %}
-  </div>
+
+      <!-- Script dynamique d'ajout/suppression de lignes -->
+      <script>
+        document.getElementById('add-row-btn')?.addEventListener('click', function() {
+          const tbody = document.getElementById('medication-tbody');
+          const firstRow = tbody.querySelector('.medication-row');
+          if (!firstRow) return;
+
+          const newRow = firstRow.cloneNode(true);
+          newRow.querySelectorAll('input').forEach(input => {
+            if (input.name === 'quantity') {
+              input.value = '1';
+            } else {
+              input.value = '';
+            }
+          });
+
+          tbody.appendChild(newRow);
+          newRow.querySelector('input[name="medication_name"]')?.focus();
+        });
+
+        function removeMedRow(btn) {
+          const tbody = document.getElementById('medication-tbody');
+          if (tbody.querySelectorAll('.medication-row').length > 1) {
+            btn.closest('.medication-row').remove();
+          } else {
+            // Effacer les champs s'il ne reste qu'une seule ligne
+            const row = btn.closest('.medication-row');
+            row.querySelectorAll('input').forEach(input => {
+              if (input.name === 'quantity') {
+                input.value = '1';
+              } else {
+                input.value = '';
+              }
+            });
+          }
+        }
+      </script>
+    </div>
+  {% endif %}
+
 </div>
 {% endblock %}

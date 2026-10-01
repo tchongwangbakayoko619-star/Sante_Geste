@@ -1,92 +1,289 @@
 {% extends "layouts/dashboard.html" %}
-{% load i18n static %}
+{% load i18n static patient_tags %}
 
-{% block title %}{% trans "Mes Rendez-vous Médicaux" %} - SantéGeste{% endblock %}
+{% block title %}{% trans "Agenda médical" %} - SantéGeste{% endblock %}
 
 {% block content_inner %}
 <div class="space-y-6">
-  <!-- En-tête de la page -->
-  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-neutral-200/80 shadow-sm">
-    <div>
-      <h1 class="text-2xl font-bold text-neutral-900 font-title tracking-tight flex items-center gap-3">
-        <span class="p-2 rounded-xl bg-teal-50 text-[#14967F]">
-          {% include "components/atoms/icon.html" with name="calendar" size="w-6 h-6" %}
-        </span>
-        {% trans "Mes Rendez-vous Médicaux" %}
-      </h1>
-      <p class="text-sm text-neutral-500 mt-1">
-        {% trans "Consultez votre agenda, vos créneaux du jour et démarrez les consultations médicales." %}
-      </p>
+
+  <!-- En-tête : Titre & Navigation Date / Vues (Conforme à la maquette) -->
+  <div class="space-y-4">
+    <h1 class="text-2xl font-bold text-neutral-900 font-title tracking-tight">
+      {% trans "Agenda médical" %}
+    </h1>
+
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <!-- Date Bar : Aujourd'hui, <, >, Date -->
+      <div class="flex flex-wrap items-center gap-2">
+        <a href="?date={{ today_date }}&date_filter=today" class="px-3.5 py-1.5 rounded-lg border border-neutral-200 bg-white text-xs font-semibold text-neutral-700 hover:bg-neutral-50 shadow-2xs transition-colors">
+          {% trans "Aujourd'hui" %}
+        </a>
+        <div class="flex items-center gap-1">
+          <a href="?date={{ prev_date }}" class="w-8 h-8 rounded-lg border border-neutral-200 bg-white flex items-center justify-center text-neutral-500 hover:text-neutral-800 hover:bg-neutral-50 shadow-2xs transition-colors" aria-label="{% trans "Précédent" %}" id="btn-prev-date">
+            {% include "components/atoms/icon.html" with name="arrow-left" size="w-3.5 h-3.5" %}
+          </a>
+          <a href="?date={{ next_date }}" class="w-8 h-8 rounded-lg border border-neutral-200 bg-white flex items-center justify-center text-neutral-500 hover:text-neutral-800 hover:bg-neutral-50 shadow-2xs transition-colors" aria-label="{% trans "Suivant" %}" id="btn-next-date">
+            {% include "components/atoms/icon.html" with name="arrow-right" size="w-3.5 h-3.5" %}
+          </a>
+        </div>
+        <label class="relative inline-flex items-center cursor-pointer group">
+          <input
+            type="date"
+            value="{{ current_date|date:'Y-m-d' }}"
+            onchange="if(this.value) window.location.href='?date=' + this.value"
+            class="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+            id="agenda-date-input"
+            aria-label="{% trans "Sélectionner une date" %}"
+          >
+          <span class="text-sm font-bold text-neutral-800 ml-1.5 select-none group-hover:text-[#0d9488] transition-colors flex items-center gap-1.5" title="{% trans "Cliquer pour changer de date" %}">
+            <span>{{ current_date|date:"l d F Y"|capfirst }}</span>
+            <svg class="w-4 h-4 text-neutral-400 group-hover:text-[#0d9488]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+          </span>
+        </label>
+      </div>
+
+      <!-- Sélecteur de vues : [ Jour | Semaine | Mois ] -->
+      <div class="inline-flex items-center rounded-xl p-1 bg-white border border-neutral-200/80 shadow-2xs self-start md:self-auto" role="tablist">
+        <button
+          type="button"
+          onclick="switchAgendaView('day')"
+          id="tab-btn-day"
+          role="tab"
+          aria-selected="true"
+          class="px-4 py-1.5 rounded-lg text-xs font-bold transition-all bg-[#0d9488] text-white shadow-2xs">
+          {% trans "Jour" %}
+        </button>
+        <button
+          type="button"
+          onclick="switchAgendaView('week')"
+          id="tab-btn-week"
+          role="tab"
+          aria-selected="false"
+          class="px-4 py-1.5 rounded-lg text-xs font-semibold text-neutral-600 hover:text-neutral-900 transition-all">
+          {% trans "Semaine" %}
+        </button>
+        <button
+          type="button"
+          onclick="switchAgendaView('month')"
+          id="tab-btn-month"
+          role="tab"
+          aria-selected="false"
+          class="px-4 py-1.5 rounded-lg text-xs font-semibold text-neutral-600 hover:text-neutral-900 transition-all">
+          {% trans "Mois" %}
+        </button>
+      </div>
     </div>
   </div>
 
-  <!-- Barre de Filtres Rapides -->
-  <div class="bg-white p-4 rounded-2xl border border-neutral-200/80 shadow-sm flex flex-wrap items-center gap-3">
-    <a href="?date_filter=today" class="px-4 py-2 rounded-xl text-sm font-semibold transition-colors {% if date_filter == 'today' %}bg-[#14967F] text-white{% else %}bg-neutral-100 text-neutral-700 hover:bg-neutral-200{% endif %}">
-      {% trans "Aujourd'hui" %}
-    </a>
-    <a href="?date_filter=upcoming" class="px-4 py-2 rounded-xl text-sm font-semibold transition-colors {% if date_filter == 'upcoming' %}bg-[#14967F] text-white{% else %}bg-neutral-100 text-neutral-700 hover:bg-neutral-200{% endif %}">
-      {% trans "À venir" %}
-    </a>
-    <a href="?date_filter=past" class="px-4 py-2 rounded-xl text-sm font-semibold transition-colors {% if date_filter == 'past' %}bg-[#14967F] text-white{% else %}bg-neutral-100 text-neutral-700 hover:bg-neutral-200{% endif %}">
-      {% trans "Historique" %}
-    </a>
+  <!-- VUE 1 : VUE JOUR (Maquette officielle : 2 colonnes) -->
+  <div id="agenda-view-day" class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+    <!-- Colonne Gauche (~33% / 4 colonnes) : Mes rendez-vous timeline & liste -->
+    <div class="lg:col-span-4 bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-xs flex flex-col justify-between min-h-[500px]">
+      <div>
+        <div class="pb-3 border-b border-neutral-100 flex items-center justify-between">
+          <div>
+            <h2 class="text-sm font-bold text-neutral-900 font-title">
+              {% trans "Mes rendez-vous" %}
+            </h2>
+            <p class="text-xs text-neutral-400 mt-0.5">
+              {{ appointments|length }} {% trans "rendez-vous" %}
+            </p>
+          </div>
+          {% if date_filter != 'today' or selected_date %}
+            <a href="?date_filter=today" class="text-[11px] font-semibold text-[#0d9488] hover:underline">
+              {% trans "Aujourd'hui" %}
+            </a>
+          {% endif %}
+        </div>
+
+        <!-- Liste des rendez-vous avec puces colorées de la maquette -->
+        <div class="mt-4 space-y-3.5">
+          {% for rdv in appointments %}
+            <div class="flex items-center gap-3 p-1.5 rounded-xl hover:bg-neutral-50 transition-colors group">
+              <!-- Pastille colorée -->
+              <span class="w-2.5 h-2.5 rounded-full shrink-0 {% cycle 'bg-emerald-500' 'bg-blue-600' 'bg-blue-600' 'bg-purple-600' 'bg-rose-500' 'bg-rose-500' %}"></span>
+
+              <!-- Heure -->
+              <span class="text-xs font-bold text-neutral-600 font-mono shrink-0">
+                {{ rdv.scheduled_at|date:"H:i" }}
+              </span>
+
+              <!-- Patient & Lien direct -->
+              <div class="min-w-0 flex-1">
+                <a href="{{ rdv.patient.get_absolute_url }}" class="text-xs font-semibold text-neutral-800 truncate block group-hover:text-[#0d9488] transition-colors">
+                  {{ rdv.patient.full_name }}
+                </a>
+                <span class="text-[11px] text-neutral-400 truncate block">
+                  {{ rdv.reason|default:_("Consultation") }}
+                </span>
+              </div>
+
+              <!-- Action rapide consultation -->
+              {% if not rdv.consultation and rdv.status != 'CANCELLED' %}
+                <a href="{% url "patients:consultation_create" %}?appointment={{ rdv.pk }}" class="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg bg-teal-50 text-[#0d9488] hover:bg-teal-100 transition-all shrink-0" title="{% trans "Démarrer consultation" %}">
+                  {% include "components/atoms/icon.html" with name="clipboard-document-list" size="w-3.5 h-3.5" %}
+                </a>
+              {% endif %}
+            </div>
+          {% empty %}
+            <div class="py-10 text-center space-y-2.5">
+              <div class="w-10 h-10 rounded-full bg-neutral-100 text-neutral-400 mx-auto flex items-center justify-center">
+                {% include "components/atoms/icon.html" with name="calendar" size="w-5 h-5" %}
+              </div>
+              <p class="text-xs font-medium text-neutral-500">{% trans "Aucun rendez-vous sur cette journée." %}</p>
+              <div class="pt-1 flex flex-col gap-1 items-center">
+                <a href="?date_filter=upcoming" class="text-xs font-semibold text-[#0d9488] hover:underline">
+                  {% trans "Voir les rendez-vous à venir ->" %}
+                </a>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Action Button en bas de colonne gauche : + Prendre un RDV -->
+      <div class="pt-4 mt-6 border-t border-neutral-100">
+        <a href="{% url "patients:appointment_create" %}" class="w-full bg-[#0d9488] hover:bg-[#0f766e] text-white text-xs font-bold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 shadow-xs transition-colors">
+          {% include "components/atoms/icon.html" with name="plus" size="w-4 h-4" %}
+          <span>{% trans "Prendre un RDV" %}</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Colonne Droite (~67% / 8 colonnes) : Grille horaire journalière (08:00 à 17:00) -->
+    <div class="lg:col-span-8 bg-white border border-neutral-200/80 rounded-2xl p-6 shadow-xs">
+      <div class="divide-y divide-neutral-100">
+        {% for hour in hours|default:"08,09,10,11,12,13,14,15,16,17"|split:"," %}
+          <div class="flex items-start gap-4 py-3 min-h-[64px]">
+            <!-- Heure axe vertical -->
+            <div class="w-14 shrink-0 text-xs font-mono font-medium text-neutral-400 pt-1 text-right">
+              {{ hour }}:00
+            </div>
+
+            <!-- Emplacement des cartes de rendez-vous pour cette heure -->
+            <div class="flex-1 space-y-2">
+              {% for rdv in appointments %}
+                {% if rdv.scheduled_at|date:"H" == hour %}
+                  <div class="p-3.5 rounded-xl border flex items-center justify-between gap-3 transition-all hover:shadow-xs {% cycle 'bg-emerald-50/70 border-emerald-200/80 text-emerald-950' 'bg-blue-50/70 border-blue-200/80 text-blue-950' 'bg-purple-50/70 border-purple-200/80 text-purple-950' 'bg-amber-50/70 border-amber-200/80 text-amber-950' %}">
+                    <!-- Badge icône + Informations du rendez-vous -->
+                    <div class="flex items-center gap-3.5 min-w-0">
+                      <!-- Badge carré arrondi avec icône -->
+                      <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 text-white shadow-2xs {% cycle 'bg-[#0d9488]' 'bg-[#2563eb]' 'bg-[#8b5cf6]' 'bg-[#f59e0b]' %}">
+                        {% include "components/atoms/icon.html" with name="clipboard-document-list" size="w-4 h-4" %}
+                      </div>
+
+                      <div class="min-w-0">
+                        <!-- Plage horaire -->
+                        <span class="text-xs font-bold font-mono tracking-tight block {% cycle 'text-[#0d9488]' 'text-[#2563eb]' 'text-[#8b5cf6]' 'text-[#d97706]' %}">
+                          {{ rdv.scheduled_at|date:"H:i" }} - {{ rdv.end_time|default:rdv.scheduled_at|date:"H:i" }}
+                        </span>
+
+                        <!-- Nom du patient -->
+                        <h3 class="text-sm font-bold text-neutral-900 truncate">
+                          {{ rdv.patient.full_name }}
+                        </h3>
+
+                        <!-- Motif / Spécialité -->
+                        <p class="text-xs text-neutral-600 truncate mt-0.5">
+                          {{ rdv.reason|default:_("Consultation générale") }}
+                        </p>
+                      </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="shrink-0 flex items-center gap-2">
+                      {% if rdv.consultation %}
+                        <a href="{% url "patients:consultation_detail" rdv.consultation.pk %}" class="px-3 py-1.5 rounded-lg bg-white text-xs font-semibold text-neutral-700 hover:bg-neutral-100 border border-neutral-200/70 shadow-2xs transition-colors">
+                          {% trans "Détails" %}
+                        </a>
+                      {% else %}
+                        <a href="{% url "patients:consultation_create" %}?appointment={{ rdv.pk }}" class="px-3 py-1.5 rounded-lg bg-[#0d9488] hover:bg-[#0f766e] text-white text-xs font-bold shadow-2xs transition-colors inline-flex items-center gap-1.5">
+                          {% trans "Consulter" %}
+                        </a>
+                      {% endif %}
+                    </div>
+                  </div>
+                {% endif %}
+              {% endfor %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
   </div>
 
-  <!-- Tableau des Rendez-vous Praticien -->
-  <div class="bg-white rounded-2xl border border-neutral-200/80 shadow-sm overflow-hidden">
-    {% if appointments %}
-      <div class="overflow-x-auto">
-        <table class="w-full text-left border-collapse">
-          <thead>
-            <tr class="bg-neutral-50/80 border-b border-neutral-200 text-xs font-bold text-neutral-500 uppercase tracking-wider">
-              <th class="py-3.5 px-6">{% trans "Heure / Date" %}</th>
-              <th class="py-3.5 px-6">{% trans "Patient" %}</th>
-              <th class="py-3.5 px-6">{% trans "Motif" %}</th>
-              <th class="py-3.5 px-6">{% trans "Statut" %}</th>
-              <th class="py-3.5 px-6 text-right">{% trans "Action" %}</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-neutral-200 text-sm">
-            {% for rdv in appointments %}
-              <tr class="hover:bg-neutral-50/50 transition-colors">
-                <td class="py-4 px-6 font-semibold text-neutral-900">
-                  {{ rdv.scheduled_at|date:"d/m/Y H:i" }}
-                </td>
-                <td class="py-4 px-6">
-                  <div class="font-bold text-neutral-900">{{ rdv.patient.full_name }}</div>
-                  <div class="text-xs text-neutral-500 font-mono">{{ rdv.patient.patient_number }}</div>
-                </td>
-                <td class="py-4 px-6 text-neutral-700">
-                  {{ rdv.reason }}
-                </td>
-                <td class="py-4 px-6">
-                  <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold {% if rdv.status == 'COMPLETED' %}bg-emerald-100 text-emerald-800{% elif rdv.status == 'CANCELLED' %}bg-rose-100 text-rose-800{% elif rdv.status == 'IN_CONSULTATION' %}bg-teal-100 text-teal-800{% else %}bg-amber-100 text-amber-800{% endif %}">
-                    {{ rdv.get_status_display }}
-                  </span>
-                </td>
-                <td class="py-4 px-6 text-right">
-                  {% if rdv.consultation %}
-                    <a href="{% url "patients:consultation_detail" rdv.consultation.pk %}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-teal-50 text-[#14967F] font-semibold text-xs hover:bg-teal-100 transition-colors">
-                      {% trans "Voir consultation" %}
-                    </a>
-                  {% else %}
-                    <a href="{% url "patients:consultation_create" %}?appointment={{ rdv.pk }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#14967F] text-white font-semibold text-xs hover:bg-[#0E6A5A] transition-colors shadow-sm">
-                      {% include "components/atoms/icon.html" with name="clipboard-document-list" size="w-4 h-4" %}
-                      {% trans "Démarrer consultation" %}
-                    </a>
-                  {% endif %}
-                </td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    {% else %}
-      <div class="py-12 text-center text-neutral-500">
-        <p class="text-base font-semibold">{% trans "Aucun rendez-vous trouvé pour ce créneau." %}</p>
-      </div>
-    {% endif %}
+  <!-- VUE 2 : VUE SEMAINE (Grille multi-colonnes Lundi -> Samedi) -->
+  <div id="agenda-view-week" class="hidden bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-xs overflow-x-auto">
+    <div class="min-w-[700px] grid grid-cols-7 gap-3 text-center border-b border-neutral-200 pb-3">
+      <div class="font-bold text-xs text-neutral-500">{% trans "Heure" %}</div>
+      <div class="font-bold text-xs text-neutral-800">{% trans "Lun" %}</div>
+      <div class="font-bold text-xs text-neutral-800">{% trans "Mar" %}</div>
+      <div class="font-bold text-xs text-neutral-800 bg-teal-50 text-[#0d9488] py-1 rounded-lg">{% trans "Mer (Aujourd'hui)" %}</div>
+      <div class="font-bold text-xs text-neutral-800">{% trans "Jeu" %}</div>
+      <div class="font-bold text-xs text-neutral-800">{% trans "Ven" %}</div>
+      <div class="font-bold text-xs text-neutral-800">{% trans "Sam" %}</div>
+    </div>
+    <div class="min-w-[700px] divide-y divide-neutral-100">
+      {% for hour in hours|default:"08,09,10,11,12,13,14,15,16,17"|split:"," %}
+        <div class="grid grid-cols-7 gap-3 py-3 items-center">
+          <div class="text-xs font-mono text-neutral-400 text-center">{{ hour }}:00</div>
+          <div class="h-10 rounded-lg bg-neutral-50/50"></div>
+          <div class="h-10 rounded-lg bg-neutral-50/50"></div>
+          <div class="h-10 rounded-lg bg-teal-50/40 p-1 flex items-center justify-center text-[10px] font-semibold text-teal-800">
+            {% for rdv in appointments %}{% if rdv.scheduled_at|date:"H" == hour %}{{ rdv.patient.first_name }} {{ rdv.patient.last_name|first }}.{% endif %}{% endfor %}
+          </div>
+          <div class="h-10 rounded-lg bg-neutral-50/50"></div>
+          <div class="h-10 rounded-lg bg-neutral-50/50"></div>
+          <div class="h-10 rounded-lg bg-neutral-50/50"></div>
+        </div>
+      {% endfor %}
+    </div>
   </div>
+
+  <!-- VUE 3 : VUE MOIS (Calendrier mensuel avec pastilles) -->
+  <div id="agenda-view-month" class="hidden bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-xs">
+    <div class="grid grid-cols-7 gap-2 text-center text-xs font-bold text-neutral-500 mb-2">
+      <div>{% trans "Lun" %}</div><div>{% trans "Mar" %}</div><div>{% trans "Mer" %}</div>
+      <div>{% trans "Jeu" %}</div><div>{% trans "Ven" %}</div><div>{% trans "Sam" %}</div><div>{% trans "Dim" %}</div>
+    </div>
+    <div class="grid grid-cols-7 gap-2">
+      {% for day_num in "1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30"|make_list %}
+        <div class="min-h-[70px] p-2 border border-neutral-100 rounded-xl {% if day_num == '24' %}bg-teal-50/80 border-[#0d9488]/40 ring-2 ring-[#0d9488]/20{% else %}bg-neutral-50/30{% endif %}">
+          <span class="text-xs font-bold {% if day_num == '24' %}text-[#0d9488]{% else %}text-neutral-700{% endif %}">{{ day_num }}</span>
+          {% if day_num == '24' %}
+            <div class="mt-1 space-y-1">
+              <span class="block w-full py-0.5 px-1 rounded bg-[#0d9488] text-white text-[9px] font-bold truncate">
+                {{ appointments|length }} RDV
+              </span>
+            </div>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
 </div>
+
+<script>
+  function switchAgendaView(view) {
+    const views = ['day', 'week', 'month'];
+    views.forEach(v => {
+      const el = document.getElementById('agenda-view-' + v);
+      const btn = document.getElementById('tab-btn-' + v);
+      if (v === view) {
+        el.classList.remove('hidden');
+        btn.classList.add('bg-[#0d9488]', 'text-white', 'shadow-2xs');
+        btn.classList.remove('text-neutral-600');
+        btn.setAttribute('aria-selected', 'true');
+      } else {
+        el.classList.add('hidden');
+        btn.classList.remove('bg-[#0d9488]', 'text-white', 'shadow-2xs');
+        btn.classList.add('text-neutral-600');
+        btn.setAttribute('aria-selected', 'false');
+      }
+    });
+  }
+</script>
 {% endblock %}

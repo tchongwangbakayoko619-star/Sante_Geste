@@ -6,20 +6,20 @@
 {% block content_inner %}
 <div class="space-y-6">
   <!-- En-tête -->
-  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-neutral-200/80 shadow-sm">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-neutral-200/80 shadow-xs">
     <div>
-      <h1 class="text-2xl font-bold text-neutral-900 font-title tracking-tight flex items-center gap-3">
+      <h1 class="text-xl font-bold text-neutral-900 font-title tracking-tight flex items-center gap-3">
         <span class="p-2 rounded-xl bg-amber-50 text-amber-600">
-          {% include "components/atoms/icon.html" with name="banknotes" size="w-6 h-6" %}
+          {% include "components/atoms/icon.html" with name="credit-card" size="w-5 h-5" %}
         </span>
         {% trans "Caisse & Facturation - Actes en Attente" %}
       </h1>
-      <p class="text-sm text-neutral-500 mt-1">
+      <p class="text-xs text-neutral-500 mt-1">
         {% trans "Prestations médicales réalisées transmises à la caisse pour facturation et encaissement." %}
       </p>
     </div>
-    <a href="{% url "patients:facture_list" %}" class="px-4 py-2 rounded-xl bg-neutral-100 text-neutral-700 font-semibold text-sm hover:bg-neutral-200 transition-colors">
-      {% trans "Historique Factures" %}
+    <a href="{% url "patients:facture_list" %}" class="px-4 py-2 rounded-xl bg-white border border-neutral-200 text-neutral-700 font-semibold text-xs hover:bg-neutral-50 transition-colors shadow-2xs">
+      {% trans "Historique des Factures" %} &rarr;
     </a>
   </div>
 
@@ -27,30 +27,46 @@
   {% if grouped_patients %}
     <div class="space-y-4">
       {% for item in grouped_patients %}
-        <div class="bg-white p-6 rounded-2xl border border-neutral-200/80 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div class="space-y-1">
-            <div class="flex items-center gap-2">
-              <h3 class="text-lg font-bold text-neutral-900">{{ item.patient.full_name }}</h3>
-              <span class="text-xs font-mono text-neutral-400">({{ item.patient.patient_number }})</span>
+        <div class="bg-white p-6 rounded-2xl border border-neutral-200/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-5 hover:border-neutral-300 transition-all">
+          <div class="space-y-2">
+            <div class="flex items-center gap-2.5">
+              <div class="w-9 h-9 rounded-xl bg-teal-50 text-[#0d9488] font-bold text-xs flex items-center justify-center">
+                {{ item.patient.first_name|slice:":1" }}{{ item.patient.last_name|slice:":1" }}
+              </div>
+              <div>
+                <h3 class="text-sm font-bold text-neutral-900">{{ item.patient.full_name }}</h3>
+                <span class="text-[11px] font-mono text-neutral-400 font-medium">{{ item.patient.patient_number }}</span>
+              </div>
             </div>
-            <p class="text-xs text-neutral-500">
-              {{ item.items|length }} {% trans "acte(s) réalisé(s) en attente d'encaissement" %}
-            </p>
-            <ul class="text-xs text-neutral-600 space-y-0.5 pt-1">
-              {% for p in item.items %}
-                <li>• {{ p.prestation.name }} (x{{ p.quantity }}) - {{ p.total_price }} FCFA</li>
-              {% endfor %}
-            </ul>
+
+            <div class="p-3 bg-neutral-50/70 rounded-xl border border-neutral-100 space-y-1">
+              <span class="text-[10px] font-bold text-neutral-400 uppercase tracking-wider block">
+                {{ item.items|length }} {% trans "acte(s) médical(aux) à facturer" %}
+              </span>
+              <ul class="text-xs text-neutral-700 space-y-1">
+                {% for p in item.items %}
+                  <li class="flex items-center justify-between gap-4">
+                    <span>• {{ p.prestation.name }} <strong class="text-neutral-500 font-normal">(x{{ p.quantity }})</strong></span>
+                    <span class="font-mono font-bold text-neutral-800">{{ p.total_price }} FCFA</span>
+                  </li>
+                {% endfor %}
+              </ul>
+            </div>
           </div>
 
-          <div class="text-right space-y-2 shrink-0">
-            <div class="text-xl font-extrabold text-emerald-800">
-              {{ item.total }} FCFA
+          <div class="text-right space-y-3 shrink-0 self-end md:self-center">
+            <div>
+              <span class="text-[11px] font-bold text-neutral-400 uppercase tracking-wider block">{% trans "Total à percevoir" %}</span>
+              <div class="text-xl font-extrabold text-neutral-900 font-mono">
+                {{ item.total }} FCFA
+              </div>
             </div>
+
             <form method="post" action="{% url "patients:facture_create" item.patient.pk %}">
               {% csrf_token %}
-              <button type="submit" class="px-5 py-2.5 bg-[#14967F] text-white font-bold text-sm rounded-xl hover:bg-[#0E6A5A] transition-colors shadow-sm">
-                {% trans "Émettre la Facture & Encaisser" %}
+              <button type="submit" class="px-5 py-2.5 bg-[#0d9488] hover:bg-[#0f766e] text-white font-bold text-xs rounded-xl transition-colors shadow-xs cursor-pointer inline-flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                <span>{% trans "Émettre la Facture & Encaisser" %}</span>
               </button>
             </form>
           </div>
@@ -58,8 +74,12 @@
       {% endfor %}
     </div>
   {% else %}
-    <div class="bg-white p-12 text-center rounded-2xl border border-neutral-200/80 shadow-sm text-neutral-500">
-      <p class="text-base font-semibold">{% trans "Aucun acte en attente d'encaissement." %}</p>
+    <div class="bg-white p-12 text-center rounded-2xl border border-neutral-200/80 shadow-xs text-neutral-400">
+      <div class="w-12 h-12 rounded-2xl bg-neutral-100 text-neutral-400 flex items-center justify-center mx-auto mb-3">
+        {% include "components/atoms/icon.html" with name="check-circle" size="w-6 h-6" %}
+      </div>
+      <p class="text-sm font-bold text-neutral-700">{% trans "Aucun acte en attente d'encaissement." %}</p>
+      <p class="text-xs text-neutral-400 mt-1">{% trans "Toutes les prestations médicales transmises ont été facturées." %}</p>
     </div>
   {% endif %}
 </div>
