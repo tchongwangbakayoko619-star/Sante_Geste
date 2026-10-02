@@ -106,6 +106,10 @@ class AppointmentForm(forms.ModelForm):
             lambda p: f"{p.patient_number} - {p.full_name}"
         )
 
+        # Initialise la durée sur 1 créneau (60 min) pour les nouveaux rendez-vous
+        if "estimated_duration_minutes" in self.fields and not (self.instance and self.instance.pk):
+            self.fields["estimated_duration_minutes"].initial = 60
+
     def clean(self) -> dict[str, Any]:
         cleaned_data = super().clean()
         doctor = cleaned_data.get("doctor")

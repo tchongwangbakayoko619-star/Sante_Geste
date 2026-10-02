@@ -438,10 +438,10 @@
         </label>
         <div class="flex items-center gap-2">
           <button type="button" onclick="setDuration(15)" class="duration-btn flex-1 py-1.5 rounded-lg border border-neutral-200 text-xs font-semibold text-neutral-600 hover:bg-neutral-100 transition-colors" data-duration="15">15 min</button>
-          <button type="button" onclick="setDuration(30)" class="duration-btn flex-1 py-1.5 rounded-lg border border-teal-500 bg-teal-50 text-xs font-bold text-teal-800 transition-colors" data-duration="30">30 min</button>
+          <button type="button" onclick="setDuration(30)" class="duration-btn flex-1 py-1.5 rounded-lg border border-neutral-200 text-xs font-semibold text-neutral-600 hover:bg-neutral-100 transition-colors" data-duration="30">30 min</button>
           <button type="button" onclick="setDuration(45)" class="duration-btn flex-1 py-1.5 rounded-lg border border-neutral-200 text-xs font-semibold text-neutral-600 hover:bg-neutral-100 transition-colors" data-duration="45">45 min</button>
-          <button type="button" onclick="setDuration(60)" class="duration-btn flex-1 py-1.5 rounded-lg border border-neutral-200 text-xs font-semibold text-neutral-600 hover:bg-neutral-100 transition-colors" data-duration="60">60 min</button>
-          <input type="hidden" name="estimated_duration_minutes" id="input-duration" value="30">
+          <button type="button" onclick="setDuration(60)" class="duration-btn flex-1 py-1.5 rounded-lg border border-teal-500 bg-teal-50 text-xs font-bold text-teal-800 transition-colors" data-duration="60">60 min</button>
+          <input type="hidden" name="estimated_duration_minutes" id="input-duration" value="60">
         </div>
       </div>
 
@@ -638,30 +638,42 @@
       byDate[app.date_str].push(app);
     });
 
-    // Pour chaque jour, positionne les cartes
+    // Pour chaque jour, positionne les cartes dans leurs carreaux respectifs
     Object.keys(byDate).forEach(dateStr => {
       const overlay = document.getElementById('overlay-' + dateStr);
       if (!overlay) return;
 
       const dayApps = byDate[dateStr];
-      // Tri par heure de début
-      dayApps.sort((a, b) => (a.start_hour * 60 + a.start_minute) - (b.start_hour * 60 + b.start_minute));
-
+      // Regrouper par créneau horaire (chaque heure = un carreau)
+      const byHour = {};
       dayApps.forEach(app => {
-        const card = createAppointmentCard(app);
-        overlay.appendChild(card);
+        const hourKey = app.start_hour;
+        if (!byHour[hourKey]) byHour[hourKey] = [];
+        byHour[hourKey].push(app);
+      });
+
+      // Positionne chaque rendez-vous dans son carreau (avec partage côte-à-côte si créneau partagé)
+      Object.keys(byHour).forEach(hourKey => {
+        const appsInSlot = byHour[hourKey];
+        appsInSlot.sort((a, b) => a.start_minute - b.start_minute);
+        const total = appsInSlot.length;
+        appsInSlot.forEach((app, index) => {
+          const card = createAppointmentCard(app, index, total);
+          overlay.appendChild(card);
+        });
       });
     });
   }
 
-  // Création du bloc visuel de rendez-vous (Fidèle à l'image)
-  function createAppointmentCard(app) {
-    // Calcul de la position verticale (grille commence à 07:00)
-    const minutesFrom7h = (app.start_hour - 7) * 60 + app.start_minute;
-    const topPx = Math.max(0, (minutesFrom7h / 60) * slotHeight);
-    const heightPx = Math.max(26, ((app.duration || 30) / 60) * slotHeight - 4);
+  // Création du bloc visuel de rendez-vous qui occupe exactement UN carreau
+  function createAppointmentCard(app, colIndex = 0, totalCols = 1) {
+    // Calcul de la position verticale calée sur le carreau horaire (07:00 -> index 0)
+    const slotIndex = Math.max(0, Math.min(12, app.start_hour - 7));
+    const topPx = slotIndex * slotHeight + 2;
+    // Hauteur : occupe tout le carreau (hauteur de la cellule moins marges)
+    const heightPx = Math.max(30, slotHeight - 4);
 
-    // Détermination de la couleur (comme sur l'image)
+    // Détermination de la couleur (comme sur la maquette)
     let bgClasses = 'bg-blue-600 text-white border-blue-700/40';
     if (app.color === 'emerald') {
       bgClasses = 'bg-emerald-600 text-white border-emerald-700/40';
@@ -672,11 +684,21 @@
     }
 
     const card = document.createElement('div');
-    card.className = `appointment-card absolute pointer-events-auto cursor-pointer rounded-lg sm:rounded-xl p-1.5 sm:p-2 border shadow-xs overflow-hidden flex flex-col justify-start leading-tight ${bgClasses}`;
+    card.className = `appointment-card absolute pointer-events-auto cursor-pointer rounded-lg sm:rounded-xl p-1.5 sm:p-2 border shadow-xs overflow-hidden flex flex-col justify-between leading-tight ${bgClasses}`;
     card.style.top = `${topPx}px`;
     card.style.height = `${heightPx}px`;
-    card.style.left = '4px';
-    card.style.right = '4px';
+
+    // Largeur : occupe tout le carreau (ou se partage le carreau si plusieurs RDV sur la même heure)
+    if (totalCols > 1) {
+      const colWidthPercent = 100 / totalCols;
+      card.style.left = `calc(${colIndex * colWidthPercent}% + 2px)`;
+      card.style.width = `calc(${colWidthPercent}% - 4px)`;
+    } else {
+      card.style.left = '4px';
+      card.style.right = '4px';
+      card.style.width = 'calc(100% - 8px)';
+    }
+
     card.setAttribute('role', 'button');
     card.setAttribute('tabindex', '0');
     card.title = `${app.patient_name} (${app.time_range}) - ${app.reason}`;
@@ -689,7 +711,9 @@
       <div class="text-[11px] sm:text-xs font-bold truncate mt-0.5 tracking-tight">
         ${escapeHtml(app.patient_name)}
       </div>
-      ${heightPx > 46 ? `<div class="text-[10px] opacity-85 truncate mt-0.5">${escapeHtml(app.reason || '')}</div>` : ''}
+      <div class="text-[10px] opacity-85 truncate mt-0.5">
+        ${escapeHtml(app.reason || '')}
+      </div>
     `;
 
     // Clic ouvre les détails du RDV
@@ -710,11 +734,21 @@
     overlay.innerHTML = '';
 
     const dayApps = APPOINTMENTS.filter(app => app.date_str === CURRENT_DATE);
-    dayApps.sort((a, b) => (a.start_hour * 60 + a.start_minute) - (b.start_hour * 60 + b.start_minute));
-
+    const byHour = {};
     dayApps.forEach(app => {
-      const card = createAppointmentCard(app);
-      overlay.appendChild(card);
+      const hourKey = app.start_hour;
+      if (!byHour[hourKey]) byHour[hourKey] = [];
+      byHour[hourKey].push(app);
+    });
+
+    Object.keys(byHour).forEach(hourKey => {
+      const appsInSlot = byHour[hourKey];
+      appsInSlot.sort((a, b) => a.start_minute - b.start_minute);
+      const total = appsInSlot.length;
+      appsInSlot.forEach((app, index) => {
+        const card = createAppointmentCard(app, index, total);
+        overlay.appendChild(card);
+      });
     });
   }
 
@@ -823,10 +857,11 @@
       slotDisplay.textContent = `Créneau : ${dateStr} à ${timeStr}`;
     }
 
-    // Reset du patient sélectionné
+    // Reset du patient sélectionné et durée par défaut sur 1 créneau (60 min)
     document.getElementById('patient-search-input').value = '';
     document.getElementById('selected-patient-id').value = '';
     document.getElementById('selected-patient-badge').textContent = '';
+    setDuration(60);
 
     // Affichage fluide de la modale
     modal.classList.remove('hidden');
