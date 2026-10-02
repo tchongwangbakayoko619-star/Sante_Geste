@@ -104,10 +104,21 @@ class DashboardApiView(View):
                 "id": str(p.id),
                 "first_name": p.first_name,
                 "last_name": p.last_name,
-                "nup": p.nup,
+                "patient_number": getattr(p, "patient_number", ""),
                 "created_at": p.created_at.isoformat() if p.created_at else None,
             }
             for p in data.get("recent_patients", [])
         ]
+        serialized_data["recent_consultations"] = [
+            {
+                "id": str(c.id),
+                "consultation_date": c.consultation_date.isoformat() if c.consultation_date else None,
+                "patient_name": f"{c.patient.first_name} {c.patient.last_name}" if getattr(c, "patient", None) else "",
+                "reason": getattr(c, "reason", "") or "",
+                "diagnosis": getattr(c, "diagnosis", "") or "",
+            }
+            for c in data.get("recent_consultations", [])
+        ]
 
         return JsonResponse(serialized_data, status=200)
+

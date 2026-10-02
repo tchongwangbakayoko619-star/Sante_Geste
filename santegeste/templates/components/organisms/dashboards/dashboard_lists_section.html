@@ -5,36 +5,53 @@
   <!-- Column 1: File d'Attente & RDV du Jour -->
   <div class="bg-white rounded-3xl border border-neutral-200/80 p-6 shadow-2xs space-y-4 flex flex-col justify-between">
     <div>
-      <div class="flex items-center justify-between border-b border-neutral-100 pb-4">
-        <div class="flex items-center gap-3">
-          <h3 class="text-base font-extrabold text-neutral-900 font-title flex items-center gap-2">
-            {% include "components/atoms/icon.html" with name="clock" size="w-5 h-5 text-[#14967F]" %}
-            <span>{% trans "File d'Attente & RDV du Jour" %}</span>
+      <div class="flex items-center justify-between border-b border-neutral-100 pb-3">
+        <div class="flex items-center gap-2">
+          <h3 class="text-base font-bold text-neutral-900 font-title flex items-center gap-2">
+            <span>{% trans "Prochains rendez-vous" %}</span>
+            <span class="sr-only">Ma File d'Attente & RDV du Jour</span>
           </h3>
         </div>
-        <a href="{% url "patients:appointment_list" %}" class="text-xs font-bold text-[#14967F] hover:underline flex items-center gap-1">
-          <span>{% trans "Voir tout l'agenda" %}</span>
-          <span>&rarr;</span>
-        </a>
+        {% if user.is_personnel_medical and not user.is_agent_accueil %}
+          <a href="{% url "patients:my_appointments" %}" class="text-xs font-semibold text-[#0d9488] hover:text-[#0f766e] flex items-center gap-1">
+            <span>{% trans "Voir tout" %}</span>
+            <span>&rarr;</span>
+          </a>
+        {% else %}
+          <a href="{% url "patients:appointment_list" %}" class="text-xs font-semibold text-[#0d9488] hover:text-[#0f766e] flex items-center gap-1">
+            <span>{% trans "Voir tout" %}</span>
+            <span>&rarr;</span>
+          </a>
+        {% endif %}
       </div>
 
       <!-- Appointments List -->
       <div class="mt-4 space-y-3">
         {% for rdv in recent_appointments %}
           <div class="p-3.5 rounded-2xl border border-neutral-200/80 bg-white hover:border-[#14967F]/40 transition shadow-2xs flex items-center justify-between gap-3">
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-3 min-w-0">
               <div class="px-3 py-1.5 rounded-xl bg-[#14967F] text-white font-extrabold text-xs font-mono text-center shrink-0">
                 {{ rdv.scheduled_at|date:"H:i" }}
               </div>
-              <div>
-                <h4 class="text-xs font-extrabold text-neutral-900">{{ rdv.patient.full_name }}</h4>
-                <p class="text-[11px] text-neutral-500">
-                  {{ rdv.patient.patient_number }} • Dr. {{ rdv.doctor.full_name }}
+              <div class="truncate">
+                <h4 class="text-xs font-extrabold text-neutral-900 truncate">{{ rdv.patient.full_name }}</h4>
+                <p class="text-[11px] text-neutral-500 truncate">
+                  {{ rdv.patient.patient_number }}
+                  {% if not user.is_personnel_medical or user.is_agent_accueil %}
+                    • Dr. {{ rdv.doctor.full_name }}
+                  {% else %}
+                    • {{ rdv.reason|default:"Consultation"|truncatechars:30 }}
+                  {% endif %}
                 </p>
               </div>
             </div>
-            <div>
-              {% if rdv.status == "completed" or rdv.status == "in_consultation" or rdv.status == "COMPLETED" or rdv.status == "IN_CONSULTATION" %}
+            <div class="flex items-center gap-2 shrink-0">
+              {% if user.is_personnel_medical and not user.is_agent_accueil and rdv.status == "waiting" or user.is_personnel_medical and not user.is_agent_accueil and rdv.status == "WAITING" %}
+                <a href="{% url "patients:consultation_create" %}?appointment={{ rdv.id }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#14967F] hover:bg-[#0f7a67] text-white text-xs font-extrabold shadow-2xs transition">
+                  {% include "components/atoms/icon.html" with name="clipboard-document-list" size="w-3.5 h-3.5" %}
+                  <span>{% trans "Consulter" %}</span>
+                </a>
+              {% elif rdv.status == "completed" or rdv.status == "in_consultation" or rdv.status == "COMPLETED" or rdv.status == "IN_CONSULTATION" %}
                 <span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200">{% trans "Honoré" %}</span>
               {% elif rdv.status == "waiting" or rdv.status == "WAITING" %}
                 <span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-amber-50 text-amber-700 border border-amber-200">{% trans "En attente" %}</span>
@@ -55,53 +72,100 @@
     </div>
   </div>
 
-  <!-- Column 2: Patients Récents & Admission -->
+  <!-- Column 2: Mes Consultations Récentes (Médecin) OU Patients Récents (Accueil / Admin) -->
   <div class="bg-white rounded-3xl border border-neutral-200/80 p-6 shadow-2xs space-y-4 flex flex-col justify-between">
     <div>
-      <div class="flex items-center justify-between border-b border-neutral-100 pb-4">
-        <div class="flex items-center gap-2">
-          <h3 class="text-base font-extrabold text-neutral-900 font-title flex items-center gap-2">
-            {% include "components/atoms/icon.html" with name="users" size="w-5 h-5 text-[#14967F]" %}
-            <span>{% trans "Dossiers Patients Récents" %}</span>
-          </h3>
-        </div>
-        <div class="flex items-center gap-2">
-          <a href="{% url "patients:patient_create" %}" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-[#14967F] hover:bg-[#0f7a67] text-white text-xs font-bold transition">
-            <span>+ {% trans "Nouveau" %}</span>
-          </a>
-          <a href="{% url "patients:patient_list" %}" class="text-xs font-bold text-[#14967F] hover:underline flex items-center gap-1">
-            <span>{% trans "Registre" %}</span>
+      {% if user.is_personnel_medical and not user.is_agent_accueil %}
+        <!-- Header Mode Médical -->
+        <div class="flex items-center justify-between border-b border-neutral-100 pb-4">
+          <div class="flex items-center gap-2">
+            <h3 class="text-base font-extrabold text-neutral-900 font-title flex items-center gap-2">
+              {% include "components/atoms/icon.html" with name="clipboard-document-list" size="w-5 h-5 text-[#14967F]" %}
+              <span>{% trans "Mes Dernières Consultations" %}</span>
+            </h3>
+          </div>
+          <a href="{% url "patients:consultation_list" %}" class="text-xs font-bold text-[#14967F] hover:underline flex items-center gap-1">
+            <span>{% trans "Historique des actes" %}</span>
             <span>&rarr;</span>
           </a>
         </div>
-      </div>
 
-      <!-- Patients List -->
-      <div class="mt-4 space-y-3">
-        {% for patient in recent_patients %}
-          <div class="p-3.5 rounded-2xl border border-neutral-200/80 bg-white hover:border-[#14967F]/40 transition flex items-center justify-between gap-3 shadow-2xs">
-            <div class="flex items-center gap-3">
-              <div class="w-9 h-9 rounded-xl bg-emerald-50 text-[#14967F] font-extrabold text-xs flex items-center justify-center shrink-0 border border-emerald-100">
-                {{ patient.first_name|slice:":1" }}{{ patient.last_name|slice:":1" }}
+        <!-- Medical Consultations List -->
+        <div class="mt-4 space-y-3">
+          {% for consult in recent_consultations %}
+            <div class="p-3.5 rounded-2xl border border-neutral-200/80 bg-white hover:border-[#14967F]/40 transition flex items-center justify-between gap-3 shadow-2xs">
+              <div class="flex items-center gap-3 min-w-0">
+                <div class="w-9 h-9 rounded-xl bg-teal-50 text-[#14967F] font-extrabold text-xs flex items-center justify-center shrink-0 border border-teal-100">
+                  {{ consult.patient.first_name|slice:":1" }}{{ consult.patient.last_name|slice:":1" }}
+                </div>
+                <div class="truncate">
+                  <h4 class="text-xs font-extrabold text-neutral-900 truncate">{{ consult.patient.full_name }}</h4>
+                  <p class="text-[11px] text-neutral-500 truncate">
+                    {{ consult.consultation_date|date:"d/m à H:i" }} • {{ consult.reason|default:consult.diagnosis|default:"Consultation générale"|truncatechars:28 }}
+                  </p>
+                </div>
               </div>
-              <div>
-                <h4 class="text-xs font-extrabold text-neutral-900">{{ patient.full_name }}</h4>
-                <p class="text-[11px] text-neutral-500">
-                  {{ patient.patient_number }} • {{ patient.phone_number|default:"-" }}
-                </p>
-              </div>
+              <a href="{% url "patients:consultation_detail" consult.pk %}" class="px-3 py-1.5 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-800 text-xs font-bold transition shrink-0">
+                {% trans "Voir fiche" %}
+              </a>
             </div>
-            <a href="{% url "patients:patient_detail" patient.pk %}" class="px-3 py-1.5 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-700 text-xs font-bold transition">
-              {% trans "Dossier" %}
+          {% empty %}
+            <div class="py-8 text-center text-xs text-neutral-400 border-2 border-dashed border-neutral-200 rounded-2xl bg-neutral-50/50">
+              <p class="font-bold text-neutral-600">{% trans "Aucune consultation récente" %}</p>
+              <p class="mt-1">{% trans "Vos consultations enregistrées apparaîtront ici." %}</p>
+            </div>
+          {% endfor %}
+        </div>
+
+      {% else %}
+        <!-- Header Mode Accueil / Standard -->
+        <div class="flex items-center justify-between border-b border-neutral-100 pb-4">
+          <div class="flex items-center gap-2">
+            <h3 class="text-base font-extrabold text-neutral-900 font-title flex items-center gap-2">
+              {% include "components/atoms/icon.html" with name="users" size="w-5 h-5 text-[#14967F]" %}
+              <span>{% trans "Dossiers Patients Récents" %}</span>
+            </h3>
+          </div>
+          <div class="flex items-center gap-2">
+            {% if user.is_agent_accueil or user.is_superuser %}
+              <a href="{% url "patients:patient_create" %}" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-[#14967F] hover:bg-[#0f7a67] text-white text-xs font-bold transition">
+                <span>+ {% trans "Nouveau" %}</span>
+              </a>
+            {% endif %}
+            <a href="{% url "patients:patient_list" %}" class="text-xs font-bold text-[#14967F] hover:underline flex items-center gap-1">
+              <span>{% trans "Registre" %}</span>
+              <span>&rarr;</span>
             </a>
           </div>
-        {% empty %}
-          <div class="py-8 text-center text-xs text-neutral-400 border-2 border-dashed border-neutral-200 rounded-2xl bg-neutral-50/50">
-            <p class="font-bold text-neutral-600">{% trans "Aucun dossier patient enregistré" %}</p>
-            <p class="mt-1">{% trans "Les nouveaux dossiers créés s'afficheront ici." %}</p>
-          </div>
-        {% endfor %}
-      </div>
+        </div>
+
+        <!-- Patients List -->
+        <div class="mt-4 space-y-3">
+          {% for patient in recent_patients %}
+            <div class="p-3.5 rounded-2xl border border-neutral-200/80 bg-white hover:border-[#14967F]/40 transition flex items-center justify-between gap-3 shadow-2xs">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-emerald-50 text-[#14967F] font-extrabold text-xs flex items-center justify-center shrink-0 border border-emerald-100">
+                  {{ patient.first_name|slice:":1" }}{{ patient.last_name|slice:":1" }}
+                </div>
+                <div>
+                  <h4 class="text-xs font-extrabold text-neutral-900">{{ patient.full_name }}</h4>
+                  <p class="text-[11px] text-neutral-500">
+                    {{ patient.patient_number }} • {{ patient.phone_number|default:"-" }}
+                  </p>
+                </div>
+              </div>
+              <a href="{% url "patients:patient_detail" patient.pk %}" class="px-3 py-1.5 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-700 text-xs font-bold transition">
+                {% trans "Dossier" %}
+              </a>
+            </div>
+          {% empty %}
+            <div class="py-8 text-center text-xs text-neutral-400 border-2 border-dashed border-neutral-200 rounded-2xl bg-neutral-50/50">
+              <p class="font-bold text-neutral-600">{% trans "Aucun dossier patient enregistré" %}</p>
+              <p class="mt-1">{% trans "Les nouveaux dossiers créés s'afficheront ici." %}</p>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
     </div>
   </div>
 

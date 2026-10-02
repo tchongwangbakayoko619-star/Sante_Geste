@@ -5,16 +5,13 @@
   <div>
     <h1 class="text-2xl sm:text-3xl font-extrabold text-neutral-900 tracking-tight font-title">
       {{ greeting|default:"Bonjour" }},
-      <span class="text-[#14967F]">
-        {% if user.first_name or user.last_name %}
-          {{ user.first_name }} {{ user.last_name|upper }}
-        {% else %}
-          {{ user.email }}
-        {% endif %}
-      </span>
+      <span class="text-primary text-[#0d9488]">{% if user.first_name or user.last_name %}{{ user.first_name }} {{ user.last_name|upper }}{% else %}{{ user.email }}{% endif %}</span>
     </h1>
     <p class="text-xs sm:text-sm text-neutral-500 mt-1">
-      {% trans "Aperçu en temps réel des arrivées patients, des rendez-vous et des convocations du jour." %}
+      {% if user.medical_profile.specialite %}
+        <span class="font-semibold text-neutral-700">{{ user.medical_profile.specialite }} • </span>
+      {% endif %}
+      {% trans "Voici un aperçu de votre activité aujourd'hui." %}
     </p>
   </div>
 

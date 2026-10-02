@@ -8,8 +8,8 @@ from django.urls import reverse
 from django.utils import timezone
 
 from apps.dashboard.services.dashboard_service import DashboardService
-from apps.patients.models import Appointment
-from apps.patients.models import Patient
+from apps.patients.models import Appointment, Consultation, Patient
+from apps.users.models import MedicalProfile
 from utils.enums import AppointmentStatusEnum
 
 User = get_user_model()
@@ -219,4 +219,67 @@ class TestDashboardViews:
         assert json_data["custom_start_date"] == "2026-02-01"
         assert json_data["custom_end_date"] == "2026-02-14"
         assert "activity_chart" in json_data
+
+    def test_dashboard_home_medical_staff(self, client):
+        """Le dashboard d'un médecin affiche ses métriques cliniques sans boutons administratifs 403."""
+        doctor = User.objects.create_user(
+            email="dr.martin@santegeste.com",
+            first_name="Paul",
+            last_name="Martin",
+            password="Password123!",
+            is_personnel_medical=True,
+        )
+        MedicalProfile.objects.create(
+            user=doctor,
+            specialite="Cardiologie",
+            numero_ordre="MED-9999",
+        )
+        client.force_login(doctor)
+
+        response = client.get(reverse("home"))
+        assert response.status_code == 200
+        assert response.context["is_medical_staff"] is True
+        assert response.context["is_doctor_only"] is True
+        assert "doctor_consultations_count" in response.context
+        assert "recent_consultations" in response.context
+
+        content = response.content.decode("utf-8")
+        assert "Bonjour," in content
+        assert "Paul MARTIN" in content
+        assert "Cardiologie" in content
+        assert "MES RDV DU JOUR" in content
+        assert "EN SALLE D'ATTENTE" in content
+        # Le bouton d'admission administrative "+ Nouveau patient" qui causerait un 403 ne doit pas être présent
+        assert 'href="/patients/nouveau/"' not in content
+
+    def test_dashboard_api_doctor_with_consultation(self, client):
+        """L'API JSON sérialise correctement les consultations récentes du médecin."""
+        doctor = User.objects.create_user(
+            email="dr.clara@santegeste.com",
+            first_name="Clara",
+            last_name="Oswald",
+            password="Password123!",
+            is_personnel_medical=True,
+        )
+        patient = Patient.objects.create(
+            first_name="Arthur",
+            last_name="Dent",
+            phone_number="+237699112233",
+        )
+        Consultation.objects.create(
+            patient=patient,
+            doctor=doctor,
+            reason="Contrôle tension",
+            diagnosis="Normal",
+        )
+        client.force_login(doctor)
+
+        response = client.get(reverse("dashboard:api_data"))
+        assert response.status_code == 200
+        json_data = response.json()
+        assert "recent_consultations" in json_data
+        assert len(json_data["recent_consultations"]) == 1
+        assert json_data["recent_consultations"][0]["patient_name"] == "Arthur Dent"
+        assert json_data["recent_consultations"][0]["reason"] == "Contrôle tension"
+
 

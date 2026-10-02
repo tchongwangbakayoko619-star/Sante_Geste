@@ -1,0 +1,468 @@
+{% extends "layouts/base.html" %}
+{% load i18n static patient_tags %}
+
+{% block title %}{% trans "Ordonnance Médicale" %} - {{ ordonnance.patient.full_name }} - SantéGeste{% endblock %}
+
+{% block content %}
+<style>
+  @media print {
+    body {
+      background-color: #ffffff !important;
+      color: #020617 !important;
+    }
+    .no-print {
+      display: none !important;
+    }
+    .print-sheet {
+      box-shadow: none !important;
+      border: none !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      max-width: 100% !important;
+      width: 100% !important;
+    }
+    * {
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+    @page {
+      size: A4;
+      margin: 15mm 15mm 15mm 15mm;
+    }
+  }
+</style>
+
+<div class="min-h-screen bg-neutral-100 py-6 px-3 sm:px-6 font-sans print:bg-white print:p-0">
+  
+  <!-- Barre d'outils supérieure (masquée lors de l'impression) -->
+  <div class="max-w-3xl mx-auto mb-4 flex flex-wrap items-center justify-between gap-3 no-print">
+    {% if ordonnance.consultation %}
+      <a href="{% url "patients:consultation_detail" ordonnance.consultation.pk %}" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-neutral-200 text-neutral-700 font-semibold text-xs sm:text-sm hover:bg-neutral-50 transition-colors shadow-2xs">
+        <svg class="w-4 h-4 text-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+        <span>{% trans "Retour au dossier clinique" %}</span>
+      </a>
+    {% else %}
+      <a href="{% url "patients:patient_detail" ordonnance.patient.pk %}" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-neutral-200 text-neutral-700 font-semibold text-xs sm:text-sm hover:bg-neutral-50 transition-colors shadow-2xs">
+        <svg class="w-4 h-4 text-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+        <span>{% trans "Retour au patient" %}</span>
+      </a>
+    {% endif %}
+
+    <div class="flex items-center gap-2">
+      <!-- Bouton signature numérique intégrée -->
+      <button type="button" onclick="openSignatureModal()" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-teal-300 text-[#0f766e] hover:bg-teal-50 font-bold text-xs sm:text-sm transition-colors shadow-2xs cursor-pointer">
+        <svg class="w-4 h-4 text-[#0d9488]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+        <span id="sig-btn-label">{% trans "Signer dans l'application" %}</span>
+      </button>
+
+      <!-- Bouton d'impression / export PDF -->
+      <button onclick="window.print()" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#0d9488] hover:bg-[#0f766e] text-white font-bold text-xs sm:text-sm transition-colors shadow-xs cursor-pointer">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+        <span>{% trans "Imprimer / Télécharger PDF" %}</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- FEUILLE D'ORDONNANCE MÉDICALE OFFICIELLE SANTÉGESTE (Format A4) -->
+  <div class="print-sheet max-w-3xl mx-auto bg-white p-8 sm:p-12 rounded-2xl border border-neutral-200/90 shadow-lg print:border-none print:shadow-none print:p-0 space-y-7">
+    
+    <!-- 1. En-tête : Logo SantéGeste, Établissement & Médecin traitant -->
+    <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-6 pb-5 border-b-2 border-[#0d9488]">
+      
+      <!-- Établissement avec Logo Officiel SantéGeste à gauche -->
+      <div class="flex items-start gap-4">
+        <!-- Logo SantéGeste officiel (Croix médicale avec onde ECG teal) -->
+        <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-[#0d9488] via-[#0f766e] to-[#042f2e] text-white flex items-center justify-center shrink-0 shadow-xs">
+          <svg class="w-8 h-8 text-white" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M19 6C19 4.89543 19.8954 4 21 4H27C28.1046 4 29 4.89543 29 6V18H41C42.1046 18 43 18.8954 43 20V26C43 27.1046 42.1046 28 41 28H29V42C29 43.1046 28.1046 44 27 44H21C19.8954 44 19 43.1046 19 42V28H7C5.89543 28 5 27.1046 5 26V20C5 18.8954 5.89543 18 7 18H19V6Z" fill="white"/>
+            <path d="M4 24H15L18 17L22 31L26 21L28 25L30 24H44" stroke="#0d9488" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+
+        <div class="space-y-0.5">
+          <h1 class="text-xl font-extrabold text-[#0f766e] tracking-tight font-title">
+            SantéGeste
+          </h1>
+          <p class="text-xs font-bold text-[#0d9488]">
+            Centre Médical Universitaire & Soins
+          </p>
+          <div class="text-[11px] text-neutral-500 pt-0.5 leading-snug">
+            <p>12, avenue de la Santé • BP 1234, Yaoundé</p>
+            <p>Tél. : +237 222 00 11 22 / Contact : contact@santegeste.cm</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bloc Praticien à droite dans un encadré pastel Teal -->
+      <div class="bg-teal-50/60 border border-teal-200/80 rounded-xl p-3 sm:p-3.5 text-left sm:text-right shrink-0 space-y-0.5 min-w-[230px]">
+        <p class="text-xs sm:text-sm font-extrabold text-[#042f2e] font-title">
+          Docteur {{ ordonnance.doctor.full_name }}
+        </p>
+        <p class="text-[11px] font-semibold text-[#0d9488]">
+          Médecin Généraliste
+        </p>
+        <div class="text-[10px] text-neutral-500 pt-1 leading-tight">
+          <p>{% trans "Consultations sur rendez-vous" %}</p>
+          <p>{% trans "du lundi au samedi • 08h00 - 19h00" %}</p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- 2. Titre ORDONNANCE MÉDICALE au centre -->
+    <div class="text-center py-1">
+      <h2 class="text-2xl sm:text-3xl font-black text-[#0f766e] uppercase tracking-widest font-title">
+        {% trans "ORDONNANCE" %}
+      </h2>
+    </div>
+
+    <!-- 3. Cartouche Patient (Gauche) & Diagnostic (Droite) -->
+    <div class="grid grid-cols-1 sm:grid-cols-12 gap-5 items-start">
+      
+      <!-- Informations Patient (Gauche - 7 cols) -->
+      <div class="sm:col-span-7 space-y-2 text-xs sm:text-sm">
+        <div class="flex items-center gap-3">
+          <span class="w-20 font-bold text-neutral-400 uppercase tracking-wider text-[11px]">{% trans "Patient :" %}</span>
+          <span class="font-extrabold text-neutral-900 text-sm sm:text-base">{{ ordonnance.patient.full_name }}</span>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="w-20 font-bold text-neutral-400 uppercase tracking-wider text-[11px]">{% trans "Âge :" %}</span>
+          <span class="font-semibold text-neutral-800">
+            {% if ordonnance.patient.age %}{{ ordonnance.patient.age }} ans{% else %}--{% endif %}
+          </span>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="w-20 font-bold text-neutral-400 uppercase tracking-wider text-[11px]">{% trans "Sexe :" %}</span>
+          <span class="font-semibold text-neutral-800">{{ ordonnance.patient.get_gender_display }}</span>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="w-20 font-bold text-neutral-400 uppercase tracking-wider text-[11px]">{% trans "Date :" %}</span>
+          <span class="font-bold text-neutral-900 font-mono">{{ ordonnance.prescribed_at|date:"d F Y" }}</span>
+        </div>
+      </div>
+
+      <!-- Encadré Diagnostic (Droite - 5 cols) -->
+      <div class="sm:col-span-5 bg-teal-50/50 border border-teal-200/80 rounded-2xl p-4 space-y-1">
+        <span class="text-[11px] font-bold text-[#0f766e] uppercase tracking-wider block">
+          {% trans "Diagnostic :" %}
+        </span>
+        <p class="text-sm font-extrabold text-neutral-900 leading-snug">
+          {% if ordonnance.consultation and ordonnance.consultation.diagnosis %}
+            {{ ordonnance.consultation.diagnosis }}
+          {% else %}
+            {% trans "Affection clinique générale" %}
+          {% endif %}
+        </p>
+        {% if ordonnance.consultation and ordonnance.consultation.reason %}
+          <p class="text-xs text-neutral-500 italic mt-0.5">
+            ({{ ordonnance.consultation.reason }})
+          </p>
+        {% endif %}
+      </div>
+
+    </div>
+
+    <!-- 4. Section Traitement (Tableau Médical) -->
+    <div class="space-y-2.5">
+      <h3 class="text-sm font-bold text-[#0f766e] uppercase tracking-wider underline underline-offset-4 decoration-teal-300">
+        {% trans "Traitement :" %}
+      </h3>
+
+      <div class="border border-teal-200/90 rounded-xl overflow-hidden shadow-2xs">
+        <table class="w-full text-left border-collapse text-xs">
+          <thead>
+            <tr class="bg-teal-50/80 border-b border-teal-200 text-[11px] font-bold text-teal-950 uppercase tracking-wider">
+              <th class="py-3 px-3.5 w-5/12">{% trans "Médicament" %}</th>
+              <th class="py-3 px-3.5 w-4/12">{% trans "Posologie" %}</th>
+              <th class="py-3 px-3.5 w-2/12">{% trans "Durée" %}</th>
+              <th class="py-3 px-3.5 w-1/12 text-center">{% trans "Quantité" %}</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-teal-100/80 text-xs">
+            {% for line in lines %}
+              <tr class="hover:bg-teal-50/30 transition-colors">
+                <td class="py-3 px-3.5">
+                  <div class="flex items-center gap-2">
+                    <span class="text-xs">💊</span>
+                    <div>
+                      <p class="font-bold text-neutral-900 text-xs sm:text-sm">
+                        {{ line.medication_name }}
+                      </p>
+                      <p class="text-[10px] text-neutral-500">
+                        {% trans "Voie orale / Spécification conforme" %}
+                      </p>
+                    </div>
+                  </div>
+                </td>
+                <td class="py-3 px-3.5 font-medium text-neutral-800 leading-snug">
+                  {{ line.posology|default:_("Selon avis médical") }}
+                </td>
+                <td class="py-3 px-3.5 font-semibold text-neutral-700">
+                  {{ line.duration|default:_("Selon besoin") }}
+                </td>
+                <td class="py-3 px-3.5 text-center font-mono font-bold text-neutral-900 text-sm">
+                  x{{ line.quantity }}
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="4" class="py-6 text-center text-neutral-400 italic">
+                  {% trans "Aucun médicament consigné sur cette ordonnance." %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+          <tfoot>
+            <tr class="bg-neutral-50/70 border-t border-teal-200">
+              <td colspan="3" class="py-2.5 px-3.5 text-right font-bold text-neutral-600 text-xs">
+                {% trans "Statut de délivrance :" %}
+              </td>
+              <td class="py-2.5 px-3.5 text-center font-bold text-xs font-mono {% if ordonnance.status == 'DELIVERED' %}text-emerald-700{% else %}text-amber-700{% endif %}">
+                {{ ordonnance.get_status_display }}
+              </td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+
+    <!-- 5. Section Conseils du médecin (Présentée sous forme de liste propre) -->
+    <div class="space-y-2 pt-1">
+      <h3 class="text-xs font-bold text-[#0f766e] uppercase tracking-wider">
+        {% trans "Conseils du médecin :" %}
+      </h3>
+      {% if ordonnance.notes %}
+        <ul class="text-xs text-neutral-800 space-y-1.5 pl-1">
+          {% for advice in ordonnance.notes|split_lines %}
+            <li class="flex items-start gap-2.5">
+              <span class="w-1.5 h-1.5 rounded-full bg-[#0d9488] shrink-0 mt-1.5"></span>
+              <span class="font-medium text-neutral-900 leading-relaxed">{{ advice }}</span>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <ul class="text-xs text-neutral-600 space-y-1.5 pl-1">
+          <li class="flex items-start gap-2.5">
+            <span class="w-1.5 h-1.5 rounded-full bg-[#0d9488] shrink-0 mt-1.5"></span>
+            <span>{% trans "Bien respecter la durée du traitement et les intervalles posologiques." %}</span>
+          </li>
+          <li class="flex items-start gap-2.5">
+            <span class="w-1.5 h-1.5 rounded-full bg-[#0d9488] shrink-0 mt-1.5"></span>
+            <span>{% trans "Surveiller la température et l'état général du patient." %}</span>
+          </li>
+          <li class="flex items-start gap-2.5">
+            <span class="w-1.5 h-1.5 rounded-full bg-[#0d9488] shrink-0 mt-1.5"></span>
+            <span>{% trans "Consulter sans délai en cas d'aggravation des symptômes." %}</span>
+          </li>
+        </ul>
+      {% endif %}
+    </div>
+
+    <!-- 6. Section Validation Médicale (Espace dédié pour signature & cachet physique ou numérique) -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-6 border-t border-neutral-200 items-start">
+      
+      <!-- Mention d'accompagnement à gauche -->
+      <div class="space-y-2">
+        <p class="font-serif italic text-sm text-neutral-800">
+          {% trans "Bon rétablissement à" %} {{ ordonnance.patient.first_name }}.
+        </p>
+        <p class="text-[11px] text-neutral-500 leading-relaxed">
+          {% trans "Ordonnance médicale délivrée conformément aux dispositions du code de santé publique." %}
+        </p>
+      </div>
+
+      <!-- Cadre officiel réservé au Praticien (Signature et Cachet) -->
+      <div class="space-y-2">
+        <div class="flex items-center justify-between text-xs font-semibold text-neutral-600">
+          <span>{% trans "Fait le" %} {{ ordonnance.prescribed_at|date:"d/m/Y" }}</span>
+          <span>Dr. {{ ordonnance.doctor.full_name }}</span>
+        </div>
+
+        <!-- Boîte officielle pour signature & tampon physique ou numérique -->
+        <div class="border-2 border-dashed border-teal-300 rounded-2xl p-4 bg-teal-50/20 min-h-[140px] flex flex-col justify-between relative overflow-hidden">
+          
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-teal-800">
+              {% trans "Signature & Cachet du Médecin" %}
+            </span>
+            <span class="text-[9px] text-neutral-400 no-print">
+              {% trans "(Physique ou Apposé)" %}
+            </span>
+          </div>
+
+          <!-- Zone d'affichage de la signature électronique si apposée -->
+          <div id="signature-display-area" class="my-auto text-center hidden">
+            <img id="signature-img" src="" alt="{% trans "Signature numérique" %}" class="h-16 mx-auto object-contain">
+          </div>
+
+          <!-- Indication de tampon physique si non signé numériquement -->
+          <div id="signature-placeholder" class="my-auto text-center py-4">
+            <p class="text-[11px] text-neutral-400 italic">
+              {% trans "Espace réservé à l'apposition du cachet et de la signature manuscrite" %}
+            </p>
+          </div>
+
+          <div class="pt-2 border-t border-teal-100 flex items-center justify-between text-[10px] text-neutral-500">
+            <span>{% trans "Praticien :" %} Dr. {{ ordonnance.doctor.last_name }}</span>
+            <span>{% trans "N° RPPS / Ordre" %}</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- 7. Pied de page réglementaire -->
+    <div class="pt-6 border-t border-neutral-200 text-center">
+      <p class="text-[10px] text-neutral-400 font-medium">
+        {% trans "Cette ordonnance est valable 3 mois à compter de la date de prescription. • SantéGeste Medical Systems" %}
+      </p>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- Modal Signature Pad Interactive (accessible depuis l'application) -->
+<div id="signature-modal" class="fixed inset-0 bg-neutral-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden no-print">
+  <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-neutral-200 space-y-4">
+    <div class="flex items-center justify-between pb-3 border-b border-neutral-100">
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 rounded-xl bg-teal-50 text-[#0d9488] flex items-center justify-center">
+          ✍️
+        </div>
+        <div>
+          <h3 class="text-sm font-bold text-neutral-900">{% trans "Signature électronique de l'ordonnance" %}</h3>
+          <p class="text-[11px] text-neutral-500">{% trans "Signez ci-dessous à l'aide de votre souris ou stylet tactile" %}</p>
+        </div>
+      </div>
+      <button type="button" onclick="closeSignatureModal()" class="text-neutral-400 hover:text-neutral-600 p-1">
+        ✕
+      </button>
+    </div>
+
+    <!-- Canvas de signature -->
+    <div class="border-2 border-neutral-200 rounded-2xl bg-neutral-50 overflow-hidden relative">
+      <canvas id="signature-canvas" width="450" height="180" class="w-full h-44 cursor-crosshair touch-none"></canvas>
+      <div class="absolute bottom-2 left-3 text-[10px] text-neutral-400 select-none pointer-events-none">
+        {% trans "Zone de signature tactile" %}
+      </div>
+    </div>
+
+    <!-- Commandes du pad -->
+    <div class="flex items-center justify-between pt-2">
+      <button type="button" onclick="clearSignatureCanvas()" class="px-3.5 py-2 rounded-xl border border-neutral-200 text-neutral-700 text-xs font-semibold hover:bg-neutral-50 transition-colors">
+        {% trans "Effacer" %}
+      </button>
+
+      <div class="flex items-center gap-2">
+        <button type="button" onclick="closeSignatureModal()" class="px-4 py-2 rounded-xl text-neutral-500 text-xs font-semibold hover:bg-neutral-100 transition-colors">
+          {% trans "Annuler" %}
+        </button>
+        <button type="button" onclick="saveSignatureCanvas()" class="px-5 py-2 rounded-xl bg-[#0d9488] hover:bg-[#0f766e] text-white text-xs font-bold transition-colors shadow-xs">
+          {% trans "Valider la signature" %}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Script interactif du Signature Pad -->
+<script>
+  let canvas, ctx, isDrawing = false;
+
+  function initSignaturePad() {
+    canvas = document.getElementById('signature-canvas');
+    if (!canvas) return;
+    ctx = canvas.getContext('2d');
+    ctx.lineWidth = 2.5;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = '#0f766e'; // Encre Teal foncé
+
+    function getCoords(e) {
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      if (e.touches && e.touches.length > 0) {
+        return {
+          x: (e.touches[0].clientX - rect.left) * scaleX,
+          y: (e.touches[0].clientY - rect.top) * scaleY
+        };
+      }
+      return {
+        x: (e.clientX - rect.left) * scaleX,
+        y: (e.clientY - rect.top) * scaleY
+      };
+    }
+
+    function startDraw(e) {
+      isDrawing = true;
+      const pos = getCoords(e);
+      ctx.beginPath();
+      ctx.moveTo(pos.x, pos.y);
+      e.preventDefault();
+    }
+
+    function draw(e) {
+      if (!isDrawing) return;
+      const pos = getCoords(e);
+      ctx.lineTo(pos.x, pos.y);
+      ctx.stroke();
+      e.preventDefault();
+    }
+
+    function endDraw(e) {
+      if (!isDrawing) return;
+      isDrawing = false;
+      ctx.closePath();
+      e.preventDefault();
+    }
+
+    canvas.addEventListener('mousedown', startDraw);
+    canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('mouseup', endDraw);
+    canvas.addEventListener('mouseleave', endDraw);
+
+    canvas.addEventListener('touchstart', startDraw, { passive: false });
+    canvas.addEventListener('touchmove', draw, { passive: false });
+    canvas.addEventListener('touchend', endDraw, { passive: false });
+  }
+
+  function openSignatureModal() {
+    document.getElementById('signature-modal').classList.remove('hidden');
+    setTimeout(initSignaturePad, 100);
+  }
+
+  function closeSignatureModal() {
+    document.getElementById('signature-modal').classList.add('hidden');
+  }
+
+  function clearSignatureCanvas() {
+    if (ctx && canvas) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+  }
+
+  function saveSignatureCanvas() {
+    if (!canvas) return;
+    const dataURL = canvas.toDataURL('image/png');
+    const displayImg = document.getElementById('signature-img');
+    const displayArea = document.getElementById('signature-display-area');
+    const placeholder = document.getElementById('signature-placeholder');
+    const btnLabel = document.getElementById('sig-btn-label');
+
+    if (displayImg && displayArea && placeholder) {
+      displayImg.src = dataURL;
+      displayArea.classList.remove('hidden');
+      placeholder.classList.add('hidden');
+      if (btnLabel) btnLabel.textContent = "{% trans "Modifier la signature" %}";
+    }
+
+    closeSignatureModal();
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    initSignaturePad();
+  });
+</script>
+{% endblock %}

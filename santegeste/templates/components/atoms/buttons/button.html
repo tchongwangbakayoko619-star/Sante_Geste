@@ -32,6 +32,7 @@
     </a>
   {% else %}
     <button
+      {% if id %}id="{{ id }}"{% endif %}
       type="{{ type|default:'submit' }}"
       {% if disabled or loading %}disabled aria-disabled="true"{% endif %}
       {% if loading %}aria-busy="true"{% else %}aria-busy="false"{% endif %}

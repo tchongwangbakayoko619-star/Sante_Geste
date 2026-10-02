@@ -1,0 +1,628 @@
+{% extends "layouts/dashboard.html" %}
+{% load i18n static %}
+
+{% block title %}{% trans "Consultation Médicale" %} - SantéGeste{% endblock %}
+
+{% block content_inner %}
+<div class="max-w-5xl mx-auto space-y-6">
+
+  <!-- Header Fiche Patient & Consultation -->
+  <div class="bg-white p-6 rounded-2xl border border-neutral-200/80 shadow-xs flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <div class="flex items-center gap-4">
+      <div class="w-14 h-14 rounded-2xl bg-teal-50 border border-teal-200/80 text-[#0d9488] font-bold text-xl flex items-center justify-center shrink-0">
+        🩺
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <h1 class="text-xl font-bold text-neutral-900 font-title tracking-tight">
+            {% if is_update %}{% trans "Modifier la consultation" %}{% else %}{% trans "Consultation Médicale" %}{% endif %}
+          </h1>
+          <span class="font-mono text-xs font-bold px-2 py-0.5 rounded-lg {% if is_update %}bg-amber-50 text-amber-800 border border-amber-200{% else %}bg-teal-50 text-[#0d9488] border border-teal-200{% endif %}">
+            {% if is_update %}{% trans "Mode modification" %}{% else %}{% trans "En cours" %}{% endif %}
+          </span>
+        </div>
+        <p class="text-xs text-neutral-600 mt-1 flex flex-wrap items-center gap-2">
+          <span>{% trans "Patient" %} : <strong class="text-neutral-900">{{ patient.full_name }}</strong></span>
+          <span class="text-neutral-300">•</span>
+          <span class="font-mono text-neutral-500">{{ patient.patient_number }}</span>
+          {% if patient.age %}
+            <span class="text-neutral-300">•</span>
+            <span>{{ patient.age }} ans</span>
+          {% endif %}
+          {% if patient.blood_group and patient.blood_group != "UNKNOWN" %}
+            <span class="text-neutral-300">•</span>
+            <span class="font-bold text-rose-600">{{ patient.blood_group }}</span>
+          {% endif %}
+        </p>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2 shrink-0">
+      <a href="{% url "patients:patient_detail" patient.pk %}" target="_blank" class="px-3.5 py-2 rounded-xl bg-white border border-neutral-200 text-neutral-700 font-semibold text-xs hover:bg-neutral-50 transition-colors inline-flex items-center gap-1.5 shadow-2xs">
+        {% include "components/atoms/icon.html" with name="user" size="w-3.5 h-3.5 text-neutral-500" %}
+        <span>{% trans "Dossier 360°" %}</span>
+      </a>
+      <a href="{% url "patients:my_appointments" %}" class="px-3.5 py-2 rounded-xl bg-neutral-100 text-neutral-600 font-semibold text-xs hover:bg-neutral-200 transition-colors">
+        {% trans "Quitter" %}
+      </a>
+    </div>
+  </div>
+
+  <!-- Alerte allergies / vigilances cliniques -->
+  {% if patient.has_critical_alerts %}
+    <div class="bg-rose-50 border border-rose-200 text-rose-900 p-4 rounded-2xl flex items-start gap-3 shadow-2xs">
+      <svg class="w-5 h-5 text-rose-600 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+      </svg>
+      <div class="text-xs">
+        <h4 class="font-bold text-rose-950 uppercase tracking-wider">{% trans "Vigilance Allergies & Risques Thérapeutiques" %}</h4>
+        <p class="mt-0.5 text-rose-800">{{ patient.allergies|default:_("Substances signalées comme allergènes majeurs.") }}</p>
+      </div>
+    </div>
+  {% endif %}
+
+  <!-- Stepper de progression de la consultation (Workflow 4 étapes) -->
+  <div class="bg-white p-4 rounded-2xl border border-neutral-200/80 shadow-xs">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+      <!-- Étape 1 -->
+      <button type="button" onclick="goToStep(1)" id="step-btn-1" class="step-btn text-left p-3 rounded-xl border border-[#0d9488] bg-teal-50/60 transition-all cursor-pointer">
+        <span class="text-[10px] font-bold text-[#0d9488] uppercase tracking-wider block">{% trans "Étape 1" %}</span>
+        <span class="text-xs font-bold text-neutral-900 block mt-0.5">{% trans "Motif & Symptômes" %}</span>
+      </button>
+
+      <!-- Étape 2 -->
+      <button type="button" onclick="goToStep(2)" id="step-btn-2" class="step-btn text-left p-3 rounded-xl border border-neutral-200 hover:border-neutral-300 transition-all cursor-pointer">
+        <span class="text-[10px] font-bold text-neutral-400 uppercase tracking-wider block">{% trans "Étape 2" %}</span>
+        <span class="text-xs font-semibold text-neutral-700 block mt-0.5">{% trans "Constantes" %}</span>
+      </button>
+
+      <!-- Étape 3 -->
+      <button type="button" onclick="goToStep(3)" id="step-btn-3" class="step-btn text-left p-3 rounded-xl border border-neutral-200 hover:border-neutral-300 transition-all cursor-pointer">
+        <span class="text-[10px] font-bold text-neutral-400 uppercase tracking-wider block">{% trans "Étape 3" %}</span>
+        <span class="text-xs font-semibold text-neutral-700 block mt-0.5">{% trans "Diagnostic" %}</span>
+      </button>
+
+      <!-- Étape 4 -->
+      <button type="button" onclick="goToStep(4)" id="step-btn-4" class="step-btn text-left p-3 rounded-xl border border-neutral-200 hover:border-neutral-300 transition-all cursor-pointer">
+        <span class="text-[10px] font-bold text-neutral-400 uppercase tracking-wider block">{% trans "Étape 4" %}</span>
+        <span class="text-xs font-semibold text-neutral-700 block mt-0.5">{% trans "Ordonnance & Actes" %}</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Formulaire Général de Consultation -->
+  <form method="post" id="consultation-form" class="space-y-6">
+    {% csrf_token %}
+    {% if appointment %}<input type="hidden" name="appointment" value="{{ appointment.pk }}">{% endif %}
+    {% if patient %}<input type="hidden" name="patient" value="{{ patient.pk }}">{% endif %}
+
+    <!-- CONTENU ÉTAPE 1 : Motif & Symptômes -->
+    <div id="step-pane-1" class="step-pane bg-white p-6 sm:p-8 rounded-2xl border border-neutral-200/80 shadow-xs space-y-6">
+      <div class="border-b border-neutral-100 pb-3">
+        <h2 class="text-base font-bold text-neutral-900 font-title">
+          {% trans "1. Motif de consultation & Symptômes constatés" %}
+        </h2>
+        <p class="text-xs text-neutral-500">
+          {% trans "Consignez les plaintes du patient et les signes initiaux d'observation" %}
+        </p>
+      </div>
+
+      <div class="space-y-4">
+        <div>
+          <label for="id_reason" class="block text-xs font-bold text-neutral-800 uppercase tracking-wider mb-1.5">
+            {% trans "Motif principal de la consultation" %} <span class="text-rose-500">*</span>
+          </label>
+          <input
+            type="text"
+            id="id_reason"
+            name="reason"
+            required
+            value="{{ form.reason.value|default:'' }}"
+            placeholder="{% trans "ex: Fièvre persistante et céphalées depuis 3 jours..." %}"
+            class="w-full px-4 py-3 border border-neutral-200 rounded-xl text-sm font-semibold text-neutral-800 placeholder-neutral-400 focus:ring-2 focus:ring-[#0d9488] focus:border-transparent outline-none shadow-2xs"
+          >
+          {% if form.reason.errors %}
+            <p class="text-xs text-rose-600 mt-1 font-medium">{{ form.reason.errors.0 }}</p>
+          {% endif %}
+        </div>
+
+        <div>
+          <label for="id_symptoms" class="block text-xs font-bold text-neutral-800 uppercase tracking-wider mb-1.5">
+            {% trans "Symptômes & Constatations cliniques" %}
+          </label>
+          <textarea
+            id="id_symptoms"
+            name="symptoms"
+            rows="5"
+            placeholder="{% trans "Description détaillée des symptômes ressentis, durée, intensité, examen physique initial..." %}"
+            class="w-full px-4 py-3 border border-neutral-200 rounded-xl text-xs text-neutral-800 placeholder-neutral-400 focus:ring-2 focus:ring-[#0d9488] focus:border-transparent outline-none shadow-2xs resize-none"
+          >{{ form.symptoms.value|default:'' }}</textarea>
+          {% if form.symptoms.errors %}
+            <p class="text-xs text-rose-600 mt-1 font-medium">{{ form.symptoms.errors.0 }}</p>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Navigation Étape 1 -->
+      <div class="flex items-center justify-between pt-4 border-t border-neutral-100">
+        <a href="{% url "patients:patient_detail" patient.pk %}" class="px-4 py-2.5 rounded-xl border border-neutral-200 text-neutral-700 text-xs font-semibold hover:bg-neutral-50 transition-colors">
+          {% trans "Annuler" %}
+        </a>
+        <button type="button" onclick="goToStep(2)" class="bg-[#0d9488] hover:bg-[#0f766e] text-white text-xs font-bold py-2.5 px-5 rounded-xl inline-flex items-center gap-2 shadow-xs transition-colors cursor-pointer">
+          <span>{% trans "Suivant : Constantes" %}</span>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- CONTENU ÉTAPE 2 : Constantes Vitales Dynamiques Définies par le Personnel -->
+    <div id="step-pane-2" class="step-pane hidden bg-white p-6 sm:p-8 rounded-2xl border border-neutral-200/80 shadow-xs space-y-6">
+      
+      <!-- En-tête Étape 2 avec Bouton d'Ajout de Paramètre -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-neutral-100 pb-4">
+        <div>
+          <h2 class="text-base sm:text-lg font-bold text-neutral-900 font-title flex items-center gap-2">
+            <span class="p-1.5 rounded-lg bg-teal-50 text-[#14967F]">
+              {% include "components/atoms/icon.html" with name="stethoscope" size="w-4 h-4" %}
+            </span>
+            <span>{% trans "2. Constantes vitales du patient" %}</span>
+          </h2>
+          <p class="text-xs text-neutral-500 mt-1">
+            {% trans "Paramètres physiologiques configurables par le personnel soignant avec saisie des valeurs mesurées." %}
+          </p>
+        </div>
+        <button
+          type="button"
+          onclick="addNewCustomVitalCard()"
+          class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-teal-50 hover:bg-teal-100 text-[#14967F] font-bold text-xs border border-teal-200 transition-colors cursor-pointer shadow-2xs shrink-0 self-start sm:self-auto"
+        >
+          {% include "components/atoms/icon.html" with name="plus" size="w-3.5 h-3.5" %}
+          <span>{% trans "Définir un autre paramètre" %}</span>
+        </button>
+      </div>
+
+      <!-- Suggestions Rapides de Paramètres Fréquents -->
+      <div class="p-3.5 rounded-2xl bg-neutral-50/80 border border-neutral-100 space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] font-bold text-neutral-500 uppercase tracking-wider">
+            {% trans "Paramètres fréquents à ajouter en 1 clic :" %}
+          </span>
+          <span class="text-[10px] text-neutral-400">
+            {% trans "Cliquez pour insérer" %}
+          </span>
+        </div>
+        <div class="flex flex-wrap items-center gap-2" id="vital-presets-container">
+          <button type="button" onclick="addPresetVital('Saturation O2 (SpO2)', '%', '98')" class="preset-pill px-3 py-1 rounded-xl bg-white hover:bg-teal-50 hover:text-[#14967F] hover:border-teal-200 text-neutral-700 font-semibold text-xs border border-neutral-200 transition shadow-2xs cursor-pointer">
+            + SpO2 (%)
+          </button>
+          <button type="button" onclick="addPresetVital('Glycémie capillaire', 'g/L', '1.05')" class="preset-pill px-3 py-1 rounded-xl bg-white hover:bg-teal-50 hover:text-[#14967F] hover:border-teal-200 text-neutral-700 font-semibold text-xs border border-neutral-200 transition shadow-2xs cursor-pointer">
+            + Glycémie (g/L)
+          </button>
+          <button type="button" onclick="addPresetVital('Taille', 'cm', '170')" class="preset-pill px-3 py-1 rounded-xl bg-white hover:bg-teal-50 hover:text-[#14967F] hover:border-teal-200 text-neutral-700 font-semibold text-xs border border-neutral-200 transition shadow-2xs cursor-pointer">
+            + Taille (cm)
+          </button>
+          <button type="button" onclick="addPresetVital('Tour de taille', 'cm', '80')" class="preset-pill px-3 py-1 rounded-xl bg-white hover:bg-teal-50 hover:text-[#14967F] hover:border-teal-200 text-neutral-700 font-semibold text-xs border border-neutral-200 transition shadow-2xs cursor-pointer">
+            + Tour de taille (cm)
+          </button>
+          <button type="button" onclick="addPresetVital('Douleur (EVA 0-10)', '/10', '0')" class="preset-pill px-3 py-1 rounded-xl bg-white hover:bg-teal-50 hover:text-[#14967F] hover:border-teal-200 text-neutral-700 font-semibold text-xs border border-neutral-200 transition shadow-2xs cursor-pointer">
+            + Douleur (EVA)
+          </button>
+          <button type="button" onclick="addPresetVital('Diurèse', 'mL', '1500')" class="preset-pill px-3 py-1 rounded-xl bg-white hover:bg-teal-50 hover:text-[#14967F] hover:border-teal-200 text-neutral-700 font-semibold text-xs border border-neutral-200 transition shadow-2xs cursor-pointer">
+            + Diurèse (mL)
+          </button>
+        </div>
+      </div>
+
+      <!-- Grille Dynamique des Constantes Vitales Définies par le Personnel -->
+      <div id="vital-signs-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <!-- Rempli dynamiquement en JavaScript avec les paramètres existants ou par défaut -->
+      </div>
+
+      <!-- Champs cachés de rétrocompatibilité -->
+      <input type="hidden" id="id_tension" name="tension" value="{{ form.tension.value|default:'' }}">
+      <input type="hidden" id="id_poids" name="poids" value="{{ form.poids.value|default:'' }}">
+      <input type="hidden" id="id_temperature" name="temperature" value="{{ form.temperature.value|default:'' }}">
+      <input type="hidden" id="id_pouls" name="pouls" value="{{ form.pouls.value|default:'' }}">
+      <input type="hidden" id="id_frequence_respiratoire" name="frequence_respiratoire" value="{{ form.frequence_respiratoire.value|default:'' }}">
+
+      <!-- Navigation Étape 2 -->
+      <div class="flex items-center justify-between pt-4 border-t border-neutral-100">
+        <button type="button" onclick="goToStep(1)" class="px-4 py-2.5 rounded-xl border border-neutral-200 text-neutral-700 text-xs font-semibold hover:bg-neutral-50 transition-colors inline-flex items-center gap-1.5 cursor-pointer">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+          <span>{% trans "Précédent" %}</span>
+        </button>
+        <button type="button" onclick="goToStep(3)" class="bg-[#0d9488] hover:bg-[#0f766e] text-white text-xs font-bold py-2.5 px-5 rounded-xl inline-flex items-center gap-2 shadow-xs transition-colors cursor-pointer">
+          <span>{% trans "Suivant : Diagnostic" %}</span>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- CONTENU ÉTAPE 3 : Diagnostic & Notes Cliniques -->
+    <div id="step-pane-3" class="step-pane hidden bg-white p-6 sm:p-8 rounded-2xl border border-neutral-200/80 shadow-xs space-y-6">
+      <div class="border-b border-neutral-100 pb-3">
+        <h2 class="text-base font-bold text-neutral-900 font-title">
+          {% trans "3. Diagnostic médical & Notes cliniques" %}
+        </h2>
+        <p class="text-xs text-neutral-500">
+          {% trans "Hypothèse diagnostique confirmée et observations pour le dossier" %}
+        </p>
+      </div>
+
+      <div class="space-y-4">
+        <div>
+          <label for="id_diagnosis" class="block text-xs font-bold text-neutral-800 uppercase tracking-wider mb-1.5">
+            {% trans "Diagnostic clinique retenu" %} <span class="text-rose-500">*</span>
+          </label>
+          <textarea
+            id="id_diagnosis"
+            name="diagnosis"
+            rows="3"
+            required
+            placeholder="{% trans "ex: Gastrite aiguë consécutive à prise d'AINS..." %}"
+            class="w-full px-4 py-3 border border-neutral-200 rounded-xl text-sm font-bold text-neutral-800 placeholder-neutral-400 focus:ring-2 focus:ring-[#0d9488] focus:border-transparent outline-none shadow-2xs resize-none"
+          >{{ form.diagnosis.value|default:'' }}</textarea>
+          {% if form.diagnosis.errors %}
+            <p class="text-xs text-rose-600 mt-1 font-medium">{{ form.diagnosis.errors.0 }}</p>
+          {% endif %}
+        </div>
+
+        <div>
+          <label for="id_notes" class="block text-xs font-bold text-neutral-800 uppercase tracking-wider mb-1.5">
+            {% trans "Notes cliniques & Recommandations confidentielles" %}
+          </label>
+          <textarea
+            id="id_notes"
+            name="notes"
+            rows="4"
+            placeholder="{% trans "Conseils hygiéno-diététiques, surveillance, examens complémentaires..." %}"
+            class="w-full px-4 py-3 border border-neutral-200 rounded-xl text-xs text-neutral-800 placeholder-neutral-400 focus:ring-2 focus:ring-[#0d9488] focus:border-transparent outline-none shadow-2xs resize-none"
+          >{{ form.notes.value|default:'' }}</textarea>
+          {% if form.notes.errors %}
+            <p class="text-xs text-rose-600 mt-1 font-medium">{{ form.notes.errors.0 }}</p>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Navigation Étape 3 -->
+      <div class="flex items-center justify-between pt-4 border-t border-neutral-100">
+        <button type="button" onclick="goToStep(2)" class="px-4 py-2.5 rounded-xl border border-neutral-200 text-neutral-700 text-xs font-semibold hover:bg-neutral-50 transition-colors inline-flex items-center gap-1.5 cursor-pointer">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+          <span>{% trans "Précédent" %}</span>
+        </button>
+        <button type="button" onclick="goToStep(4)" class="bg-[#0d9488] hover:bg-[#0f766e] text-white text-xs font-bold py-2.5 px-5 rounded-xl inline-flex items-center gap-2 shadow-xs transition-colors cursor-pointer">
+          <span>{% trans "Suivant : Ordonnance & Actes" %}</span>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- CONTENU ÉTAPE 4 : Ordonnance & Actes (Validation & Finalisation) -->
+    <div id="step-pane-4" class="step-pane hidden bg-white p-6 sm:p-8 rounded-2xl border border-neutral-200/80 shadow-xs space-y-6">
+      <div class="border-b border-neutral-100 pb-3">
+        <h2 class="text-base font-bold text-neutral-900 font-title">
+          {% trans "4. Ordonnance, Actes médicaux & Clôture" %}
+        </h2>
+        <p class="text-xs text-neutral-500">
+          {% trans "Récapitulatif de la consultation avant prescription et transmission à la caisse" %}
+        </p>
+      </div>
+
+      <!-- Récapitulatif interactif des données saisies -->
+      <div class="bg-neutral-50/70 p-5 rounded-2xl border border-neutral-200/80 space-y-4">
+        <h3 class="text-xs font-bold text-neutral-800 uppercase tracking-wider">
+          {% trans "Synthèse clinique prête à enregistrer" %}
+        </h3>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+          <div class="space-y-1">
+            <span class="text-[11px] font-semibold text-neutral-400 block uppercase">{% trans "Motif" %}</span>
+            <p id="summary-reason" class="font-bold text-neutral-900 italic">{% trans "(à renseigner à l'étape 1)" %}</p>
+          </div>
+
+          <div class="space-y-1">
+            <span class="text-[11px] font-semibold text-neutral-400 block uppercase">{% trans "Diagnostic" %}</span>
+            <p id="summary-diagnosis" class="font-bold text-neutral-900 italic">{% trans "(à renseigner à l'étape 3)" %}</p>
+          </div>
+
+          <div class="space-y-1 md:col-span-2">
+            <span class="text-[11px] font-semibold text-neutral-400 block uppercase">{% trans "Constantes saisies" %}</span>
+            <p id="summary-vitals" class="font-mono text-neutral-700 font-semibold"></p>
+          </div>
+        </div>
+
+        <div class="p-3 bg-teal-50 border border-teal-200 rounded-xl text-xs text-teal-900 flex items-start gap-2.5">
+          <svg class="w-4 h-4 text-[#0d9488] shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <p>
+            {% trans "Dès validation, vous accéderez directement à l'interface de prescription médicamenteuse (ordonnance à lignes multiples, impression/PDF, délivrance) et à l'ajout des actes médicaux avec transmission directe à la caisse." %}
+          </p>
+        </div>
+      </div>
+
+      <!-- Navigation & Validation finale (Boutons Enregistrer / Terminer la consultation) -->
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-neutral-100">
+        <button type="button" onclick="goToStep(3)" class="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-neutral-200 text-neutral-700 text-xs font-semibold hover:bg-neutral-50 transition-colors inline-flex items-center justify-center gap-1.5 cursor-pointer">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+          <span>{% trans "Précédent" %}</span>
+        </button>
+
+        <div class="flex items-center gap-3 w-full sm:w-auto">
+          <button type="submit" class="w-full sm:w-auto bg-white hover:bg-neutral-50 text-neutral-800 border border-neutral-300 font-bold text-xs py-2.5 px-5 rounded-xl inline-flex items-center justify-center gap-2 shadow-2xs transition-colors cursor-pointer">
+            <svg class="w-4 h-4 text-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
+            <span>{% trans "Enregistrer" %}</span>
+          </button>
+
+          <button type="submit" class="w-full sm:w-auto bg-[#0d9488] hover:bg-[#0f766e] text-white font-bold text-xs py-2.5 px-6 rounded-xl inline-flex items-center justify-center gap-2 shadow-xs transition-colors cursor-pointer">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+            <span>{% trans "Terminer la consultation" %}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </form>
+</div>
+
+<!-- Script Stepper réactif pour la consultation médicale -->
+<script>
+  let currentStep = 1;
+
+  // Données initiales des constantes vitales (soit existantes en BDD, soit paramètres usuels par défaut)
+  const initialVitals = [
+    {% if form.vital_parameters %}
+      {% for p in form.vital_parameters %}
+        { name: "{{ p.name|escapejs }}", value: "{{ p.value|escapejs }}", unit: "{{ p.unit|escapejs }}" },
+      {% endfor %}
+    {% elif form.instance.pk and form.instance.vital_signs %}
+      {% if form.instance.vital_signs.parameters %}
+        {% for p in form.instance.vital_signs.parameters %}
+          { name: "{{ p.name|escapejs }}", value: "{{ p.value|escapejs }}", unit: "{{ p.unit|escapejs }}" },
+        {% endfor %}
+      {% else %}
+        {% if form.tension.value %}{ name: "Tension artérielle", value: "{{ form.tension.value|escapejs }}", unit: "mmHg" },{% endif %}
+        {% if form.poids.value %}{ name: "Poids", value: "{{ form.poids.value|escapejs }}", unit: "kg" },{% endif %}
+        {% if form.temperature.value %}{ name: "Température", value: "{{ form.temperature.value|escapejs }}", unit: "°C" },{% endif %}
+        {% if form.pouls.value %}{ name: "Pouls (Fréquence cardiaque)", value: "{{ form.pouls.value|escapejs }}", unit: "bpm" },{% endif %}
+        {% if form.frequence_respiratoire.value %}{ name: "Fréquence respiratoire", value: "{{ form.frequence_respiratoire.value|escapejs }}", unit: "/min" },{% endif %}
+      {% endif %}
+    {% else %}
+      { name: "Tension artérielle", value: "{{ form.tension.value|default:''|escapejs }}", unit: "mmHg" },
+      { name: "Poids", value: "{{ form.poids.value|default:''|escapejs }}", unit: "kg" },
+      { name: "Température", value: "{{ form.temperature.value|default:''|escapejs }}", unit: "°C" },
+      { name: "Pouls (Fréquence cardiaque)", value: "{{ form.pouls.value|default:''|escapejs }}", unit: "bpm" },
+      { name: "Fréquence respiratoire", value: "{{ form.frequence_respiratoire.value|default:''|escapejs }}", unit: "/min" }
+    {% endif %}
+  ];
+
+  function createVitalCardElement(name = '', value = '', unit = '', isCustom = false) {
+    const card = document.createElement('div');
+    card.className = "vital-param-card relative p-4 rounded-xl border border-neutral-200 bg-white hover:border-teal-300 transition-all shadow-2xs space-y-3 group";
+    
+    card.innerHTML = `
+      <div class="flex items-center justify-between gap-2">
+        <div class="flex-1 min-w-0">
+          <input
+            type="text"
+            name="vital_param_name[]"
+            value="${escapeHtml(name)}"
+            placeholder="{% trans "Nom du paramètre (ex: SpO2, Glycémie...)" %}"
+            class="vital-name-input w-full text-xs font-bold text-neutral-800 bg-transparent border-b border-dashed border-neutral-300 focus:border-[#14967F] focus:outline-none pb-0.5 tracking-tight"
+            oninput="syncVitalsToHiddenFields()"
+            required
+          />
+        </div>
+        <button
+          type="button"
+          onclick="removeVitalCard(this)"
+          class="text-neutral-400 hover:text-rose-500 hover:bg-rose-50 p-1.5 rounded-lg transition-colors cursor-pointer shrink-0"
+          title="{% trans "Supprimer ce paramètre" %}"
+        >
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+        </button>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <div class="relative flex-1">
+          <input
+            type="text"
+            name="vital_param_value[]"
+            value="${escapeHtml(value)}"
+            placeholder="{% trans "Valeur" %}"
+            class="vital-val-input w-full px-3 py-2 rounded-lg border border-neutral-200 text-sm font-semibold text-neutral-900 focus:outline-none focus:ring-2 focus:ring-[#14967F] focus:border-transparent bg-neutral-50/50"
+            oninput="syncVitalsToHiddenFields()"
+          />
+        </div>
+        <div class="w-24 shrink-0">
+          <input
+            type="text"
+            name="vital_param_unit[]"
+            value="${escapeHtml(unit)}"
+            placeholder="{% trans "Unité" %}"
+            class="vital-unit-input w-full px-2.5 py-2 rounded-lg border border-neutral-200 text-xs font-medium text-neutral-600 focus:outline-none focus:ring-2 focus:ring-[#14967F] focus:border-transparent bg-neutral-50/50 text-center"
+            oninput="syncVitalsToHiddenFields()"
+          />
+        </div>
+      </div>
+    `;
+
+    return card;
+  }
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function renderInitialVitals() {
+    const container = document.getElementById('vital-signs-grid');
+    if (!container) return;
+    container.innerHTML = '';
+
+    initialVitals.forEach(item => {
+      container.appendChild(createVitalCardElement(item.name, item.value, item.unit));
+    });
+
+    syncVitalsToHiddenFields();
+  }
+
+  function addNewCustomVitalCard() {
+    const container = document.getElementById('vital-signs-grid');
+    if (!container) return;
+
+    const card = createVitalCardElement('', '', '', true);
+    container.appendChild(card);
+    const nameInput = card.querySelector('.vital-name-input');
+    if (nameInput) {
+      nameInput.focus();
+    }
+    syncVitalsToHiddenFields();
+  }
+
+  function addPresetVital(name, unit, defaultVal) {
+    const container = document.getElementById('vital-signs-grid');
+    if (!container) return;
+
+    // Vérifier si le paramètre existe déjà
+    const existingInputs = container.querySelectorAll('.vital-name-input');
+    for (let input of existingInputs) {
+      if (input.value.trim().toLowerCase() === name.toLowerCase()) {
+        const parent = input.closest('.vital-param-card');
+        const valInput = parent.querySelector('.vital-val-input');
+        if (valInput) {
+          valInput.focus();
+          valInput.classList.add('ring-2', 'ring-[#14967F]');
+          setTimeout(() => valInput.classList.remove('ring-2', 'ring-[#14967F]'), 1200);
+        }
+        return;
+      }
+    }
+
+    const card = createVitalCardElement(name, '', unit);
+    container.appendChild(card);
+    const valInput = card.querySelector('.vital-val-input');
+    if (valInput) {
+      valInput.focus();
+    }
+    syncVitalsToHiddenFields();
+  }
+
+  function removeVitalCard(btn) {
+    const card = btn.closest('.vital-param-card');
+    if (card) {
+      card.remove();
+      syncVitalsToHiddenFields();
+    }
+  }
+
+  function syncVitalsToHiddenFields() {
+    const container = document.getElementById('vital-signs-grid');
+    if (!container) return;
+
+    const cards = container.querySelectorAll('.vital-param-card');
+    let tension = '', poids = '', temp = '', pouls = '', freqResp = '';
+
+    cards.forEach(card => {
+      const name = card.querySelector('.vital-name-input')?.value.trim() || '';
+      const val = card.querySelector('.vital-val-input')?.value.trim() || '';
+      const nLower = name.toLowerCase();
+
+      if (nLower.includes('tension') && !tension) tension = val;
+      else if (nLower.includes('poids') && !poids) poids = val;
+      else if (nLower.includes('tempér') && !temp) temp = val;
+      else if ((nLower.includes('pouls') || nLower.includes('cardiaque')) && !pouls) pouls = val;
+      else if (nLower.includes('respiratoire') && !freqResp) freqResp = val;
+    });
+
+    const hiddenTension = document.getElementById('id_tension');
+    const hiddenPoids = document.getElementById('id_poids');
+    const hiddenTemp = document.getElementById('id_temperature');
+    const hiddenPouls = document.getElementById('id_pouls');
+    const hiddenFreq = document.getElementById('id_frequence_respiratoire');
+
+    if (hiddenTension) hiddenTension.value = tension;
+    if (hiddenPoids) hiddenPoids.value = poids;
+    if (hiddenTemp) hiddenTemp.value = temp;
+    if (hiddenPouls) hiddenPouls.value = pouls;
+    if (hiddenFreq) hiddenFreq.value = freqResp;
+  }
+
+  function updateSummary() {
+    const reasonInput = document.getElementById('id_reason');
+    const diagInput = document.getElementById('id_diagnosis');
+    const summaryReason = document.getElementById('summary-reason');
+    const summaryDiag = document.getElementById('summary-diagnosis');
+    const summaryVitals = document.getElementById('summary-vitals');
+
+    if (reasonInput && summaryReason) {
+      summaryReason.textContent = reasonInput.value.trim() || "{% trans "Non renseigné" %}";
+    }
+    if (diagInput && summaryDiag) {
+      summaryDiag.textContent = diagInput.value.trim() || "{% trans "Non renseigné" %}";
+    }
+
+    // Récupérer toutes les constantes saisies dynamiquement
+    const container = document.getElementById('vital-signs-grid');
+    const parts = [];
+
+    if (container) {
+      const cards = container.querySelectorAll('.vital-param-card');
+      cards.forEach(card => {
+        const name = card.querySelector('.vital-name-input')?.value.trim();
+        const val = card.querySelector('.vital-val-input')?.value.trim();
+        const unit = card.querySelector('.vital-unit-input')?.value.trim();
+        if (name && val) {
+          parts.push(`${name}: ${val} ${unit || ''}`.trim());
+        }
+      });
+    }
+
+    if (summaryVitals) {
+      summaryVitals.textContent = parts.length > 0 ? parts.join(' • ') : "{% trans "Aucune constante mesurée." %}";
+    }
+  }
+
+  function goToStep(stepNumber) {
+    currentStep = stepNumber;
+
+    // 1. Boutons du stepper
+    for (let i = 1; i <= 4; i++) {
+      const btn = document.getElementById('step-btn-' + i);
+      if (!btn) continue;
+      if (i === stepNumber) {
+        btn.className = "step-btn text-left p-3 rounded-xl border border-[#0d9488] bg-teal-50/60 transition-all cursor-pointer";
+        btn.querySelector('span:first-child').className = "text-[10px] font-bold text-[#0d9488] uppercase tracking-wider block";
+      } else {
+        btn.className = "step-btn text-left p-3 rounded-xl border border-neutral-200 hover:border-neutral-300 transition-all cursor-pointer";
+        btn.querySelector('span:first-child').className = "text-[10px] font-bold text-neutral-400 uppercase tracking-wider block";
+      }
+    }
+
+    // 2. Affichage des panneaux
+    for (let i = 1; i <= 4; i++) {
+      const pane = document.getElementById('step-pane-' + i);
+      if (pane) {
+        if (i === stepNumber) {
+          pane.classList.remove('hidden');
+        } else {
+          pane.classList.add('hidden');
+        }
+      }
+    }
+
+    if (stepNumber === 4) {
+      updateSummary();
+    }
+
+    window.scrollTo({ top: 100, behavior: 'smooth' });
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    renderInitialVitals();
+  });
+</script>
+{% endblock %}

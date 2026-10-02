@@ -554,3 +554,436 @@ class Appointment(SoftDeleteModel):
         return super().save(*args, **kwargs)
 
 
+class Consultation(SoftDeleteModel):
+    """Consultation médicale réalisée par un praticien pour un patient."""
+
+    appointment = models.OneToOneField(
+        Appointment,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="consultation",
+        verbose_name=_("Rendez-vous associé"),
+    )
+    patient = models.ForeignKey(
+        Patient,
+        on_delete=models.CASCADE,
+        related_name="consultations",
+        verbose_name=_("Patient"),
+    )
+    doctor = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        limit_choices_to={"is_personnel_medical": True},
+        related_name="doctor_consultations",
+        verbose_name=_("Médecin / Praticien"),
+    )
+    consultation_date = models.DateTimeField(
+        default=timezone.now,
+        db_index=True,
+        verbose_name=_("Date et heure de la consultation"),
+    )
+    reason = models.CharField(
+        max_length=255,
+        verbose_name=_("Motif de la consultation"),
+    )
+    symptoms = models.TextField(
+        blank=True,
+        default="",
+        verbose_name=_("Symptômes et observations cliniques"),
+    )
+    vital_signs = models.JSONField(
+        default=dict,
+        blank=True,
+        verbose_name=_("Constantes vitales (Tension, Poids, Température, Pouls)"),
+        help_text=_("Ex: {'tension': '12/8', 'poids': 70, 'temperature': 37.2, 'pouls': 75}"),
+    )
+    diagnosis = models.TextField(
+        blank=True,
+        default="",
+        verbose_name=_("Diagnostic médical"),
+    )
+    notes = models.TextField(
+        blank=True,
+        default="",
+        verbose_name=_("Notes confidentielles / Recommandations"),
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=[
+            ("IN_PROGRESS", _("En cours")),
+            ("COMPLETED", _("Terminée")),
+        ],
+        default="COMPLETED",
+        verbose_name=_("Statut de la consultation"),
+    )
+
+    class Meta:
+        db_table = "consultations"
+        verbose_name = _("Consultation médicale")
+        verbose_name_plural = _("Consultations médicales")
+        ordering = ["-consultation_date"]
+        indexes = [
+            models.Index(fields=["is_deleted", "-created_at"], name="consult_del_created_idx"),
+            models.Index(fields=["doctor", "-consultation_date"], name="consult_doc_date_idx"),
+            models.Index(fields=["patient", "-consultation_date"], name="consult_pat_date_idx"),
+        ]
+
+    def __str__(self) -> str:
+        date_str = timezone.localtime(self.consultation_date).strftime("%d/%m/%Y %H:%M")
+        return f"Consultation: {self.patient.full_name} par Dr. {self.doctor.full_name} ({date_str})"
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        # Met à jour le statut du rendez-vous lié si présent
+        if self.appointment and self.appointment.status != AppointmentStatusEnum.COMPLETED:
+            self.appointment.status = AppointmentStatusEnum.COMPLETED
+            self.appointment.save(update_fields=["status", "updated_at"])
+
+
+class Prestation(BaseModel):
+    """Catalogue officiel des actes et prestations médicales de l'établissement."""
+
+    name = models.CharField(
+        max_length=150,
+        unique=True,
+        verbose_name=_("Nom de la prestation"),
+    )
+    code = models.CharField(
+        max_length=30,
+        unique=True,
+        verbose_name=_("Code acte / Tarifaire"),
+    )
+    category = models.CharField(
+        max_length=50,
+        default="CONSULTATION",
+        verbose_name=_("Catégorie d'acte"),
+    )
+    standard_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        verbose_name=_("Tarif standard (FCFA / EUR)"),
+    )
+    is_active = models.BooleanField(
+        default=True,
+        verbose_name=_("Prestation active"),
+    )
+
+    class Meta:
+        db_table = "prestations"
+        verbose_name = _("Prestation médicale")
+        verbose_name_plural = _("Prestations médicales")
+        ordering = ["name"]
+
+    def __str__(self) -> str:
+        return f"{self.code} - {self.name} ({self.standard_price})"
+
+
+class PrestationRealisee(BaseModel):
+    """Acte ou prestation médicale réalisée pour un patient, transmise à la caisse."""
+
+    patient = models.ForeignKey(
+        Patient,
+        on_delete=models.CASCADE,
+        related_name="prestations_realisees",
+        verbose_name=_("Patient"),
+    )
+    consultation = models.ForeignKey(
+        Consultation,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="prestations",
+        verbose_name=_("Consultation associée"),
+    )
+    prestation = models.ForeignKey(
+        Prestation,
+        on_delete=models.PROTECT,
+        related_name="realisations",
+        verbose_name=_("Prestation"),
+    )
+    doctor = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="prestations_prescrites",
+        verbose_name=_("Praticien prescripteur / exécutant"),
+    )
+    quantity = models.PositiveIntegerField(
+        default=1,
+        verbose_name=_("Quantité"),
+    )
+    unit_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        verbose_name=_("Prix unitaire"),
+    )
+    total_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        verbose_name=_("Prix total"),
+    )
+    status = models.CharField(
+        max_length=25,
+        choices=[
+            ("EN_ATTENTE_CAISSE", _("En attente de facturation")),
+            ("FACTURE", _("Facturé")),
+            ("PAYE", _("Payé")),
+        ],
+        default="EN_ATTENTE_CAISSE",
+        verbose_name=_("Statut d'encaissement"),
+    )
+
+    class Meta:
+        db_table = "prestations_realisees"
+        verbose_name = _("Prestation réalisée")
+        verbose_name_plural = _("Prestations réalisées")
+        ordering = ["-created_at"]
+
+    def __str__(self) -> str:
+        return f"{self.prestation.name} x{self.quantity} - {self.patient.full_name} ({self.get_status_display()})"
+
+    def save(self, *args, **kwargs):
+        if not self.unit_price and self.prestation_id:
+            self.unit_price = self.prestation.standard_price
+        self.total_price = self.unit_price * self.quantity
+        super().save(*args, **kwargs)
+
+
+class Ordonnance(BaseModel):
+    """Ordonnance médicale délivrée par un praticien pour un patient."""
+
+    consultation = models.ForeignKey(
+        Consultation,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="ordonnances",
+        verbose_name=_("Consultation associée"),
+    )
+    patient = models.ForeignKey(
+        Patient,
+        on_delete=models.CASCADE,
+        related_name="ordonnances",
+        verbose_name=_("Patient"),
+    )
+    doctor = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="ordonnances_delivrees",
+        verbose_name=_("Médecin prescripteur"),
+    )
+    prescribed_at = models.DateTimeField(
+        default=timezone.now,
+        verbose_name=_("Date de prescription"),
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=[
+            ("PENDING", _("En attente de délivrance")),
+            ("DELIVERED", _("Délivrée")),
+            ("CANCELLED", _("Annulée")),
+        ],
+        default="PENDING",
+        verbose_name=_("Statut de délivrance"),
+    )
+    delivered_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name=_("Date de délivrance"),
+    )
+    delivered_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="prescriptions_delivrees",
+        verbose_name=_("Pharmacien / Agent de délivrance"),
+    )
+    notes = models.TextField(
+        blank=True,
+        default="",
+        verbose_name=_("Recommandations / Instructions générales"),
+    )
+
+    class Meta:
+        db_table = "ordonnances"
+        verbose_name = _("Ordonnance médicale")
+        verbose_name_plural = _("Ordonnances médicales")
+        ordering = ["-prescribed_at"]
+
+    def __str__(self) -> str:
+        date_str = timezone.localtime(self.prescribed_at).strftime("%d/%m/%Y")
+        return f"Ordonnance du {date_str} - {self.patient.full_name} (Dr. {self.doctor.full_name})"
+
+
+class LigneOrdonnance(BaseModel):
+    """Ligne de prescription médicamenteuse figurant sur une ordonnance."""
+
+    ordonnance = models.ForeignKey(
+        Ordonnance,
+        on_delete=models.CASCADE,
+        related_name="lines",
+        verbose_name=_("Ordonnance"),
+    )
+    medication_name = models.CharField(
+        max_length=200,
+        verbose_name=_("Nom du médicament / Substance"),
+    )
+    posology = models.CharField(
+        max_length=200,
+        verbose_name=_("Posologie (ex: 1 cp 3x/jour)"),
+    )
+    duration = models.CharField(
+        max_length=100,
+        verbose_name=_("Durée du traitement (ex: 7 jours)"),
+    )
+    quantity = models.PositiveIntegerField(
+        default=1,
+        verbose_name=_("Quantité / Boîtes"),
+    )
+
+    class Meta:
+        db_table = "lignes_ordonnance"
+        verbose_name = _("Ligne d'ordonnance")
+        verbose_name_plural = _("Lignes d'ordonnance")
+
+    def __str__(self) -> str:
+        return f"{self.medication_name} - {self.posology} ({self.duration})"
+
+
+class Facture(BaseModel):
+    """Facture émise par la Caisse pour les prestations d'un patient."""
+
+    invoice_number = models.CharField(
+        max_length=50,
+        unique=True,
+        verbose_name=_("Numéro de facture"),
+    )
+    patient = models.ForeignKey(
+        Patient,
+        on_delete=models.CASCADE,
+        related_name="factures",
+        verbose_name=_("Patient"),
+    )
+    consultation = models.ForeignKey(
+        Consultation,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="factures",
+        verbose_name=_("Consultation associée"),
+    )
+    total_amount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0.00,
+        verbose_name=_("Montant total (FCFA / EUR)"),
+    )
+    paid_amount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0.00,
+        verbose_name=_("Montant encaisse"),
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=[
+            ("UNPAID", _("Non payée")),
+            ("PARTIALLY_PAID", _("Partiellement payée")),
+            ("PAID", _("Payée")),
+            ("CANCELLED", _("Annulée")),
+        ],
+        default="UNPAID",
+        verbose_name=_("Statut de paiement"),
+    )
+    issued_at = models.DateTimeField(
+        default=timezone.now,
+        verbose_name=_("Date d'émission"),
+    )
+    issued_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="factures_emises",
+        verbose_name=_("Caissier / Agent émetteur"),
+    )
+
+    class Meta:
+        db_table = "factures"
+        verbose_name = _("Facture")
+        verbose_name_plural = _("Factures")
+        ordering = ["-issued_at"]
+
+    def __str__(self) -> str:
+        return f"{self.invoice_number} - {self.patient.full_name} ({self.total_amount} FCFA - {self.get_status_display()})"
+
+    @property
+    def remaining_amount(self):
+        return max(0, self.total_amount - self.paid_amount)
+
+
+class Paiement(BaseModel):
+    """Enregistrement d'un règlement financier perçu à la caisse."""
+
+    facture = models.ForeignKey(
+        Facture,
+        on_delete=models.CASCADE,
+        related_name="paiements",
+        verbose_name=_("Facture associée"),
+    )
+    cashier = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="paiements_encaisses",
+        verbose_name=_("Caissier"),
+    )
+    amount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        verbose_name=_("Montant régle"),
+    )
+    payment_method = models.CharField(
+        max_length=30,
+        choices=[
+            ("ESPECES", _("Espèces")),
+            ("CARTE", _("Carte Bancaire")),
+            ("MOBILE_MONEY", _("Mobile Money (Orange/MTN/Moov)")),
+            ("VIREMENT", _("Virement / Chèque")),
+        ],
+        default="ESPECES",
+        verbose_name=_("Mode de règlement"),
+    )
+    paid_at = models.DateTimeField(
+        default=timezone.now,
+        verbose_name=_("Date de règlement"),
+    )
+    notes = models.TextField(
+        blank=True,
+        default="",
+        verbose_name=_("Notes de caisse"),
+    )
+
+    class Meta:
+        db_table = "paiements"
+        verbose_name = _("Paiement / Règlement")
+        verbose_name_plural = _("Paiements / Règlements")
+        ordering = ["-paid_at"]
+
+    def __str__(self) -> str:
+        return f"Paiement {self.amount} FCFA par {self.get_payment_method_display()} (Facture {self.facture.invoice_number})"
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        # Recalcule le montant payé et met à jour le statut de la facture
+        facture = self.facture
+        total_paid = sum(p.amount for p in facture.paiements.all())
+        facture.paid_amount = total_paid
+        if total_paid >= facture.total_amount:
+            facture.status = "PAID"
+        elif total_paid > 0:
+            facture.status = "PARTIALLY_PAID"
+        else:
+            facture.status = "UNPAID"
+        facture.save(update_fields=["paid_amount", "status", "updated_at"])
+
+
+

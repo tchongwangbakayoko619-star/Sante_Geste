@@ -106,3 +106,34 @@ def get_elided_page_range(page_obj: Any, on_each_side: int = 1) -> list[Any]:
     )
 
 
+@register.filter(name="split")
+def split_filter(value: Any, delimiter: str = ",") -> list[str]:
+    """Divise une chaîne en liste selon un délimiteur.
+
+    Usage:
+        {% for item in "08,09,10"|split:"," %}
+    """
+    if isinstance(value, (list, tuple)):
+        return list(value)
+    if not value:
+        return []
+    return [s.strip() for s in str(value).split(delimiter) if s.strip()]
+
+
+@register.filter(name="split_lines")
+def split_lines_filter(value: Any) -> list[str]:
+    """Divise une chaîne multiligne en liste de lignes nettoyées pour listes à puces.
+
+    Usage:
+        {% for line in ordonnance.notes|split_lines %}
+            <li>• {{ line }}</li>
+        {% endfor %}
+    """
+    if not value:
+        return []
+    if isinstance(value, (list, tuple)):
+        return list(value)
+    lines = [line.strip().lstrip("-•*").strip() for line in str(value).splitlines()]
+    return [l for l in lines if l]
+
+
