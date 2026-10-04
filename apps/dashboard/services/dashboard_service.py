@@ -19,6 +19,8 @@ from django.db.models import Q
 from django.utils import timezone
 
 from apps.patients.models import Appointment
+from apps.patients.models import Consultation
+from apps.patients.models import Ordonnance
 from apps.patients.models import Patient
 from apps.users.services import rbac as rbac_service
 from utils.enums import AppointmentStatusEnum
@@ -56,9 +58,12 @@ class DashboardService:
         appointment_qs = Appointment.objects.filter(is_deleted=False)
         patient_qs = Patient.objects.filter(is_deleted=False)
 
+        is_doctor_only = False
+        is_medical_staff = False
         if user and getattr(user, "is_authenticated", False):
+            is_medical_staff = bool(getattr(user, "is_personnel_medical", False))
             is_doctor_only = (
-                getattr(user, "is_personnel_medical", False)
+                is_medical_staff
                 and not getattr(user, "is_agent_accueil", False)
                 and not getattr(user, "is_proprietaire", False)
                 and not getattr(user, "is_superuser", False)
@@ -124,6 +129,29 @@ class DashboardService:
         # 7. Nouveaux patients récents (Les 5 derniers créés)
         recent_patients = patient_qs.order_by("-created_at")[:5]
 
+        # 8. Données et consultations spécifiques au personnel soignant (médecin)
+        consultation_qs = Consultation.objects.filter(is_deleted=False)
+        ordonnance_qs = Ordonnance.objects.all()
+
+        if is_doctor_only and user:
+            consultation_qs = consultation_qs.filter(doctor=user)
+            ordonnance_qs = ordonnance_qs.filter(doctor=user)
+
+        doctor_consultations_count = consultation_qs.filter(
+            consultation_date__gte=start_date,
+            consultation_date__lte=end_date,
+        ).count()
+
+        doctor_ordonnances_count = ordonnance_qs.filter(
+            prescribed_at__gte=start_date,
+            prescribed_at__lte=end_date,
+        ).count()
+
+        recent_consultations = (
+            consultation_qs.select_related("patient", "doctor")
+            .order_by("-consultation_date")[:5]
+        )
+
         greeting = "Bonsoir" if local_now.hour >= 18 else "Bonjour"
 
         return {
@@ -136,6 +164,12 @@ class DashboardService:
             "end_date": end_date.isoformat(),
             "custom_start_date": start_date.strftime("%Y-%m-%d"),
             "custom_end_date": end_date.strftime("%Y-%m-%d"),
+            # Rôles et mode praticien
+            "is_doctor_only": is_doctor_only,
+            "is_medical_staff": is_medical_staff,
+            "doctor_consultations_count": doctor_consultations_count,
+            "doctor_ordonnances_count": doctor_ordonnances_count,
+            "recent_consultations": recent_consultations,
             # KPIs principaux
             "rdv_today_count": stats["total_count"] or 0,
             "rdv_confirmed_count": stats["confirmed_count"] or 0,

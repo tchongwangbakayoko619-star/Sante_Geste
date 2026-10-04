@@ -8,18 +8,18 @@
   }
 
   .btn-primary {
-    @apply bg-[#14967F] hover:bg-[#0f7a67] active:bg-[#0b6353] text-white shadow-sm hover:shadow-md shadow-[#14967F]/25 hover:shadow-[#14967F]/35 py-3.5 px-5 text-sm sm:text-base font-semibold;
+    @apply bg-[#0d9488] hover:bg-[#0f766e] active:bg-[#115e59] text-white shadow-xs hover:shadow-sm py-2.5 px-4 text-sm font-semibold rounded-xl;
   }
 
   .btn-outline {
-    @apply border border-neutral-300 text-neutral-700 bg-white hover:bg-neutral-50 py-3 px-5 text-sm;
+    @apply border border-neutral-200 text-neutral-700 bg-white hover:bg-neutral-50 hover:border-neutral-300 py-2.5 px-4 text-sm font-semibold rounded-xl;
   }
 
   .btn-secondary {
-    @apply bg-neutral-100 hover:bg-neutral-200 text-neutral-800 py-3 px-5 text-sm;
+    @apply bg-neutral-100 hover:bg-neutral-200 text-neutral-800 py-2.5 px-4 text-sm font-semibold rounded-xl;
   }
 
   .btn-link {
-    @apply text-[#14967F] hover:text-[#0f7a67] hover:underline p-0 min-h-0 text-sm font-semibold focus-visible:ring-offset-0;
+    @apply text-[#0d9488] hover:text-[#0f766e] hover:underline p-0 min-h-0 text-sm font-semibold focus-visible:ring-offset-0;
   }
 }

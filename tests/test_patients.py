@@ -1590,6 +1590,59 @@ def test_appointment_form_searchable_selects(client, agent_accueil, doctor_user,
     assert "searchable-select.js" in content
 
 
+@pytest.mark.django_db
+def test_calendar_view_and_ajax_slot_booking(client, doctor_user, sample_patient):
+    """Vérifie l'affichage de Mon Calendrier et la réservation sur créneau vide (AJAX)."""
+    client.force_login(doctor_user)
+
+    # 1. Accès à Mon Calendrier en vue semaine
+    calendar_url = reverse("patients:my_appointments")
+    resp = client.get(calendar_url + "?view=week")
+    assert resp.status_code == 200
+    content = resp.content.decode("utf-8")
+    assert "Mon Calendrier" in content
+    assert "calendar-zoom-slider" in content
+    assert "btn-view-week" in content
+    assert "modal-create-appointment" in content
+
+    # 2. Planification d'un rendez-vous sur créneau vide via requête AJAX
+    create_url = reverse("patients:appointment_create")
+    scheduled_dt = (timezone.now() + timedelta(days=1)).replace(hour=10, minute=0, second=0, microsecond=0)
+    scheduled_str = scheduled_dt.strftime("%Y-%m-%dT%H:%M")
+
+    post_data = {
+        "patient": str(sample_patient.pk),
+        "doctor": str(doctor_user.pk),
+        "scheduled_at": scheduled_str,
+        "estimated_duration_minutes": 30,
+        "reason": "Consultation générale sur créneau vide",
+        "notes": "Réservation rapide depuis le calendrier",
+    }
+    ajax_resp = client.post(
+        create_url,
+        data=post_data,
+        HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+    )
+    assert ajax_resp.status_code == 200
+    json_data = ajax_resp.json()
+    assert json_data["success"] is True
+    assert "appointment" in json_data
+    assert json_data["appointment"]["patient_name"] == sample_patient.full_name
+    assert json_data["appointment"]["reason"] == "Consultation générale sur créneau vide"
+
+    # 3. Vérification en base de données
+    new_apt = Appointment.objects.get(reason="Consultation générale sur créneau vide")
+    assert new_apt.patient == sample_patient
+    assert new_apt.doctor == doctor_user
+    assert new_apt.status == AppointmentStatusEnum.SCHEDULED
+
+    # 4. Le calendrier affiche désormais le rendez-vous
+    resp_after = client.get(f"{calendar_url}?date={scheduled_dt.strftime('%Y-%m-%d')}&view=week")
+    assert resp_after.status_code == 200
+    assert sample_patient.full_name in resp_after.content.decode("utf-8")
+
+
+
 
 
 

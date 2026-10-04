@@ -219,6 +219,24 @@ class PatientDetailView(PatientManagementRequiredMixin, DetailView):
             .order_by("-criticality", "allergen__name")
         )
 
+        # Données 360° pour les onglets (consultations, ordonnances, prestations)
+        context["consultations"] = (
+            self.object.consultations
+            .select_related("doctor")
+            .order_by("-consultation_date")
+        )
+        context["ordonnances"] = (
+            self.object.ordonnances
+            .select_related("doctor")
+            .prefetch_related("lines")
+            .order_by("-prescribed_at")
+        )
+        context["prestations_realisees"] = (
+            self.object.prestations_realisees
+            .select_related("prestation", "doctor")
+            .order_by("-created_at")
+        )
+
         return context
 
 

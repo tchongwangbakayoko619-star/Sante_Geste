@@ -24,6 +24,12 @@ class AppointmentForm(forms.ModelForm):
 
     scheduled_at = forms.DateTimeField(
         label=_("Date et heure"),
+        input_formats=[
+            "%Y-%m-%dT%H:%M",
+            "%Y-%m-%dT%H:%M:%S",
+            "%Y-%m-%d %H:%M:%S",
+            "%Y-%m-%d %H:%M",
+        ],
         widget=forms.DateTimeInput(
             attrs={
                 "type": "datetime-local",
@@ -99,6 +105,10 @@ class AppointmentForm(forms.ModelForm):
         self.fields["patient"].label_from_instance = (
             lambda p: f"{p.patient_number} - {p.full_name}"
         )
+
+        # Initialise la durée sur 1 créneau (60 min) pour les nouveaux rendez-vous
+        if "estimated_duration_minutes" in self.fields and not (self.instance and self.instance.pk):
+            self.fields["estimated_duration_minutes"].initial = 60
 
     def clean(self) -> dict[str, Any]:
         cleaned_data = super().clean()

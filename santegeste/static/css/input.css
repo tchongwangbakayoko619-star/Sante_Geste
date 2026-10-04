@@ -5,36 +5,36 @@
 @source "../js";
 
 @theme {
-  /* Tokens SantéGeste / CS² Health - Centrés sur la couleur primaire #14967F */
-  --color-primary: #14967F;
-  --color-primary-hover: #0f7a67;
-  --color-primary-active: #0b6353;
-  --color-primary-light: #eafaf6;
+  /* Tokens SantéGeste - Palette Teal Officielle de la Maquette */
+  --color-primary: #0d9488;
+  --color-primary-hover: #0f766e;
+  --color-primary-active: #115e59;
+  --color-primary-dark: #042f2e;
+  --color-primary-light: #f0fdfa;
 
-  --color-health-primary: #14967F;
-  --color-health-primary-hover: #0f7a67;
-  --color-health-primary-active: #0b6353;
-  --color-health-btn: #14967F;
-  --color-health-btn-hover: #0f7a67;
-  --color-health-btn-active: #0b6353;
+  --color-health-primary: #0d9488;
+  --color-health-primary-hover: #0f766e;
+  --color-health-primary-active: #115e59;
+  --color-health-btn: #0d9488;
+  --color-health-btn-hover: #0f766e;
+  --color-health-btn-active: #115e59;
 
-  /* Palette Déclinée #14967F (50 à 950) */
-  --color-health-50: #eafaf6;
-  --color-health-100: #cbf2e8;
-  --color-health-200: #9be5d3;
-  --color-health-300: #64d3ba;
-  --color-health-400: #36bca0;
-  --color-health-500: #14967F;
-  /* COULEUR PRIMAIRE EXACTE */
-  --color-health-600: #0f7a67;
-  --color-health-700: #0e6254;
-  --color-health-800: #0f4e44;
-  --color-health-850: #0c4139;
-  --color-health-900: #0c3730;
-  --color-health-950: #041f1b;
+  /* Palette Déclinée Teal (50 à 950) */
+  --color-health-50: #f0fdfa;
+  --color-health-100: #ccfbf1;
+  --color-health-200: #99f6e4;
+  --color-health-300: #5eead4;
+  --color-health-400: #2dd4bf;
+  --color-health-500: #0d9488;
+  --color-health-600: #0f766e;
+  --color-health-700: #115e59;
+  --color-health-800: #134e4a;
+  --color-health-850: #0c3e3a;
+  --color-health-900: #042f2e;
+  --color-health-950: #021a19;
 
-  /* Surface Sombre - Sidebar Médicale Haute Fidélité */
-  --color-health-sidebar: #052d31;
+  /* Surface Sombre - Sidebar Médicale de la Maquette */
+  --color-health-sidebar: #042f2e;
 
   /* Neutrals */
   --color-neutral-50: #f8fafc;

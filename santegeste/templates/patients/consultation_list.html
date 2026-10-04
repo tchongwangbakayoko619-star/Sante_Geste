@@ -1,0 +1,94 @@
+{% extends "layouts/dashboard.html" %}
+{% load i18n static %}
+
+{% block title %}{% trans "Consultations Médicales" %} - SantéGeste{% endblock %}
+
+{% block content_inner %}
+<div class="space-y-6">
+  <!-- En-tête -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-neutral-200/80 shadow-xs">
+    <div>
+      <h1 class="text-xl font-bold text-neutral-900 font-title tracking-tight flex items-center gap-3">
+        <span class="p-2 rounded-xl bg-teal-50 text-[#0d9488]">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        </span>
+        {% trans "Consultations Médicales" %}
+      </h1>
+      <p class="text-xs text-neutral-500 mt-1">
+        {% trans "Historique et suivi clinique de toutes les consultations réalisées." %}
+      </p>
+    </div>
+  </div>
+
+  <!-- Barre de recherche -->
+  <form method="get" class="bg-white p-3 rounded-2xl border border-neutral-200/80 shadow-xs flex items-center gap-3">
+    <div class="flex-1 relative">
+      <input type="text" name="q" value="{{ query }}" placeholder="{% trans "Rechercher par patient, matricule, motif ou diagnostic..." %}" class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-neutral-200 text-xs focus:ring-2 focus:ring-[#0d9488] focus:border-transparent outline-none">
+      <span class="absolute left-3 top-2.5 text-neutral-400">
+        {% include "components/atoms/icon.html" with name="magnifying-glass" size="w-4 h-4" %}
+      </span>
+    </div>
+    <button type="submit" class="px-5 py-2.5 bg-[#0d9488] hover:bg-[#0f766e] text-white font-bold text-xs rounded-xl transition-colors shadow-xs cursor-pointer">
+      {% trans "Rechercher" %}
+    </button>
+  </form>
+
+  <!-- Liste des Consultations -->
+  <div class="bg-white rounded-2xl border border-neutral-200/80 shadow-xs overflow-hidden">
+    {% if consultations %}
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse text-xs">
+          <thead>
+            <tr class="bg-neutral-50/80 border-b border-neutral-200 text-[11px] font-bold text-neutral-500 uppercase tracking-wider">
+              <th class="py-3 px-5">{% trans "Date & Heure" %}</th>
+              <th class="py-3 px-5">{% trans "Patient" %}</th>
+              <th class="py-3 px-5">{% trans "Médecin" %}</th>
+              <th class="py-3 px-5">{% trans "Motif" %}</th>
+              <th class="py-3 px-5">{% trans "Diagnostic" %}</th>
+              <th class="py-3 px-5 text-right">{% trans "Action" %}</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-neutral-100">
+            {% for c in consultations %}
+              <tr class="hover:bg-neutral-50/50 transition-colors">
+                <td class="py-3.5 px-5 font-semibold text-neutral-800 font-mono">
+                  {{ c.consultation_date|date:"d/m/Y - H:i" }}
+                </td>
+                <td class="py-3.5 px-5 font-bold text-neutral-900">
+                  {{ c.patient.full_name }}
+                  <span class="block text-[11px] font-mono text-neutral-400 font-normal">{{ c.patient.patient_number }}</span>
+                </td>
+                <td class="py-3.5 px-5 text-neutral-700">
+                  Dr. {{ c.doctor.full_name }}
+                </td>
+                <td class="py-3.5 px-5 text-neutral-700 max-w-xs truncate">
+                  {{ c.reason }}
+                </td>
+                <td class="py-3.5 px-5 text-neutral-800 font-medium truncate max-w-xs">
+                  {{ c.diagnosis|truncatechars:50|default:"--" }}
+                </td>
+                <td class="py-3.5 px-5 text-right whitespace-nowrap">
+                  <div class="flex items-center justify-end gap-2">
+                    <a href="{% url "patients:consultation_update" c.pk %}" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-white border border-neutral-300 text-neutral-700 font-bold text-xs hover:bg-neutral-50 transition-colors shadow-2xs" title="{% trans "Modifier" %}">
+                      {% include "components/atoms/icon.html" with name="pencil" size="w-3.5 h-3.5 text-neutral-500" %}
+                      <span>{% trans "Modifier" %}</span>
+                    </a>
+                    <a href="{% url "patients:consultation_detail" c.pk %}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-teal-50 text-[#0d9488] font-bold text-xs hover:bg-teal-100 transition-colors">
+                      <span>{% trans "Voir" %}</span>
+                      &rarr;
+                    </a>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="py-12 text-center text-neutral-400 text-xs">
+        <p class="text-sm font-semibold text-neutral-600">{% trans "Aucune consultation enregistrée." %}</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
