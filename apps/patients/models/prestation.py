@@ -66,6 +66,14 @@ class PrestationRealisee(BaseModel):
         related_name="prestations",
         verbose_name=_("Consultation associée"),
     )
+    facture = models.ForeignKey(
+        "patients.Facture",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="prestations_realisees",
+        verbose_name=_("Facture associée"),
+    )
     prestation = models.ForeignKey(
         Prestation,
         on_delete=models.PROTECT,

@@ -12,6 +12,7 @@ from .caisse_views import FactureListView
 from .caisse_views import FacturePrintView
 from .caisse_views import FactureUpdateView
 from .caisse_views import PaiementCreateView
+from .caisse_views import PaiementReceiptView
 from .consultation_views import ConsultationCreateView
 from .consultation_views import ConsultationDetailView
 from .consultation_views import ConsultationListView
@@ -55,6 +56,7 @@ __all__ = [
     "OrdonnanceDetailPrintView",
     "OrdonnanceUpdateView",
     "PaiementCreateView",
+    "PaiementReceiptView",
     "PatientAllergyCreateView",
     "PatientAllergyDeleteView",
     "PatientCreateView",

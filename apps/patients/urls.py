@@ -22,6 +22,7 @@ from apps.patients.views import OrdonnanceCreateView
 from apps.patients.views import OrdonnanceDetailPrintView
 from apps.patients.views import OrdonnanceUpdateView
 from apps.patients.views import PaiementCreateView
+from apps.patients.views import PaiementReceiptView
 from apps.patients.views import PatientAllergyCreateView
 from apps.patients.views import PatientAllergyDeleteView
 from apps.patients.views import PatientCreateView
@@ -73,6 +74,7 @@ urlpatterns = [
     path("caisse/factures/<uuid:pk>/annuler/", FactureCancelView.as_view(), name="facture_cancel"),
     path("caisse/factures/<uuid:pk>/imprimer/", FacturePrintView.as_view(), name="facture_print"),
     path("caisse/factures/<uuid:pk>/payer/", PaiementCreateView.as_view(), name="paiement_create"),
+    path("caisse/paiements/<uuid:pk>/recu/", PaiementReceiptView.as_view(), name="paiement_receipt"),
 
     # Module Pharmacie & Délivrance
     path("pharmacie/ordonnances/", PharmacyOrdonnanceListView.as_view(), name="pharmacy_ordonnance_list"),

@@ -7,6 +7,7 @@ from .appointment_service import find_conflicting_appointment
 from .appointment_service import get_appointment_daily_stats
 from .appointment_service import reschedule_appointment
 from .appointment_service import update_appointment_status
+from .caisse_service import PaymentService
 from .patient_service import add_patient_allergy
 from .patient_service import check_allergy_contraindication
 from .patient_service import create_patient
@@ -17,6 +18,7 @@ from .patient_service import update_patient
 from .patient_service import update_patient_medical_record
 
 __all__ = [
+    "PaymentService",
     "add_patient_allergy",
     "cancel_appointment",
     "check_allergy_contraindication",

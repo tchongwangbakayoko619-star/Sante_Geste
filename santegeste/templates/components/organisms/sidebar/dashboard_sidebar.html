@@ -20,16 +20,13 @@
     <!-- Brand Logo & Hamburger Menu Button -->
     <div class="flex items-center justify-between px-2 pb-5 border-b border-white/10" data-sidebar-header>
       <!-- Logo link -->
-      <a href="{% url "home" %}" class="flex items-center gap-3.5 group focus:outline-none" data-sidebar-brand-link data-sidebar-tooltip="SantéGeste CS² Health">
-        <div class="w-12 h-12 rounded-2xl bg-emerald-500 flex items-center justify-center shadow-lg border border-white/20 group-hover:scale-105 transition-transform shrink-0" data-sidebar-brand>
-          <svg class="w-7 h-7 text-white" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M35 15C35 9.477 39.477 5 45 5H55C60.523 5 65 9.477 65 15V35H85C90.523 35 95 39.477 95 45V55C95 60.523 90.523 65 85 65H65V85C65 90.523 60.523 95 55 95H45C39.477 95 35 90.523 35 85V65H15C9.477 65 5 60.523 5 55V45C5 39.477 9.477 35 15 35H35V15Z" fill="currentColor" />
-            <path d="M12 50H36L44 32L54 68L64 42L70 50H88" stroke="#052d31" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" />
-          </svg>
+      <a href="{% url "home" %}" class="flex items-center gap-3 group focus:outline-none" data-sidebar-brand-link data-sidebar-tooltip="SantéGeste - Gestion de centre de santé">
+        <div class="h-10 w-10 flex items-center justify-center shrink-0" data-sidebar-brand>
+          <img src="{% static 'images/logo_icon_white.png' %}" alt="SantéGeste Logo" class="w-full h-full object-contain">
         </div>
-        <div class="hidden sm:block" data-sidebar-label>
-          <span class="font-title font-extrabold text-xl text-white tracking-tight leading-tight block"><span>Santé</span><span class="text-emerald-400">Geste</span></span>
-          <span class="text-[10px] text-slate-300 font-semibold uppercase tracking-[.16em] block">CS² Health</span>
+        <div class="hidden sm:block text-left select-none" data-sidebar-label>
+          <span class="font-title font-bold text-xl text-white tracking-tight leading-none block">Sante</span>
+          <span class="font-title font-normal text-lg text-slate-100 tracking-tight leading-tight block">Geste</span>
         </div>
       </a>
 

@@ -90,6 +90,9 @@ class ConsultationForm(forms.ModelForm):
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
+        if "status" in self.fields:
+            self.fields["status"].required = False
+            self.fields["status"].initial = "COMPLETED"
         self.vital_parameters: list[dict[str, str]] = []
         if self.instance and self.instance.pk and self.instance.vital_signs:
             vitals = self.instance.vital_signs or {}
@@ -116,12 +119,14 @@ class ConsultationForm(forms.ModelForm):
 
     def save(self, commit: bool = True) -> Consultation:
         instance: Consultation = super().save(commit=False)
+        if not instance.status:
+            instance.status = "COMPLETED"
         vitals: dict[str, Any] = {
-            "tension": self.cleaned_data.get("tension", "").strip(),
-            "poids": self.cleaned_data.get("poids", "").strip(),
-            "temperature": self.cleaned_data.get("temperature", "").strip(),
-            "pouls": self.cleaned_data.get("pouls", "").strip(),
-            "frequence_respiratoire": self.cleaned_data.get("frequence_respiratoire", "").strip(),
+            "tension": str(self.cleaned_data.get("tension") or "").strip(),
+            "poids": str(self.cleaned_data.get("poids") or "").strip(),
+            "temperature": str(self.cleaned_data.get("temperature") or "").strip(),
+            "pouls": str(self.cleaned_data.get("pouls") or "").strip(),
+            "frequence_respiratoire": str(self.cleaned_data.get("frequence_respiratoire") or "").strip(),
         }
 
         # Extraire tous les paramètres personnalisés ou dynamiques définis par le personnel
@@ -238,10 +243,16 @@ class PaiementForm(forms.ModelForm):
         model = Paiement
         fields = ["amount", "payment_method", "notes"]
         widgets = {
-            "amount": forms.NumberInput(attrs={"step": "100", "min": "0"}),
+            "amount": forms.NumberInput(attrs={"step": "any", "min": "0.01"}),
             "payment_method": forms.Select(attrs={"class": "w-full px-4 py-2 rounded-xl border border-neutral-300 bg-white"}),
             "notes": forms.Textarea(attrs={"rows": 2, "placeholder": _("Référence transaction ou notes..."), "class": "resize-none"}),
         }
+
+    def clean_amount(self):
+        amount = self.cleaned_data.get("amount")
+        if amount is not None and amount <= 0:
+            raise forms.ValidationError(_("Le montant reçu doit être strictement supérieur à zéro."))
+        return amount
 
 
 class FactureUpdateForm(forms.ModelForm):
@@ -253,7 +264,7 @@ class FactureUpdateForm(forms.ModelForm):
         widgets = {
             "total_amount": forms.NumberInput(
                 attrs={
-                    "step": "100",
+                    "step": "any",
                     "min": "0",
                     "class": "w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[#14967F]",
                 }

@@ -120,7 +120,7 @@
         <div class="divide-y divide-neutral-100 text-xs">
           {% for p in paiements %}
             <div class="py-1.5 flex justify-between font-mono">
-              <span class="text-neutral-600">{{ p.paid_at|date:"d/m/Y - H:i" }} • {{ p.get_payment_method_display }} ({{ p.cashier.full_name }})</span>
+              <span class="text-neutral-600">Reçu {{ p.receipt_number|default:"-" }} • {{ p.paid_at|date:"d/m/Y - H:i" }} • {{ p.get_payment_method_display }} ({{ p.cashier.full_name }})</span>
               <span class="font-bold text-neutral-900">{{ p.amount }} FCFA</span>
             </div>
           {% endfor %}
