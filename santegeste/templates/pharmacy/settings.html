@@ -1,0 +1,107 @@
+{% extends "layouts/dashboard.html" %}
+{% load i18n static %}
+
+{% block title %}{% trans "Paramètres Pharmacie" %} - SantéGeste{% endblock %}
+
+{% block content_inner %}
+<div class="space-y-6 max-w-4xl mx-auto">
+
+  <!-- En-tête -->
+  <div class="bg-white p-6 rounded-2xl border border-neutral-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-xl font-bold text-neutral-900 font-title tracking-tight flex items-center gap-3">
+        <span class="p-2 rounded-xl bg-teal-50 text-[#0d9488]">
+          {% include "components/atoms/icon.html" with name="cog-6-tooth" size="w-5 h-5" %}
+        </span>
+        {% trans "Paramètres Pharmacie" %}
+      </h1>
+      <p class="text-xs text-neutral-500 mt-1">
+        {% trans "Configuration générale du catalogue, catégories de médicaments et partenaires fournisseurs." %}
+      </p>
+    </div>
+    <a href="{% url "pharmacy:dashboard" %}" class="px-3.5 py-2 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-700 font-bold text-xs transition-colors">
+      {% trans "← Tableau de bord" %}
+    </a>
+  </div>
+
+  <!-- Sections de paramétrage -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+    <!-- Gestion des Catégories -->
+    <div class="bg-white p-6 rounded-2xl border border-neutral-200/80 shadow-xs space-y-4 flex flex-col justify-between">
+      <div>
+        <div class="flex items-center justify-between mb-2">
+          <span class="p-2.5 rounded-xl bg-teal-50 text-[#0d9488]">
+            {% include "components/atoms/icon.html" with name="tag" size="w-5 h-5" %}
+          </span>
+          <span class="font-mono text-xs font-bold px-2 py-0.5 rounded-md bg-neutral-100 text-neutral-600">
+            {{ categories_count }} {% trans "catégories" %}
+          </span>
+        </div>
+        <h3 class="font-bold text-sm text-neutral-900">{% trans "Catégories de Médicaments" %}</h3>
+        <p class="text-xs text-neutral-500 mt-1">
+          {% trans "Organisez vos médicaments par classes thérapeutiques, voies d'administration ou formes galéniques." %}
+        </p>
+      </div>
+      <div class="flex items-center gap-2 pt-2 border-t border-neutral-100">
+        <a href="{% url "pharmacy:category_list" %}" class="px-3 py-2 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 text-xs font-bold rounded-xl transition-colors">
+          {% trans "Voir la liste" %}
+        </a>
+        <a href="{% url "pharmacy:category_create" %}" class="px-3 py-2 bg-[#0d9488] hover:bg-[#0f766e] text-white text-xs font-bold rounded-xl shadow-xs transition-colors">
+          + {% trans "Ajouter une catégorie" %}
+        </a>
+      </div>
+    </div>
+
+    <!-- Gestion des Fournisseurs -->
+    <div class="bg-white p-6 rounded-2xl border border-neutral-200/80 shadow-xs space-y-4 flex flex-col justify-between">
+      <div>
+        <div class="flex items-center justify-between mb-2">
+          <span class="p-2.5 rounded-xl bg-blue-50 text-blue-600">
+            {% include "components/atoms/icon.html" with name="truck" size="w-5 h-5" %}
+          </span>
+          <span class="font-mono text-xs font-bold px-2 py-0.5 rounded-md bg-neutral-100 text-neutral-600">
+            {{ suppliers_count }} {% trans "fournisseurs" %}
+          </span>
+        </div>
+        <h3 class="font-bold text-sm text-neutral-900">{% trans "Fournisseurs & Grossistes" %}</h3>
+        <p class="text-xs text-neutral-500 mt-1">
+          {% trans "Gérez les répartiteurs pharmaceutiques, coordonnées et délais de livraison pour les réapprovisionnements." %}
+        </p>
+      </div>
+      <div class="flex items-center gap-2 pt-2 border-t border-neutral-100">
+        <a href="{% url "pharmacy:supplier_list" %}" class="px-3 py-2 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 text-xs font-bold rounded-xl transition-colors">
+          {% trans "Voir les fournisseurs" %}
+        </a>
+        <a href="{% url "pharmacy:supplier_create" %}" class="px-3 py-2 bg-[#0d9488] hover:bg-[#0f766e] text-white text-xs font-bold rounded-xl shadow-xs transition-colors">
+          + {% trans "Nouveau fournisseur" %}
+        </a>
+      </div>
+    </div>
+
+    <!-- Règles de Stock & Alertes -->
+    <div class="bg-white p-6 rounded-2xl border border-neutral-200/80 shadow-xs sm:col-span-2 space-y-3">
+      <h3 class="font-bold text-sm text-neutral-900 flex items-center gap-2">
+        {% include "components/atoms/icon.html" with name="bell-alert" size="w-4 h-4 text-amber-500" %}
+        {% trans "Règles de gestion des stocks et seuils" %}
+      </h3>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs text-neutral-600">
+        <div class="p-3 bg-neutral-50 rounded-xl">
+          <span class="font-bold text-neutral-800 block mb-1">{% trans "Délivrance FEFO" %}</span>
+          {% trans "First Expired, First Out appliqué par défaut sur toutes les sorties et ventes." %}
+        </div>
+        <div class="p-3 bg-neutral-50 rounded-xl">
+          <span class="font-bold text-neutral-800 block mb-1">{% trans "Alerte de péremption" %}</span>
+          {% trans "Notifications automatiques 90 jours avant la date limite d'utilisation." %}
+        </div>
+        <div class="p-3 bg-neutral-50 rounded-xl">
+          <span class="font-bold text-neutral-800 block mb-1">{% trans "Catalogue actif" %}</span>
+          {{ products_count }} {% trans "médicament(s) géré(s) au catalogue." %}
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}

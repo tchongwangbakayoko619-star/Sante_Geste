@@ -1,0 +1,139 @@
+{% extends "layouts/dashboard.html" %}
+{% load i18n static %}
+
+{% block title %}{% trans "Vente" %} {{ sale.sale_number }} - SantéGeste{% endblock %}
+
+{% block content_inner %}
+<div class="max-w-4xl mx-auto space-y-6">
+
+  <!-- En-tête -->
+  <div class="bg-white p-6 rounded-2xl border border-neutral-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <div class="flex items-center gap-3">
+        <h1 class="text-xl font-bold text-neutral-900 font-title tracking-tight font-mono">{{ sale.sale_number }}</h1>
+        <span class="font-mono text-xs font-bold px-2.5 py-1 rounded-xl {% if sale.status == 'COMPLETED' %}bg-emerald-50 text-emerald-700 border border-emerald-200{% elif sale.status == 'PENDING_PAYMENT' %}bg-amber-50 text-amber-700 border border-amber-200{% else %}bg-neutral-100 text-neutral-600{% endif %}">
+          {{ sale.get_status_display }}
+        </span>
+      </div>
+      <p class="text-xs text-neutral-500 mt-1">
+        {% trans "Enregistrée le" %} {{ sale.sale_date|date:"d/m/Y à H:i" }} {% trans "par" %} <strong>{{ sale.seller.full_name }}</strong>
+      </p>
+    </div>
+
+    <div class="flex items-center gap-2">
+      {% if sale.facture %}
+        <a href="{% url "patients:facture_detail" sale.facture.pk %}" class="px-4 py-2.5 rounded-xl bg-teal-50 text-[#0d9488] border border-teal-200 hover:bg-teal-100 font-bold text-xs transition-colors">
+          💳 {% trans "Voir la Facture Caisse" %} &rarr;
+        </a>
+      {% endif %}
+      <a href="{% url "pharmacy:sale_list" %}" class="px-3.5 py-2.5 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-700 font-semibold text-xs transition-colors">
+        {% trans "Retour aux ventes" %}
+      </a>
+    </div>
+  </div>
+
+  <!-- Détails et Lignes de Vente -->
+  <div class="bg-white p-6 sm:p-8 rounded-2xl border border-neutral-200/80 shadow-xs space-y-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-4 border-b border-neutral-100 text-xs">
+      <div>
+        <span class="text-[10px] font-bold text-neutral-400 uppercase tracking-wider block">{% trans "Client / Bénéficiaire" %}</span>
+        <p class="font-bold text-neutral-900 mt-1">
+          {% if sale.patient %}
+            {{ sale.patient.full_name }} <span class="font-mono text-neutral-500 font-normal">({{ sale.patient.patient_number }})</span>
+          {% else %}
+            {{ sale.client_name|default:_("Client au comptoir") }}
+          {% endif %}
+        </p>
+      </div>
+      {% if sale.ordonnance %}
+        <div>
+          <span class="text-[10px] font-bold text-neutral-400 uppercase tracking-wider block">{% trans "Ordonnance prescrite" %}</span>
+          <p class="font-bold text-neutral-900 mt-1">
+            Dr. {{ sale.ordonnance.doctor.full_name }} ({{ sale.ordonnance.prescribed_at|date:"d/m/Y" }})
+          </p>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Tableau des Médicaments et Lots Prélevés -->
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse text-xs">
+        <thead>
+          <tr class="bg-neutral-50/80 border-b border-neutral-200 text-[11px] font-bold text-neutral-500 uppercase tracking-wider">
+            <th class="py-3 px-4">{% trans "Médicament" %}</th>
+            <th class="py-3 px-4">{% trans "Lot utilisé (FEFO)" %}</th>
+            <th class="py-3 px-4 text-center">{% trans "Quantité" %}</th>
+            <th class="py-3 px-4 text-right">{% trans "Prix unitaire" %}</th>
+            <th class="py-3 px-4 text-right">{% trans "Total" %}</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-neutral-100">
+          {% for item in items %}
+            <tr class="hover:bg-neutral-50/50">
+              <td class="py-3.5 px-4 font-bold text-neutral-900">
+                {{ item.product.name }}
+                <span class="block text-[11px] font-mono text-neutral-400 font-normal">{{ item.product.reference_code }}</span>
+              </td>
+              <td class="py-3.5 px-4 font-mono text-neutral-700">
+                {% if item.batch %}
+                  <strong>{{ item.batch.batch_number }}</strong>
+                  <span class="text-[10px] text-neutral-400 block">Exp: {{ item.batch.expiry_date|date:"d/m/Y" }}</span>
+                {% else %}
+                  -
+                {% endif %}
+              </td>
+              <td class="py-3.5 px-4 text-center font-mono font-bold text-neutral-900">
+                {{ item.quantity }}
+              </td>
+              <td class="py-3.5 px-4 text-right font-mono text-neutral-700">
+                {{ item.unit_price }} FCFA
+              </td>
+              <td class="py-3.5 px-4 text-right font-mono font-extrabold text-neutral-900">
+                {{ item.total_price }} FCFA
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Récapitulatif Financier -->
+    <div class="pt-4 border-t border-neutral-100 flex flex-col items-end gap-1.5 text-xs">
+      <div class="flex items-center gap-8">
+        <span class="text-neutral-500">{% trans "Sous-total brut" %} :</span>
+        <span class="font-mono font-bold text-neutral-800">{{ sale.subtotal }} FCFA</span>
+      </div>
+      {% if sale.discount_amount > 0 %}
+        <div class="flex items-center gap-8 text-rose-600">
+          <span>{% trans "Remise commerciale" %} :</span>
+          <span class="font-mono font-bold">- {{ sale.discount_amount }} FCFA</span>
+        </div>
+      {% endif %}
+      <div class="flex items-center gap-8 text-base font-black text-neutral-900 pt-2 border-t border-dashed border-neutral-200">
+        <span>{% trans "Total net" %} :</span>
+        <span class="font-mono text-xl text-[#0d9488]">{{ sale.total_amount }} FCFA</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Annulation réservée au Responsable -->
+  {% if request.user.is_responsable_pharmacie or request.user.is_proprietaire or request.user.is_superuser %}
+    {% if sale.status == 'PENDING_PAYMENT' %}
+      <div class="bg-rose-50 border border-rose-200 p-5 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div>
+          <h4 class="text-xs font-bold text-rose-950 uppercase tracking-wider">{% trans "Annulation de la vente" %}</h4>
+          <p class="text-xs text-rose-800 mt-0.5">{% trans "Cette action réintègre immédiatement les quantités prélevées dans le stock." %}</p>
+        </div>
+        <form method="post" action="{% url "pharmacy:sale_cancel" sale.pk %}">
+          {% csrf_token %}
+          <input type="hidden" name="reason" value="Annulation demandée au comptoir">
+          <button type="submit" onclick="return confirm('Confirmer l\'annulation de cette vente et la réintégration des stocks ?')" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl transition cursor-pointer">
+            {% trans "Annuler la vente" %}
+          </button>
+        </form>
+      </div>
+    {% endif %}
+  {% endif %}
+
+</div>
+{% endblock %}

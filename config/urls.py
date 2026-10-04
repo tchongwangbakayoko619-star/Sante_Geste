@@ -21,6 +21,8 @@ urlpatterns = [
     path("users/", include("apps.users.urls", namespace="users")),
     # Application Patients & Rendez-vous
     path("patients/", include("apps.patients.urls", namespace="patients")),
+    # Application Pharmacie & Stocks
+    path("pharmacie/", include("apps.pharmacy.urls", namespace="pharmacy")),
     # Media files
     *static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT),
 ]

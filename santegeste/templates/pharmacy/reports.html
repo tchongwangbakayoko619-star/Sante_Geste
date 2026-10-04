@@ -1,0 +1,119 @@
+{% extends "layouts/dashboard.html" %}
+{% load i18n static %}
+
+{% block title %}{% trans "Rapports & Statistiques Pharmacie" %} - SantéGeste{% endblock %}
+
+{% block content_inner %}
+<div class="space-y-6 max-w-6xl mx-auto">
+
+  <!-- En-tête -->
+  <div class="bg-white p-6 rounded-2xl border border-neutral-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-xl font-bold text-neutral-900 font-title tracking-tight flex items-center gap-3">
+        <span class="p-2 rounded-xl bg-teal-50 text-[#0d9488]">
+          {% include "components/atoms/icon.html" with name="chart-bar" size="w-5 h-5" %}
+        </span>
+        {% trans "Rapports & Statistiques Pharmacie" %}
+      </h1>
+      <p class="text-xs text-neutral-500 mt-1">
+        {% trans "Indicateurs d'activité, ventes du mois et valorisation du stock pharmaceutique." %}
+      </p>
+    </div>
+    <div class="flex items-center gap-2">
+      <a href="{% url "pharmacy:dashboard" %}" class="px-3.5 py-2 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-700 font-bold text-xs transition-colors">
+        {% trans "← Tableau de bord" %}
+      </a>
+    </div>
+  </div>
+
+  <!-- Cartes KPI Financiers & Stocks -->
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+    <div class="bg-white p-6 rounded-2xl border border-neutral-200/80 shadow-xs space-y-2">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-bold text-neutral-400 uppercase tracking-wider">{% trans "Chiffre d'affaires (Mois)" %}</span>
+        <span class="p-1.5 rounded-lg bg-teal-50 text-[#0d9488]">
+          {% include "components/atoms/icon.html" with name="banknotes" size="w-4 h-4" %}
+        </span>
+      </div>
+      <div class="text-2xl font-black font-mono text-teal-700">
+        {{ month_revenue }} FCFA
+      </div>
+      <p class="text-[11px] text-neutral-400">
+        {{ month_sales_count }} {% trans "délivrance(s) enregistrée(s) ce mois" %}
+      </p>
+    </div>
+
+    <div class="bg-white p-6 rounded-2xl border border-neutral-200/80 shadow-xs space-y-2">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-bold text-neutral-400 uppercase tracking-wider">{% trans "Valeur du stock (Achat)" %}</span>
+        <span class="p-1.5 rounded-lg bg-blue-50 text-blue-600">
+          {% include "components/atoms/icon.html" with name="archive-box" size="w-4 h-4" %}
+        </span>
+      </div>
+      <div class="text-2xl font-black font-mono text-neutral-900">
+        {{ stock_val }} FCFA
+      </div>
+      <p class="text-[11px] text-neutral-400">
+        {% trans "Valorisation au prix d'achat standard" %}
+      </p>
+    </div>
+
+    <div class="bg-white p-6 rounded-2xl border border-neutral-200/80 shadow-xs space-y-2">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-bold text-neutral-400 uppercase tracking-wider">{% trans "Nombre de ventes" %}</span>
+        <span class="p-1.5 rounded-lg bg-emerald-50 text-emerald-600">
+          {% include "components/atoms/icon.html" with name="document-text" size="w-4 h-4" %}
+        </span>
+      </div>
+      <div class="text-2xl font-black font-mono text-emerald-600">
+        {{ month_sales_count }}
+      </div>
+      <p class="text-[11px] text-neutral-400">
+        {% trans "Transactions honorées" %}
+      </p>
+    </div>
+  </div>
+
+  <!-- Top 5 des Médicaments les plus vendus -->
+  <div class="bg-white p-6 rounded-2xl border border-neutral-200/80 shadow-xs space-y-4">
+    <div class="flex items-center justify-between border-b border-neutral-100 pb-4">
+      <div>
+        <h2 class="text-sm font-bold text-neutral-900 font-title">{% trans "Médicaments les plus délivrés" %}</h2>
+        <p class="text-[11px] text-neutral-400">{% trans "Classement par volume de boîtes / unités écoulées." %}</p>
+      </div>
+      <a href="{% url "pharmacy:sale_list" %}" class="text-xs text-[#0d9488] font-bold hover:underline">
+        {% trans "Toutes les ventes →" %}
+      </a>
+    </div>
+
+    {% if top_products %}
+      <div class="divide-y divide-neutral-100">
+        {% for tp in top_products %}
+          <div class="py-3 flex items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+              <span class="w-7 h-7 rounded-lg bg-neutral-100 text-neutral-600 font-bold text-xs flex items-center justify-center font-mono">
+                #{{ forloop.counter }}
+              </span>
+              <div>
+                <a href="{% url "pharmacy:product_detail" tp.pk %}" class="font-bold text-xs text-neutral-900 hover:text-[#0d9488]">
+                  {{ tp.name }}
+                </a>
+                <p class="text-[11px] text-neutral-400 font-mono">{{ tp.reference_code }} • {{ tp.dosage }} {{ tp.form }}</p>
+              </div>
+            </div>
+            <div class="text-right">
+              <span class="text-xs font-mono font-bold text-teal-700">{{ tp.total_sold }}</span>
+              <span class="text-[11px] text-neutral-400"> {{ tp.unit }}</span>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="py-8 text-center text-xs text-neutral-400">
+        {% trans "Aucune donnée de vente enregistrée pour le moment." %}
+      </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,108 @@
+{% extends "layouts/dashboard.html" %}
+{% load i18n static %}
+
+{% block title %}{% trans "Journal des Mouvements de Stock" %} - SantéGeste{% endblock %}
+
+{% block content_inner %}
+<div class="space-y-6">
+
+  <!-- En-tête -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-neutral-200/80 shadow-xs">
+    <div>
+      <h1 class="text-xl font-bold text-neutral-900 font-title tracking-tight flex items-center gap-3">
+        <span class="p-2 rounded-xl bg-teal-50 text-[#0d9488]">
+          {% include "components/atoms/icon.html" with name="clock" size="w-5 h-5" %}
+        </span>
+        {% trans "Journal d'Audit des Mouvements de Stock" %}
+      </h1>
+      <p class="text-xs text-neutral-500 mt-1">
+        {% trans "Traçabilité inaltérable de toutes les entrées, sorties de vente et inventaires." %}
+      </p>
+    </div>
+  </div>
+
+  <!-- Filtres -->
+  <div class="bg-white p-4 rounded-2xl border border-neutral-200/80 shadow-xs">
+    <form method="get" class="flex flex-col sm:flex-row items-center gap-3">
+      <div class="relative flex-1 w-full">
+        <input type="text" name="q" value="{{ q }}" placeholder="{% trans "Rechercher par médicament, référence ou N° opération..." %}" class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-neutral-200 text-xs focus:ring-2 focus:ring-[#0d9488] outline-none">
+        <span class="absolute left-3.5 top-3 text-neutral-400">
+          {% include "components/atoms/icon.html" with name="magnifying-glass" size="w-4 h-4" %}
+        </span>
+      </div>
+      <div class="w-full sm:w-64">
+        <select name="type" class="w-full px-3 py-2.5 rounded-xl border border-neutral-200 text-xs focus:ring-2 focus:ring-[#0d9488] outline-none bg-white">
+          <option value="">{% trans "Tous les types de mouvements" %}</option>
+          {% for code, label in movement_types %}
+            <option value="{{ code }}" {% if selected_type == code %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <button type="submit" class="w-full sm:w-auto px-5 py-2.5 bg-[#0d9488] hover:bg-[#0f766e] text-white font-bold text-xs rounded-xl shadow-xs transition-colors">
+        {% trans "Filtrer" %}
+      </button>
+    </form>
+  </div>
+
+  <!-- Table des Mouvements -->
+  <div class="bg-white rounded-2xl border border-neutral-200/80 shadow-xs overflow-hidden">
+    {% if movements %}
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse text-xs">
+          <thead>
+            <tr class="bg-neutral-50/80 border-b border-neutral-200 text-[11px] font-bold text-neutral-500 uppercase tracking-wider">
+              <th class="py-3 px-5">{% trans "Date & Heure" %}</th>
+              <th class="py-3 px-5">{% trans "Produit / Lot" %}</th>
+              <th class="py-3 px-5">{% trans "Opération" %}</th>
+              <th class="py-3 px-5 text-right">{% trans "Quantité" %}</th>
+              <th class="py-3 px-5 text-right">{% trans "Évolution Stock" %}</th>
+              <th class="py-3 px-5">{% trans "Opérateur" %}</th>
+              <th class="py-3 px-5">{% trans "Justification" %}</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-neutral-100">
+            {% for m in movements %}
+              <tr class="hover:bg-neutral-50/50">
+                <td class="py-3 px-5 font-mono text-neutral-500 font-medium">
+                  {{ m.movement_date|date:"d/m/Y - H:i" }}
+                </td>
+                <td class="py-3 px-5">
+                  <a href="{% url "pharmacy:product_detail" m.product.pk %}" class="font-bold text-neutral-900 hover:text-[#0d9488]">
+                    {{ m.product.name }}
+                  </a>
+                  {% if m.batch %}
+                    <span class="block text-[11px] font-mono text-neutral-400">Lot: {{ m.batch.batch_number }}</span>
+                  {% endif %}
+                </td>
+                <td class="py-3 px-5">
+                  <span class="font-semibold text-neutral-800">{{ m.get_movement_type_display }}</span>
+                  {% if m.reference_number %}
+                    <span class="block text-[10px] font-mono text-neutral-400">{{ m.reference_number }}</span>
+                  {% endif %}
+                </td>
+                <td class="py-3 px-5 text-right font-mono font-bold {% if m.quantity > 0 %}text-emerald-600{% else %}text-rose-600{% endif %}">
+                  {% if m.quantity > 0 %}+{% endif %}{{ m.quantity }}
+                </td>
+                <td class="py-3 px-5 text-right font-mono text-neutral-600 font-semibold">
+                  {{ m.previous_stock }} &rarr; <strong>{{ m.new_stock }}</strong>
+                </td>
+                <td class="py-3 px-5 text-neutral-700">
+                  {{ m.user.full_name }}
+                </td>
+                <td class="py-3 px-5 text-neutral-500 italic max-w-xs truncate">
+                  {{ m.reason|default:"-" }}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="p-12 text-center text-neutral-400">
+        <p class="text-sm font-bold text-neutral-700">{% trans "Aucun mouvement trouvé." %}</p>
+      </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}
