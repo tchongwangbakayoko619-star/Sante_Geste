@@ -443,6 +443,11 @@ class SaleListView(PharmacyAccessRequiredMixin, ListView):
         if self.request.GET.get("my_sales") == "1":
             qs = qs.filter(seller=self.request.user)
 
+        # Filtre type prescription (délivrances ordonnances)
+        sale_type = self.request.GET.get("type", "").strip()
+        if sale_type == "PRESCRIPTION":
+            qs = qs.filter(ordonnance__isnull=False)
+
         if q:
             qs = qs.filter(
                 Q(sale_number__icontains=q)
@@ -459,6 +464,7 @@ class SaleListView(PharmacyAccessRequiredMixin, ListView):
         context = super().get_context_data(**kwargs)
         context["status_choices"] = Sale.STATUS_CHOICES
         context["selected_status"] = self.request.GET.get("status", "")
+        context["selected_type"] = self.request.GET.get("type", "")
         context["q"] = self.request.GET.get("q", "")
         context["my_sales"] = self.request.GET.get("my_sales", "")
         return context
