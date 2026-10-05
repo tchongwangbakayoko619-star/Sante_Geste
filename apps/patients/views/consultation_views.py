@@ -258,13 +258,19 @@ class ConsultationCreateView(PersonnelMedicalRequiredMixin, CreateView):
         self.patient = None
         patient_id = request.GET.get("patient") or request.POST.get("patient")
         if patient_id:
-            self.patient = get_object_or_404(Patient, pk=patient_id)
+            try:
+                self.patient = Patient.objects.get(pk=patient_id)
+            except (Patient.DoesNotExist, ValueError):
+                pass
         elif self.appointment:
             self.patient = self.appointment.patient
 
-        if not self.patient:
-            messages.error(request, _("Veuillez sélectionner un patient valide pour démarrer une consultation."))
-            return redirect("patients:appointment_list")
+        if request.method == "POST" and not self.patient:
+            messages.error(
+                request,
+                _("Veuillez sélectionner un patient valide pour enregistrer la consultation."),
+            )
+            return redirect("patients:consultation_create")
 
         return super().dispatch(request, *args, **kwargs)
 
@@ -312,6 +318,10 @@ class ConsultationCreateView(PersonnelMedicalRequiredMixin, CreateView):
         context = super().get_context_data(**kwargs)
         context["patient"] = self.patient
         context["appointment"] = self.appointment
+        if not self.patient:
+            context["patients_list"] = Patient.objects.filter(
+                status=PatientStatusEnum.ACTIVE
+            ).order_by("last_name", "first_name")
         return context
 
 

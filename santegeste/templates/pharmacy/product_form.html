@@ -1,0 +1,157 @@
+{% extends "layouts/dashboard.html" %}
+{% load i18n static %}
+
+{% block title %}{% if form.instance.pk %}{% trans "Modifier Produit" %}{% else %}{% trans "Nouveau Médicament" %}{% endif %} - SantéGeste{% endblock %}
+
+{% block content_inner %}
+<div class="max-w-3xl mx-auto space-y-6">
+
+  <!-- En-tête -->
+  <div class="bg-white p-6 rounded-2xl border border-neutral-200/80 shadow-xs flex items-center justify-between">
+    <div>
+      <h1 class="text-xl font-bold text-neutral-900 font-title tracking-tight">
+        {% if form.instance.pk %}{% trans "Modifier la fiche médicament" %}{% else %}{% trans "Enregistrer un nouveau médicament" %}{% endif %}
+      </h1>
+      <p class="text-xs text-neutral-500 mt-1">
+        {% trans "Informations galéniques, seuil d'alerte et tarification." %}
+      </p>
+    </div>
+    <a href="{% url "pharmacy:product_list" %}" class="px-3.5 py-2 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-700 font-semibold text-xs transition-colors">
+      {% trans "Annuler" %}
+    </a>
+  </div>
+
+  <!-- Formulaire -->
+  <form method="post" enctype="multipart/form-data" class="bg-white p-6 sm:p-8 rounded-2xl border border-neutral-200/80 shadow-xs space-y-6">
+    {% csrf_token %}
+
+    {% if form.non_field_errors %}
+      <div class="p-3 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-xs">
+        {{ form.non_field_errors.0 }}
+      </div>
+    {% endif %}
+
+    <!-- Photo / Image du médicament -->
+    <div class="p-4 bg-neutral-50/70 rounded-2xl border border-neutral-200/60">
+      <label class="block text-xs font-bold text-neutral-800 uppercase tracking-wider mb-2">
+        {% trans "Photo / Image du médicament" %}
+      </label>
+      <div class="flex flex-col sm:flex-row items-center gap-4">
+        {% if form.instance.image %}
+          <div class="w-20 h-20 rounded-xl overflow-hidden border border-neutral-200 shrink-0 bg-white shadow-2xs">
+            <img src="{{ form.instance.image.url }}" alt="{{ form.instance.name }}" class="w-full h-full object-cover">
+          </div>
+        {% else %}
+          <div class="w-20 h-20 rounded-xl bg-teal-50 border border-teal-200/60 text-[#0d9488] text-2xl flex items-center justify-center shrink-0">
+            💊
+          </div>
+        {% endif %}
+        <div class="flex-1 w-full">
+          <input type="file" name="image" id="id_image" accept="image/*" class="block w-full text-xs text-neutral-600 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-[#0d9488]/10 file:text-[#0d9488] hover:file:bg-[#0d9488]/20 file:cursor-pointer cursor-pointer border border-neutral-200 rounded-xl bg-white p-1">
+          <p class="text-[11px] text-neutral-400 mt-1.5">
+            {% trans "Formats acceptés : JPG, PNG, WEBP. Taille max : 5 Mo." %}
+          </p>
+          {% if form.image.errors %}
+            <p class="text-xs text-rose-600 mt-1 font-semibold">{{ form.image.errors.0 }}</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div class="sm:col-span-2">
+        <label class="block text-xs font-bold text-neutral-800 uppercase tracking-wider mb-1.5">
+          {% trans "Nom commercial" %} <span class="text-rose-500">*</span>
+        </label>
+        <input type="text" name="name" value="{{ form.name.value|default:'' }}" required class="w-full px-4 py-2.5 border border-neutral-200 rounded-xl text-xs font-bold text-neutral-900 focus:ring-2 focus:ring-[#0d9488] outline-none">
+        {% if form.name.errors %}<p class="text-xs text-rose-600 mt-1">{{ form.name.errors.0 }}</p>{% endif %}
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-neutral-800 uppercase tracking-wider mb-1.5">
+          {% trans "Principe actif (DCI)" %}
+        </label>
+        <input type="text" name="dci" value="{{ form.dci.value|default:'' }}" class="w-full px-4 py-2.5 border border-neutral-200 rounded-xl text-xs font-semibold text-neutral-900 focus:ring-2 focus:ring-[#0d9488] outline-none">
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-neutral-800 uppercase tracking-wider mb-1.5">
+          {% trans "Code référence / Code-barres" %} <span class="text-rose-500">*</span>
+        </label>
+        <input type="text" name="reference_code" value="{{ form.reference_code.value|default:'' }}" required class="w-full px-4 py-2.5 border border-neutral-200 rounded-xl text-xs font-mono font-bold text-neutral-900 focus:ring-2 focus:ring-[#0d9488] outline-none">
+        {% if form.reference_code.errors %}<p class="text-xs text-rose-600 mt-1">{{ form.reference_code.errors.0 }}</p>{% endif %}
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-neutral-800 uppercase tracking-wider mb-1.5">
+          {% trans "Dosage" %}
+        </label>
+        <input type="text" name="dosage" value="{{ form.dosage.value|default:'' }}" placeholder="ex: 500 mg, 1g" class="w-full px-4 py-2.5 border border-neutral-200 rounded-xl text-xs focus:ring-2 focus:ring-[#0d9488] outline-none">
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-neutral-800 uppercase tracking-wider mb-1.5">
+          {% trans "Forme pharmaceutique" %}
+        </label>
+        <input type="text" name="form" value="{{ form.form.value|default:'' }}" placeholder="ex: Comprimé, Sirop" class="w-full px-4 py-2.5 border border-neutral-200 rounded-xl text-xs focus:ring-2 focus:ring-[#0d9488] outline-none">
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-neutral-800 uppercase tracking-wider mb-1.5">
+          {% trans "Catégorie" %}
+        </label>
+        {{ form.category }}
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-neutral-800 uppercase tracking-wider mb-1.5">
+          {% trans "Unité de délivrance" %}
+        </label>
+        <input type="text" name="unit" value="{{ form.unit.value|default:'Boîte' }}" class="w-full px-4 py-2.5 border border-neutral-200 rounded-xl text-xs focus:ring-2 focus:ring-[#0d9488] outline-none">
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-neutral-800 uppercase tracking-wider mb-1.5">
+          {% trans "Prix d'achat standard (FCFA)" %}
+        </label>
+        <input type="number" step="0.01" name="purchase_price" value="{{ form.purchase_price.value|default:'0.00' }}" class="w-full px-4 py-2.5 border border-neutral-200 rounded-xl text-xs font-mono font-bold focus:ring-2 focus:ring-[#0d9488] outline-none">
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-neutral-800 uppercase tracking-wider mb-1.5">
+          {% trans "Prix de vente public (FCFA)" %} <span class="text-rose-500">*</span>
+        </label>
+        <input type="number" step="0.01" name="selling_price" value="{{ form.selling_price.value|default:'0.00' }}" required class="w-full px-4 py-2.5 border border-neutral-200 rounded-xl text-xs font-mono font-bold focus:ring-2 focus:ring-[#0d9488] outline-none">
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-neutral-800 uppercase tracking-wider mb-1.5">
+          {% trans "Seuil d'alerte de stock" %}
+        </label>
+        <input type="number" name="min_stock_threshold" value="{{ form.min_stock_threshold.value|default:'10' }}" class="w-full px-4 py-2.5 border border-neutral-200 rounded-xl text-xs font-mono focus:ring-2 focus:ring-[#0d9488] outline-none">
+      </div>
+
+      <div class="flex items-center pt-5">
+        <label class="inline-flex items-center gap-2 cursor-pointer">
+          <input type="checkbox" name="is_active" {% if form.is_active.value %}checked{% endif %} class="rounded border-neutral-300 text-[#0d9488] focus:ring-[#0d9488]">
+          <span class="text-xs font-bold text-neutral-800">{% trans "Produit actif et disponible à la vente" %}</span>
+        </label>
+      </div>
+
+      <div class="sm:col-span-2">
+        <label class="block text-xs font-bold text-neutral-800 uppercase tracking-wider mb-1.5">
+          {% trans "Remarques cliniques & Indications" %}
+        </label>
+        <textarea name="description" rows="3" class="w-full px-4 py-2.5 border border-neutral-200 rounded-xl text-xs focus:ring-2 focus:ring-[#0d9488] outline-none">{{ form.description.value|default:'' }}</textarea>
+      </div>
+    </div>
+
+    <div class="flex items-center justify-end gap-3 pt-4 border-t border-neutral-100">
+      <button type="submit" class="px-6 py-2.5 bg-[#0d9488] hover:bg-[#0f766e] text-white font-bold text-xs rounded-xl shadow-xs transition-colors cursor-pointer">
+        {% trans "Enregistrer la fiche" %}
+      </button>
+    </div>
+  </form>
+
+</div>
+{% endblock %}

@@ -18,6 +18,14 @@
         {% trans "Historique et suivi clinique de toutes les consultations réalisées." %}
       </p>
     </div>
+    {% if user.is_personnel_medical or user.is_superuser or user.is_proprietaire %}
+      <div class="shrink-0">
+        <a href="{% url "patients:consultation_create" %}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#0d9488] hover:bg-[#0f766e] text-white font-bold text-xs shadow-xs transition-colors">
+          {% include "components/atoms/icon.html" with name="plus" size="w-4 h-4" %}
+          <span>{% trans "Nouvelle Consultation" %}</span>
+        </a>
+      </div>
+    {% endif %}
   </div>
 
   <!-- Barre de recherche -->

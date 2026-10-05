@@ -2,19 +2,18 @@
 
 from __future__ import annotations
 
+from datetime import date
+from typing import TYPE_CHECKING
 from typing import Any
 
 from django.contrib import messages
+from django.core.exceptions import ValidationError
 from django.db import models
-from django.db import transaction
-from django.db.models import QuerySet
 from django.shortcuts import get_object_or_404
 from django.shortcuts import redirect
-from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.views import View
 from django.views.generic import DetailView
-from django.views.generic import FormView
 from django.views.generic import ListView
 
 from apps.patients.forms import FactureUpdateForm
@@ -23,11 +22,16 @@ from apps.patients.models import Facture
 from apps.patients.models import Paiement
 from apps.patients.models import Patient
 from apps.patients.models import PrestationRealisee
+from apps.patients.services import PaymentService
 from apps.users.mixins import CaissierRequiredMixin
+from apps.users.mixins import ProprietaireRequiredMixin
+
+if TYPE_CHECKING:
+    from django.db.models import QuerySet
 
 
 class CaissePendingListView(CaissierRequiredMixin, ListView):
-    """File d'attente des prestations réalisées en attente de facturation et d'encaissement."""
+    """File d'attente des prestations en attente de facturation et encaissement."""
 
     model = PrestationRealisee
     template_name = "patients/caisse_pending_list.html"
@@ -35,9 +39,9 @@ class CaissePendingListView(CaissierRequiredMixin, ListView):
     paginate_by = 20
 
     def get_queryset(self) -> QuerySet[PrestationRealisee]:
-        qs = PrestationRealisee.objects.filter(status="EN_ATTENTE_CAISSE").select_related(
-            "patient", "prestation", "doctor", "consultation"
-        )
+        qs = PrestationRealisee.objects.filter(
+            status="EN_ATTENTE_CAISSE"
+        ).select_related("patient", "prestation", "doctor", "consultation")
         query = self.request.GET.get("q", "").strip()
         if query:
             qs = qs.filter(
@@ -51,7 +55,6 @@ class CaissePendingListView(CaissierRequiredMixin, ListView):
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context["query"] = self.request.GET.get("q", "").strip()
-        # Groupement par patient pour faciliter la facturation groupée
         pending = context["prestations"]
         patients_map = {}
         for item in pending:
@@ -69,50 +72,67 @@ class CaissePendingListView(CaissierRequiredMixin, ListView):
 
 
 class FactureCreateView(CaissierRequiredMixin, View):
-    """Génération d'une facture de caisse pour les prestations en attente d'un patient."""
+    """Génération d'une facture de caisse pour les prestations d'un patient."""
 
     def post(self, request: Any, patient_id: Any):
         patient = get_object_or_404(Patient, pk=patient_id)
         prestation_ids = request.POST.getlist("prestation_ids")
 
-        with transaction.atomic():
-            if prestation_ids:
-                pending_items = PrestationRealisee.objects.filter(
-                    id__in=prestation_ids, patient=patient, status="EN_ATTENTE_CAISSE"
+        if prestation_ids:
+            pending_items = list(
+                PrestationRealisee.objects.filter(
+                    id__in=prestation_ids,
+                    patient=patient,
+                    status="EN_ATTENTE_CAISSE",
                 )
-            else:
-                pending_items = PrestationRealisee.objects.filter(
-                    patient=patient, status="EN_ATTENTE_CAISSE"
+            )
+        else:
+            pending_items = list(
+                PrestationRealisee.objects.filter(
+                    patient=patient,
+                    status="EN_ATTENTE_CAISSE",
                 )
-
-            if not pending_items.exists():
-                messages.warning(request, _("Aucune prestation en attente de facturation trouvée pour ce patient."))
-                return redirect("patients:caisse_pending_list")
-
-            total_sum = sum(item.total_price for item in pending_items)
-            invoice_num = f"FAC-{timezone.now().strftime('%Y%m%d')}-{Facture.objects.count() + 1:04d}"
-
-            facture = Facture.objects.create(
-                invoice_number=invoice_num,
-                patient=patient,
-                total_amount=total_sum,
-                paid_amount=0,
-                status="UNPAID",
-                issued_by=request.user,
             )
 
-            pending_items.update(status="FACTURE")
+        if not pending_items:
+            messages.warning(
+                request,
+                _(
+                    "Aucune prestation en attente de facturation "
+                    "trouvée pour ce patient."
+                ),
+            )
+            return redirect("patients:caisse_pending_list")
 
+        try:
+            facture = PaymentService.create_invoice(
+                patient=patient,
+                prestations=pending_items,
+                cashier=request.user,
+            )
             messages.success(
                 request,
-                _("Facture N° %(num)s générée avec succès pour un montant de %(amount)s FCFA.")
-                % {"num": invoice_num, "amount": f"{total_sum:,.0f}"},
+                _(
+                    "Facture N° %(num)s générée pour %(amount)s FCFA. "
+                    "Statut : NON PAYÉE."
+                )
+                % {
+                    "num": facture.invoice_number,
+                    "amount": f"{facture.total_amount:,.0f}",
+                },
             )
             return redirect("patients:facture_detail", pk=facture.pk)
+        except ValidationError as e:
+            err_msg = e.message if hasattr(e, "message") else " ".join(e.messages)
+            messages.error(
+                request,
+                _("Erreur lors de la facturation : ") + str(err_msg),
+            )
+            return redirect("patients:caisse_pending_list")
 
 
 class FactureDetailView(CaissierRequiredMixin, DetailView):
-    """Affichage détaillé d'une facture avec reçu de paiement et formulaire d'encaissement."""
+    """Affichage détaillé d'une facture avec prestations et règlements."""
 
     model = Facture
     template_name = "patients/facture_detail.html"
@@ -120,21 +140,43 @@ class FactureDetailView(CaissierRequiredMixin, DetailView):
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
-        context["paiements"] = self.object.paiements.select_related("cashier")
-        context["paiement_form"] = PaiementForm(initial={"amount": self.object.remaining_amount})
+        facture = self.object
+        context["paiements"] = facture.paiements.select_related(
+            "cashier"
+        ).order_by("-paid_at")
+
+        prestations = list(
+            facture.prestations_realisees.select_related("prestation", "doctor")
+        )
+        if not prestations and facture.consultation:
+            prestations = list(
+                facture.consultation.prestations.select_related(
+                    "prestation", "doctor"
+                )
+            )
+        context["prestations"] = prestations
+        context["paiement_form"] = PaiementForm(
+            initial={"amount": facture.remaining_amount}
+        )
         return context
 
 
 class PaiementCreateView(CaissierRequiredMixin, View):
-    """Enregistrement d'un règlement financier perçu à la caisse."""
+    """Enregistrement et confirmation explicite d'un règlement financier."""
 
     def post(self, request: Any, pk: Any):
         facture = get_object_or_404(Facture, pk=pk)
-        
+
         post_data = request.POST.copy()
         if "amount" in post_data:
-            raw_amount = post_data["amount"].replace(" ", "").replace("\xa0", "").replace("FCFA", "").replace("fcfa", "").strip()
-            # remplace virgule par point pour format decimal
+            raw_amount = (
+                post_data["amount"]
+                .replace(" ", "")
+                .replace("\xa0", "")
+                .replace("FCFA", "")
+                .replace("fcfa", "")
+                .strip()
+            )
             if "," in raw_amount and "." not in raw_amount:
                 raw_amount = raw_amount.replace(",", ".")
             post_data["amount"] = raw_amount
@@ -146,36 +188,66 @@ class PaiementCreateView(CaissierRequiredMixin, View):
             method = form.cleaned_data["payment_method"]
             notes = form.cleaned_data.get("notes", "")
 
-            Paiement.objects.create(
-                facture=facture,
-                cashier=request.user,
-                amount=amount,
-                payment_method=method,
-                notes=notes,
-            )
+            try:
+                paiement = PaymentService.confirm_payment(
+                    facture=facture,
+                    amount=amount,
+                    payment_method=method,
+                    cashier=request.user,
+                    notes=notes,
+                )
 
-            messages.success(
-                request,
-                _("Paiement de %(amount)s FCFA enregistré par %(method)s pour la facture N° %(num)s.")
-                % {
-                    "amount": f"{amount:,.0f}",
-                    "method": dict(Paiement._meta.get_field("payment_method").choices).get(method, method),
-                    "num": facture.invoice_number,
-                },
-            )
+                method_label = dict(Paiement.PAYMENT_METHOD_CHOICES).get(
+                    method, method
+                )
+                messages.success(
+                    request,
+                    _(
+                        "Paiement de %(amount)s FCFA par %(method)s enregistré "
+                        "pour la facture N° %(num)s. Reçu N° %(rec)s émis."
+                    )
+                    % {
+                        "amount": f"{amount:,.0f}",
+                        "method": method_label,
+                        "num": facture.invoice_number,
+                        "rec": paiement.receipt_number,
+                    },
+                )
+                return redirect("patients:paiement_receipt", pk=paiement.pk)
+            except ValidationError as e:
+                err_msg = e.message if hasattr(e, "message") else " ".join(e.messages)
+                messages.error(request, _("Erreur d'encaissement : ") + str(err_msg))
         else:
             errors_summary = []
             for field, errs in form.errors.items():
                 label = form.fields[field].label if field in form.fields else field
                 errors_summary.append(f"{label}: {' '.join(errs)}")
-            err_text = " | ".join(errors_summary) if errors_summary else _("Veuillez vérifier les informations saisies.")
+            err_text = (
+                " | ".join(errors_summary)
+                if errors_summary
+                else _("Veuillez vérifier les informations saisies.")
+            )
             messages.error(request, _("Erreur de paiement : ") + err_text)
 
         return redirect("patients:facture_detail", pk=facture.pk)
 
 
+class PaiementReceiptView(CaissierRequiredMixin, DetailView):
+    """Affichage et impression du reçu de paiement officiel (preuve de paiement)."""
+
+    model = Paiement
+    template_name = "patients/paiement_receipt.html"
+    context_object_name = "paiement"
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        paiement = self.object
+        context["facture"] = paiement.facture
+        return context
+
+
 class FactureListView(CaissierRequiredMixin, ListView):
-    """Historique complet de toutes les factures et états d'encaissement de caisse."""
+    """Historique complet des factures avec recherche, filtres et statuts."""
 
     model = Facture
     template_name = "patients/facture_list.html"
@@ -183,9 +255,12 @@ class FactureListView(CaissierRequiredMixin, ListView):
     paginate_by = 20
 
     def get_queryset(self) -> QuerySet[Facture]:
-        qs = Facture.objects.select_related("patient", "issued_by")
+        qs = Facture.objects.select_related(
+            "patient", "issued_by"
+        ).prefetch_related("paiements")
         query = self.request.GET.get("q", "").strip()
         status = self.request.GET.get("status", "").strip()
+        date_filter = self.request.GET.get("date", "").strip()
 
         if query:
             qs = qs.filter(
@@ -198,18 +273,35 @@ class FactureListView(CaissierRequiredMixin, ListView):
         if status:
             qs = qs.filter(status=status)
 
+        if date_filter:
+            try:
+                parsed_date = date.fromisoformat(date_filter)
+                qs = qs.filter(issued_at__date=parsed_date)
+            except ValueError:
+                pass
+
         return qs.order_by("-issued_at")
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context["query"] = self.request.GET.get("q", "").strip()
         context["selected_status"] = self.request.GET.get("status", "").strip()
-        context["status_choices"] = Facture._meta.get_field("status").choices
+        context["date_filter"] = self.request.GET.get("date", "").strip()
+        context["status_choices"] = Facture.STATUS_CHOICES
+
+        all_qs = Facture.objects.all()
+        context["count_total"] = all_qs.count()
+        context["count_unpaid"] = all_qs.filter(status="UNPAID").count()
+        context["count_partially_paid"] = all_qs.filter(
+            status="PARTIALLY_PAID"
+        ).count()
+        context["count_paid"] = all_qs.filter(status="PAID").count()
+        context["count_cancelled"] = all_qs.filter(status="CANCELLED").count()
         return context
 
 
 class FacturePrintView(CaissierRequiredMixin, DetailView):
-    """Vue d'impression et d'export au format reçu officiel / PDF d'une facture de caisse."""
+    """Vue d'impression et d'export au format officiel d'une facture de caisse."""
 
     model = Facture
     template_name = "patients/facture_print.html"
@@ -217,23 +309,35 @@ class FacturePrintView(CaissierRequiredMixin, DetailView):
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
-        context["paiements"] = self.object.paiements.select_related("cashier")
-        if self.object.consultation:
-            context["prestations"] = self.object.consultation.prestations.select_related("prestation")
+        context["paiements"] = self.object.paiements.select_related(
+            "cashier"
+        ).order_by("paid_at")
+        prestations = list(
+            self.object.prestations_realisees.select_related("prestation", "doctor")
+        )
+        if not prestations and self.object.consultation:
+            prestations = list(
+                self.object.consultation.prestations.select_related(
+                    "prestation", "doctor"
+                )
+            )
+        context["prestations"] = prestations
         return context
 
 
-class FactureUpdateView(CaissierRequiredMixin, View):
-    """Modification du montant d'une facture non encore payée."""
+class FactureUpdateView(ProprietaireRequiredMixin, View):
+    """Modification du montant d'une facture non réglée (Propriétaire uniquement)."""
 
     def post(self, request: Any, pk: Any):
         facture = get_object_or_404(Facture, pk=pk)
 
-        # Règle comptable : interdiction de modifier une facture déjà réglée
         if facture.status == "PAID" or facture.paid_amount > 0:
             messages.error(
                 request,
-                _("Impossible de modifier une facture ayant déjà fait l'objet d'un encaissement."),
+                _(
+                    "Impossible de modifier une facture ayant déjà "
+                    "fait l'objet d'un encaissement."
+                ),
             )
             return redirect("patients:facture_detail", pk=facture.pk)
 
@@ -246,7 +350,7 @@ class FactureUpdateView(CaissierRequiredMixin, View):
             form.save()
             messages.success(
                 request,
-                _("Le montant de la facture N° %(num)s a été ajusté avec succès.")
+                _("Le montant de la facture N° %(num)s a été ajusté.")
                 % {"num": facture.invoice_number},
             )
         else:
@@ -261,32 +365,18 @@ class FactureCancelView(CaissierRequiredMixin, View):
     def post(self, request: Any, pk: Any):
         facture = get_object_or_404(Facture, pk=pk)
 
-        if facture.status == "PAID" or facture.paid_amount > 0:
-            messages.error(
+        try:
+            PaymentService.cancel_invoice(facture=facture, user=request.user)
+            messages.success(
                 request,
-                _("Impossible d'annuler une facture déjà payée ou partiellement réglée."),
-            )
-            return redirect("patients:facture_detail", pk=facture.pk)
-
-        if facture.status == "CANCELLED":
-            messages.warning(request, _("Cette facture est déjà annulée."))
-            return redirect("patients:facture_detail", pk=facture.pk)
-
-        with transaction.atomic():
-            facture.status = "CANCELLED"
-            facture.save(update_fields=["status", "updated_at"])
-
-            # Si liée à une consultation, remettre les prestations au statut EN_ATTENTE_CAISSE
-            if facture.consultation:
-                facture.consultation.prestations.filter(status="FACTURE").update(
-                    status="EN_ATTENTE_CAISSE"
+                _(
+                    "La facture N° %(num)s a été annulée. "
+                    "Les actes associés sont à nouveau disponibles pour facturation."
                 )
+                % {"num": facture.invoice_number},
+            )
+        except ValidationError as e:
+            err_msg = e.message if hasattr(e, "message") else " ".join(e.messages)
+            messages.error(request, str(err_msg))
 
-        messages.success(
-            request,
-            _("La facture N° %(num)s a été annulée. Les actes associés sont à nouveau disponibles pour facturation.")
-            % {"num": facture.invoice_number},
-        )
         return redirect("patients:facture_detail", pk=facture.pk)
-
-

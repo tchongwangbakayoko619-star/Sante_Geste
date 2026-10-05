@@ -1,4 +1,4 @@
-{# Organism: Login Form (CS² Health Design System) #}
+{# Organism: Login Form (SantéGeste Design System) #}
 {# Props: #}
 {#   - form : objet formulaire Django #}
 {#   - action_url : URL de soumission du formulaire (défaut: '') #}
@@ -13,7 +13,7 @@
 {#   - class / custom_classes : classes CSS additionnelles #}
 {% load i18n %}
 {% trans "Ravi de vous revoir !" as default_login_title %}
-{% trans "Bienvenue sur votre espace CS² Health. Connectez-vous pour retrouver vos outils médicaux." as default_login_subtitle %}
+{% trans "Bienvenue sur votre espace SantéGeste. Connectez-vous pour retrouver vos outils médicaux." as default_login_subtitle %}
 {% trans "Se connecter à mon espace" as default_login_submit %}
 {% trans "Adresse email ou identifiant *" as email_label %}
 {% trans "Mot de passe *" as password_label %}
@@ -23,7 +23,7 @@
 
   <!-- Top Brand Lockup -->
   <div class="mb-6 flex justify-center">
-    {% include "components/molecules/brand-lockup.html" %}
+    {% include "components/molecules/brand-lockup.html" with size="lg" %}
   </div>
 
   <!-- Form Greeting Header -->
@@ -50,7 +50,7 @@
     {% endif %}
 
     <!-- Field 1: Email or Identifier -->
-    {% include "components/molecules/form-field.html" with id="email" name="email" type="email" label=email_label placeholder="dr.valois@cs2-health.org" value=form.email.value required=True autocomplete="email" icon_left="mail" has_error=form.email.errors error_message=form.email.errors.0 %}
+    {% include "components/molecules/form-field.html" with id="email" name="email" type="email" label=email_label placeholder="dr.valois@santegeste.fr" value=form.email.value required=True autocomplete="email" icon_left="mail" has_error=form.email.errors error_message=form.email.errors.0 %}
 
     <!-- Field 2: Password with Forgot Link -->
     {% include "components/molecules/password-field.html" with id="password" name="password" label=password_label placeholder="••••••••" required=True autocomplete="current-password" forgot_password_url=forgot_password_url has_error=form.password.errors error_message=form.password.errors.0 %}
@@ -94,7 +94,7 @@
   <!-- Bottom Brand Footnote -->
   <footer class="auth-footer">
     <p class="auth-footer-text">
-      CS<sup class="text-[9px]">2</sup> Health • {% trans "Votre partenaire de soin au quotidien" %}
+      SantéGeste • {% trans "Votre partenaire de soin au quotidien" %}
     </p>
   </footer>
 

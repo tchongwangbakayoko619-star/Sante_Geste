@@ -1,0 +1,139 @@
+{% extends "layouts/base.html" %}
+{% load i18n static %}
+
+{% block title %}{% trans "Reçu de Paiement" %} {{ paiement.receipt_number }} - SantéGeste{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-neutral-100 p-4 sm:p-8 font-sans print:bg-white print:p-0">
+  <div class="max-w-2xl mx-auto bg-white p-8 sm:p-12 rounded-3xl border border-neutral-200/90 shadow-xl print:shadow-none print:border-none print:max-w-none print:p-0">
+    
+    <!-- Barre d'action rapide (masquée à l'impression) -->
+    <div class="flex items-center justify-between border-b border-neutral-200 pb-5 mb-8 print:hidden">
+      <a href="{% url "patients:facture_detail" paiement.facture.pk %}" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-neutral-200 text-neutral-700 font-semibold text-xs sm:text-sm hover:bg-neutral-50 transition-colors shadow-2xs">
+        <svg class="w-4 h-4 text-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+        {% trans "Retour à la Facture" %}
+      </a>
+      <div class="flex items-center gap-2">
+        <a href="{% url "patients:facture_print" paiement.facture.pk %}" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-neutral-50 border border-neutral-200 text-neutral-700 font-semibold text-xs hover:bg-neutral-100 transition-colors">
+          {% include "components/atoms/icon.html" with name="document-text" size="w-4 h-4 text-neutral-500" %}
+          {% trans "Voir Facture" %}
+        </a>
+        <button onclick="window.print()" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#0d9488] hover:bg-[#0f766e] text-white font-bold text-xs sm:text-sm transition-colors shadow-xs cursor-pointer">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+          {% trans "Imprimer le Reçu" %}
+        </button>
+      </div>
+    </div>
+
+    <!-- En-tête Reçu avec Logo Officiel SantéGeste -->
+    <div class="flex justify-between items-start border-b-2 border-[#0d9488] pb-6 mb-6">
+      <div class="flex items-start gap-3.5">
+        <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-[#0d9488] via-[#0f766e] to-[#042f2e] text-white flex items-center justify-center shrink-0 shadow-xs">
+          <svg class="w-8 h-8 text-white" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M19 6C19 4.89543 19.8954 4 21 4H27C28.1046 4 29 4.89543 29 6V18H41C42.1046 18 43 18.8954 43 20V26C43 27.1046 42.1046 28 41 28H29V42C29 43.1046 28.1046 44 27 44H21C19.8954 44 19 43.1046 19 42V28H7C5.89543 28 5 27.1046 5 26V20C5 18.8954 5.89543 18 7 18H19V6Z" fill="white"/>
+            <path d="M4 24H15L18 17L22 31L26 21L28 25L30 24H44" stroke="#0d9488" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-xl font-extrabold text-[#0f766e] font-title tracking-tight">
+            SantéGeste
+          </h1>
+          <p class="text-xs font-semibold text-[#0d9488]">Service de Caisse & Règlements</p>
+          <p class="text-[11px] text-neutral-500">Centre de Santé Médical CS² Health</p>
+        </div>
+      </div>
+
+      <div class="text-right">
+        <span class="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-300">
+          {% trans "Preuve de Paiement" %}
+        </span>
+        <h2 class="text-base font-extrabold text-neutral-900 font-title uppercase mt-1">{% trans "REÇU DE CAISSE" %}</h2>
+        <p class="text-xs font-mono font-bold text-[#0d9488]">{{ paiement.receipt_number }}</p>
+        <p class="text-[11px] text-neutral-500 font-mono mt-0.5">{{ paiement.paid_at|date:"d/m/Y - H:i:s" }}</p>
+      </div>
+    </div>
+
+    <!-- Informations Générales : Patient & Caissier -->
+    <div class="grid grid-cols-2 gap-4 bg-teal-50/40 p-4 rounded-2xl border border-teal-100 text-xs mb-6">
+      <div>
+        <span class="text-[10px] font-bold text-neutral-400 uppercase tracking-wider block mb-0.5">{% trans "Patient / Versant" %}</span>
+        <p class="font-bold text-neutral-900 text-sm">{{ paiement.facture.patient.full_name }}</p>
+        <p class="text-neutral-600 font-mono text-[11px]">Dossier N° {{ paiement.facture.patient.patient_number }}</p>
+        {% if paiement.facture.patient.phone_number %}
+          <p class="text-neutral-500 text-[11px]">{{ paiement.facture.patient.phone_number }}</p>
+        {% endif %}
+      </div>
+      <div class="text-right">
+        <span class="text-[10px] font-bold text-neutral-400 uppercase tracking-wider block mb-0.5">{% trans "Caissier Réceptionnaire" %}</span>
+        <p class="font-bold text-neutral-900 text-sm">{{ paiement.cashier.full_name }}</p>
+        <p class="text-neutral-600 text-[11px]">{% trans "Guichet Caisse Principale" %}</p>
+        <p class="text-emerald-700 font-bold text-[11px] mt-0.5">{% trans "Statut : RÈGLEMENT ENCAISSÉ" %}</p>
+      </div>
+    </div>
+
+    <!-- Encadré Principal : Montant Réglé (Ce qui a été payé) -->
+    <div class="bg-gradient-to-br from-emerald-50 via-teal-50 to-white p-6 rounded-2xl border-2 border-emerald-500/60 text-center space-y-2 mb-6 shadow-xs">
+      <span class="text-xs font-bold text-emerald-800 uppercase tracking-widest block">
+        {% trans "Montant Effectivement Perçu" %}
+      </span>
+      <div class="text-3xl sm:text-4xl font-extrabold text-emerald-700 font-mono tracking-tight">
+        {{ paiement.amount }} FCFA
+      </div>
+      <div class="inline-flex items-center gap-2 px-3 py-1 bg-white rounded-full border border-emerald-200 text-xs font-bold text-neutral-700 shadow-2xs mt-2">
+        <span>{% trans "Mode de règlement" %} :</span>
+        <span class="text-[#0d9488]">{{ paiement.get_payment_method_display }}</span>
+      </div>
+      {% if paiement.notes %}
+        <p class="text-xs text-neutral-600 italic mt-2">
+          « {{ paiement.notes }} »
+        </p>
+      {% endif %}
+    </div>
+
+    <!-- Référence et Situation de la Facture -->
+    <div class="border border-neutral-200 rounded-2xl p-4 bg-neutral-50/60 space-y-3 mb-6 text-xs">
+      <div class="flex items-center justify-between border-b border-neutral-200 pb-2">
+        <span class="font-bold text-neutral-700">{% trans "Référence Facture Associée" %} :</span>
+        <span class="font-mono font-bold text-neutral-900">{{ paiement.facture.invoice_number }}</span>
+      </div>
+      <div class="grid grid-cols-3 gap-2 text-center pt-1">
+        <div>
+          <span class="text-[10px] text-neutral-400 block uppercase">{% trans "Montant Facturé" %}</span>
+          <span class="font-bold text-neutral-800 font-mono">{{ paiement.facture.total_amount }} FCFA</span>
+        </div>
+        <div>
+          <span class="text-[10px] text-neutral-400 block uppercase">{% trans "Total Réglé" %}</span>
+          <span class="font-bold text-emerald-600 font-mono">{{ paiement.facture.paid_amount }} FCFA</span>
+        </div>
+        <div>
+          <span class="text-[10px] text-neutral-400 block uppercase">{% trans "Reste Dû Facture" %}</span>
+          <span class="font-bold {% if paiement.facture.remaining_amount == 0 %}text-neutral-500{% else %}text-rose-600{% endif %} font-mono">
+            {{ paiement.facture.remaining_amount }} FCFA
+          </span>
+        </div>
+      </div>
+      <div class="flex justify-between items-center border-t border-neutral-200 pt-2 text-[11px]">
+        <span class="text-neutral-500">{% trans "Statut actuel de la facture" %} :</span>
+        <span class="font-bold {% if paiement.facture.status == 'PAID' %}text-emerald-700{% elif paiement.facture.status == 'PARTIALLY_PAID' %}text-amber-700{% else %}text-rose-700{% endif %}">
+          {{ paiement.facture.get_status_display }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Mention Légale et Signature -->
+    <div class="grid grid-cols-2 gap-6 pt-4 border-t border-neutral-200 items-end text-xs">
+      <div class="text-[10px] text-neutral-500 space-y-1">
+        <p class="font-bold text-neutral-700 uppercase">{% trans "Important" %}</p>
+        <p>{% trans "Ce reçu est une preuve de paiement attestant des sommes perçues à la caisse de l'établissement." %}</p>
+        <p>{% trans "Conservez précieusement ce reçu pour vos remboursements d'assurance ou justificatifs médicaux." %}</p>
+      </div>
+      <div class="text-center space-y-6">
+        <p class="text-[10px] font-bold text-neutral-500 uppercase tracking-wider">{% trans "Signature & Cachet de la Caisse" %}</p>
+        <div class="border-b border-dashed border-teal-300 w-3/4 mx-auto"></div>
+        <p class="text-xs text-neutral-700 font-bold">{{ paiement.cashier.full_name }}</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

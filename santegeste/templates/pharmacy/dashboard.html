@@ -1,0 +1,189 @@
+{% extends "layouts/dashboard.html" %}
+{% load i18n static %}
+
+{% block title %}{% trans "Pharmacie & Gestion des Stocks" %} - SantéGeste{% endblock %}
+
+{% block content_inner %}
+<div class="space-y-6">
+
+  <!-- En-tête Tableau de bord Pharmacie -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-neutral-200/80 shadow-xs">
+    <div>
+      <h1 class="text-xl sm:text-2xl font-bold text-neutral-900 font-title tracking-tight flex items-center gap-3">
+        <span class="p-2.5 rounded-xl bg-teal-50 text-[#0d9488]">
+          {% include "components/atoms/icon.html" with name="beaker" size="w-6 h-6" %}
+        </span>
+        {% trans "Pharmacie & Stocks de Médicaments" %}
+      </h1>
+      <p class="text-xs text-neutral-500 mt-1">
+        {% trans "Pilotage du stock, délivrance des ordonnances et ventes au comptoir." %}
+      </p>
+    </div>
+    <div class="flex flex-wrap items-center gap-2">
+      <a href="{% url "pharmacy:sale_create" %}" class="px-4 py-2.5 rounded-xl bg-[#0d9488] hover:bg-[#0f766e] text-white font-bold text-xs transition-colors shadow-xs inline-flex items-center gap-2 cursor-pointer">
+        {% include "components/atoms/icon.html" with name="plus" size="w-4 h-4" %}
+        <span>{% trans "Nouvelle Vente" %}</span>
+      </a>
+      {% if request.user.is_responsable_pharmacie or request.user.is_proprietaire or request.user.is_superuser %}
+        <a href="{% url "pharmacy:stock_entry" %}" class="px-4 py-2.5 rounded-xl bg-white border border-neutral-200 text-neutral-700 hover:bg-neutral-50 font-bold text-xs transition-colors shadow-2xs inline-flex items-center gap-2">
+          <span>{% trans "Réception Fournisseur" %}</span>
+        </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Cartes d'indicateurs KPIs -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <!-- KPI 1 : Produits en stock -->
+    <div class="bg-white p-5 rounded-2xl border border-neutral-200/80 shadow-xs space-y-2">
+      <div class="flex items-center justify-between text-neutral-500">
+        <span class="text-xs font-bold uppercase tracking-wider">{% trans "Catalogue Produits" %}</span>
+        <span class="p-2 rounded-xl bg-teal-50 text-[#0d9488]">📦</span>
+      </div>
+      <div class="text-2xl font-black text-neutral-900 font-mono">{{ total_products }}</div>
+      <p class="text-[11px] text-neutral-400">{% trans "Références médicales enregistrées" %}</p>
+    </div>
+
+    <!-- KPI 2 : Alertes Stock Faible -->
+    <div class="bg-white p-5 rounded-2xl border {% if low_stock_count > 0 %}border-amber-300 bg-amber-50/20{% else %}border-neutral-200/80{% endif %} shadow-xs space-y-2">
+      <div class="flex items-center justify-between text-neutral-500">
+        <span class="text-xs font-bold uppercase tracking-wider text-amber-800">{% trans "Stock Faible / Rupture" %}</span>
+        <span class="p-2 rounded-xl bg-amber-50 text-amber-600">⚠️</span>
+      </div>
+      <div class="text-2xl font-black {% if low_stock_count > 0 %}text-amber-700{% else %}text-neutral-900{% endif %} font-mono">{{ low_stock_count }}</div>
+      <p class="text-[11px] text-amber-800/80">{% trans "Articles sous le seuil d'alerte" %}</p>
+    </div>
+
+    <!-- KPI 3 : Alertes Péremption -->
+    <div class="bg-white p-5 rounded-2xl border {% if expiring_soon_count > 0 or expired_batches_count > 0 %}border-rose-300 bg-rose-50/20{% else %}border-neutral-200/80{% endif %} shadow-xs space-y-2">
+      <div class="flex items-center justify-between text-neutral-500">
+        <span class="text-xs font-bold uppercase tracking-wider text-rose-800">{% trans "Péremptions (< 90j)" %}</span>
+        <span class="p-2 rounded-xl bg-rose-50 text-rose-600">⏳</span>
+      </div>
+      <div class="text-2xl font-black {% if expiring_soon_count > 0 or expired_batches_count > 0 %}text-rose-700{% else %}text-neutral-900{% endif %} font-mono">{{ expiring_soon_count }}</div>
+      <p class="text-[11px] text-rose-800/80">{{ expired_batches_count }} {% trans "lots déjà expirés" %}</p>
+    </div>
+
+    <!-- KPI 4 : Ventes du jour -->
+    <div class="bg-white p-5 rounded-2xl border border-neutral-200/80 shadow-xs space-y-2">
+      <div class="flex items-center justify-between text-neutral-500">
+        <span class="text-xs font-bold uppercase tracking-wider text-emerald-800">{% trans "Ventes du jour" %}</span>
+        <span class="p-2 rounded-xl bg-emerald-50 text-emerald-600">💰</span>
+      </div>
+      <div class="text-2xl font-black text-neutral-900 font-mono">{{ today_revenue }} FCFA</div>
+      <p class="text-[11px] text-neutral-500">{{ today_sales_count }} {% trans "ventes enregistrées aujourd'hui" %}</p>
+    </div>
+  </div>
+
+  <!-- Grille 2 Colonnes : Alertes Stock & Ventes Récentes -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+    <!-- Colonne 1 : Alertes Stocks Faibles & Lots Bientôt Périmés -->
+    <div class="space-y-6">
+      <!-- Bloc Stock Faible -->
+      <div class="bg-white p-6 rounded-2xl border border-neutral-200/80 shadow-xs space-y-4">
+        <div class="flex items-center justify-between border-b border-neutral-100 pb-3">
+          <h2 class="text-sm font-bold text-neutral-900 flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+            {% trans "Médicaments en alerte de réapprovisionnement" %}
+          </h2>
+          <a href="{% url "pharmacy:product_list" %}?stock=low" class="text-xs font-semibold text-[#0d9488] hover:underline">{% trans "Tout voir" %} &rarr;</a>
+        </div>
+
+        {% if low_stock_products %}
+          <div class="divide-y divide-neutral-100">
+            {% for prod in low_stock_products %}
+              <div class="py-3 flex items-center justify-between gap-4">
+                <div>
+                  <a href="{% url "pharmacy:product_detail" prod.pk %}" class="text-xs font-bold text-neutral-900 hover:text-[#0d9488]">
+                    {{ prod.name }}
+                  </a>
+                  <p class="text-[11px] text-neutral-400 font-mono">{{ prod.reference_code }} • DCI: {{ prod.dci|default:"-" }}</p>
+                </div>
+                <div class="text-right shrink-0">
+                  <span class="font-mono text-xs font-bold {% if prod.current_stock <= 0 %}text-rose-600{% else %}text-amber-700{% endif %}">
+                    {{ prod.current_stock }} {{ prod.unit }}
+                  </span>
+                  <span class="text-[10px] text-neutral-400 block">Min: {{ prod.min_stock_threshold }}</span>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="text-xs text-neutral-400 text-center py-4">{% trans "Aucun produit en rupture ou stock faible." %}</p>
+        {% endif %}
+      </div>
+
+      <!-- Bloc Lots Proches de Péremption -->
+      <div class="bg-white p-6 rounded-2xl border border-neutral-200/80 shadow-xs space-y-4">
+        <div class="flex items-center justify-between border-b border-neutral-100 pb-3">
+          <h2 class="text-sm font-bold text-neutral-900 flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+            {% trans "Lots proches de la date de péremption" %}
+          </h2>
+        </div>
+
+        {% if expiring_batches %}
+          <div class="divide-y divide-neutral-100">
+            {% for b in expiring_batches %}
+              <div class="py-3 flex items-center justify-between gap-4">
+                <div>
+                  <span class="text-xs font-bold text-neutral-900">{{ b.product.name }}</span>
+                  <p class="text-[11px] text-neutral-400 font-mono">Lot: {{ b.batch_number }} • Exp: <strong class="{% if b.is_expired %}text-rose-600{% else %}text-amber-700{% endif %}">{{ b.expiry_date|date:"d/m/Y" }}</strong></p>
+                </div>
+                <div class="text-right shrink-0">
+                  <span class="font-mono text-xs font-bold text-neutral-800">{{ b.current_quantity }} unités</span>
+                  <span class="text-[10px] font-semibold {% if b.is_expired %}text-rose-600{% else %}text-amber-600{% endif %} block">
+                    {% if b.is_expired %}{% trans "PÉRIMÉ" %}{% else %}{{ b.days_until_expiry }}j restants{% endif %}
+                  </span>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="text-xs text-neutral-400 text-center py-4">{% trans "Aucun lot proche de la péremption." %}</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Colonne 2 : Dernières Ventes Réalisées -->
+    <div class="bg-white p-6 rounded-2xl border border-neutral-200/80 shadow-xs space-y-4">
+      <div class="flex items-center justify-between border-b border-neutral-100 pb-3">
+        <h2 class="text-sm font-bold text-neutral-900 flex items-center gap-2">
+          {% include "components/atoms/icon.html" with name="shopping-bag" size="w-4 h-4 text-[#0d9488]" %}
+          {% trans "Dernières opérations de vente" %}
+        </h2>
+        <a href="{% url "pharmacy:sale_list" %}" class="text-xs font-semibold text-[#0d9488] hover:underline">{% trans "Historique complet" %} &rarr;</a>
+      </div>
+
+      {% if recent_sales %}
+        <div class="divide-y divide-neutral-100">
+          {% for s in recent_sales %}
+            <div class="py-3.5 flex items-center justify-between gap-4">
+              <div>
+                <a href="{% url "pharmacy:sale_detail" s.pk %}" class="text-xs font-bold text-neutral-900 hover:text-[#0d9488] font-mono">
+                  {{ s.sale_number }}
+                </a>
+                <p class="text-[11px] text-neutral-500">
+                  {% if s.patient %}{{ s.patient.full_name }}{% else %}{{ s.client_name|default:_("Comptoir") }}{% endif %}
+                  <span class="text-neutral-300">•</span>
+                  <span>{{ s.sale_date|date:"H:i" }}</span>
+                </p>
+              </div>
+              <div class="text-right shrink-0">
+                <span class="font-mono text-xs font-extrabold text-neutral-900">{{ s.total_amount }} FCFA</span>
+                <span class="block text-[10px] font-bold {% if s.status == 'COMPLETED' %}text-emerald-600{% elif s.status == 'PENDING_PAYMENT' %}text-amber-600{% else %}text-neutral-400{% endif %}">
+                  {{ s.get_status_display }}
+                </span>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="text-xs text-neutral-400 text-center py-8">{% trans "Aucune vente enregistrée pour le moment." %}</p>
+      {% endif %}
+    </div>
+
+  </div>
+</div>
+{% endblock %}

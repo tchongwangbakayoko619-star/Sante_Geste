@@ -46,14 +46,16 @@ class Facture(BaseModel):
         default=0.00,
         verbose_name=_("Montant encaisse"),
     )
+    STATUS_CHOICES = (
+        ("UNPAID", _("Non payée")),
+        ("PARTIALLY_PAID", _("Partiellement payée")),
+        ("PAID", _("Payée")),
+        ("CANCELLED", _("Annulée")),
+    )
+
     status = models.CharField(
         max_length=20,
-        choices=[
-            ("UNPAID", _("Non payée")),
-            ("PARTIALLY_PAID", _("Partiellement payée")),
-            ("PAID", _("Payée")),
-            ("CANCELLED", _("Annulée")),
-        ],
+        choices=STATUS_CHOICES,
         default="UNPAID",
         verbose_name=_("Statut de paiement"),
     )
@@ -85,6 +87,13 @@ class Facture(BaseModel):
 class Paiement(BaseModel):
     """Enregistrement d'un règlement financier perçu à la caisse."""
 
+    receipt_number = models.CharField(
+        max_length=50,
+        unique=True,
+        null=True,
+        blank=True,
+        verbose_name=_("Numéro de reçu"),
+    )
     facture = models.ForeignKey(
         Facture,
         on_delete=models.CASCADE,
@@ -102,14 +111,16 @@ class Paiement(BaseModel):
         decimal_places=2,
         verbose_name=_("Montant régle"),
     )
+    PAYMENT_METHOD_CHOICES = (
+        ("ESPECES", _("Espèces")),
+        ("CARTE", _("Carte Bancaire")),
+        ("MOBILE_MONEY", _("Mobile Money (Orange/MTN/Moov)")),
+        ("VIREMENT", _("Virement / Chèque")),
+    )
+
     payment_method = models.CharField(
         max_length=30,
-        choices=[
-            ("ESPECES", _("Espèces")),
-            ("CARTE", _("Carte Bancaire")),
-            ("MOBILE_MONEY", _("Mobile Money (Orange/MTN/Moov)")),
-            ("VIREMENT", _("Virement / Chèque")),
-        ],
+        choices=PAYMENT_METHOD_CHOICES,
         default="ESPECES",
         verbose_name=_("Mode de règlement"),
     )
@@ -130,9 +141,24 @@ class Paiement(BaseModel):
         ordering = ["-paid_at"]
 
     def __str__(self) -> str:
-        return f"Paiement {self.amount} FCFA par {self.get_payment_method_display()} (Facture {self.facture.invoice_number})"
+        num = self.receipt_number or "En cours"
+        return f"Reçu {num} - {self.amount} FCFA par {self.get_payment_method_display()} (Facture {self.facture.invoice_number})"
 
     def save(self, *args, **kwargs):
+        if not self.receipt_number:
+            today_str = timezone.now().strftime("%Y%m%d")
+            prefix = f"REC-{today_str}-"
+            last_p = Paiement.objects.filter(receipt_number__startswith=prefix).order_by("-receipt_number").first()
+            if last_p and last_p.receipt_number:
+                try:
+                    last_seq = int(last_p.receipt_number.split("-")[-1])
+                    seq = last_seq + 1
+                except ValueError:
+                    seq = Paiement.objects.count() + 1
+            else:
+                seq = 1
+            self.receipt_number = f"{prefix}{seq:04d}"
+
         super().save(*args, **kwargs)
         # Recalcule le montant payé et met à jour le statut de la facture
         facture = self.facture
@@ -140,6 +166,10 @@ class Paiement(BaseModel):
         facture.paid_amount = total_paid
         if total_paid >= facture.total_amount:
             facture.status = "PAID"
+            # Marquer les prestations associées comme payées
+            facture.prestations_realisees.all().update(status="PAYE")
+            if facture.consultation:
+                facture.consultation.prestations.all().update(status="PAYE")
         elif total_paid > 0:
             facture.status = "PARTIALLY_PAID"
         else:

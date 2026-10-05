@@ -1,0 +1,165 @@
+{% extends "layouts/dashboard.html" %}
+{% load i18n static %}
+
+{% block title %}{{ product.name }} - SantéGeste{% endblock %}
+
+{% block content_inner %}
+<div class="space-y-6 max-w-5xl mx-auto">
+
+  <!-- En-tête Fiche Produit -->
+  <div class="bg-white p-6 rounded-2xl border border-neutral-200/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div class="flex items-center gap-4">
+      {% if product.image %}
+        <div class="w-16 h-16 rounded-2xl overflow-hidden border border-neutral-200 shrink-0 bg-white shadow-xs">
+          <img src="{{ product.image.url }}" alt="{{ product.name }}" class="w-full h-full object-cover">
+        </div>
+      {% else %}
+        <div class="w-14 h-14 rounded-2xl bg-teal-50 border border-teal-200/80 text-[#0d9488] font-bold text-2xl flex items-center justify-center shrink-0">
+          💊
+        </div>
+      {% endif %}
+      <div>
+        <div class="flex items-center gap-2">
+          <h1 class="text-xl font-bold text-neutral-900 font-title tracking-tight">{{ product.name }}</h1>
+          <span class="font-mono text-xs font-bold px-2 py-0.5 rounded-lg {% if product.is_active %}bg-emerald-50 text-emerald-700 border border-emerald-200{% else %}bg-neutral-100 text-neutral-600{% endif %}">
+            {% if product.is_active %}{% trans "Actif" %}{% else %}{% trans "Inactif" %}{% endif %}
+          </span>
+        </div>
+        <p class="text-xs text-neutral-500 mt-1 flex flex-wrap items-center gap-2">
+          <span>Réf : <strong class="font-mono text-neutral-800">{{ product.reference_code }}</strong></span>
+          <span class="text-neutral-300">•</span>
+          <span>DCI : <strong class="text-neutral-700">{{ product.dci|default:"-" }}</strong></span>
+          <span class="text-neutral-300">•</span>
+          <span>Catégorie : <strong>{{ product.category.name|default:"-" }}</strong></span>
+        </p>
+      </div>
+    </div>
+
+    <!-- Actions Responsable -->
+    <div class="flex items-center gap-2">
+      {% if request.user.is_responsable_pharmacie or request.user.is_proprietaire or request.user.is_superuser %}
+        <a href="{% url "pharmacy:stock_entry" %}?product={{ product.pk }}" class="px-3.5 py-2 rounded-xl bg-[#0d9488] hover:bg-[#0f766e] text-white font-bold text-xs shadow-xs transition-colors">
+          {% trans "+ Réceptionner du stock" %}
+        </a>
+        <a href="{% url "pharmacy:stock_adjustment" %}?product={{ product.pk }}" class="px-3.5 py-2 rounded-xl bg-white border border-neutral-200 text-neutral-700 hover:bg-neutral-50 font-bold text-xs shadow-2xs transition-colors">
+          {% trans "Ajuster l'inventaire" %}
+        </a>
+        <a href="{% url "pharmacy:product_update" product.pk %}" class="px-3.5 py-2 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-700 font-bold text-xs transition-colors">
+          {% trans "Modifier" %}
+        </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Cartes de Synthèse Stock & Tarifs -->
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+    <div class="bg-white p-5 rounded-2xl border border-neutral-200/80 shadow-xs space-y-1">
+      <span class="text-[11px] font-bold text-neutral-400 uppercase tracking-wider">{% trans "Stock physique total" %}</span>
+      <div class="text-2xl font-black font-mono {% if product.current_stock <= 0 %}text-rose-600{% elif product.is_low_stock %}text-amber-600{% else %}text-emerald-700{% endif %}">
+        {{ product.current_stock }} {{ product.unit }}
+      </div>
+      <p class="text-[11px] text-neutral-400">Seuil minimum configuré : {{ product.min_stock_threshold }}</p>
+    </div>
+
+    <div class="bg-white p-5 rounded-2xl border border-neutral-200/80 shadow-xs space-y-1">
+      <span class="text-[11px] font-bold text-neutral-400 uppercase tracking-wider">{% trans "Prix de vente public" %}</span>
+      <div class="text-2xl font-black font-mono text-neutral-900">{{ product.selling_price }} FCFA</div>
+      <p class="text-[11px] text-neutral-400">Par unité de conditionnement</p>
+    </div>
+
+    <div class="bg-white p-5 rounded-2xl border border-neutral-200/80 shadow-xs space-y-1">
+      <span class="text-[11px] font-bold text-neutral-400 uppercase tracking-wider">{% trans "Prix d'achat standard" %}</span>
+      <div class="text-2xl font-black font-mono text-neutral-700">{{ product.purchase_price }} FCFA</div>
+      <p class="text-[11px] text-neutral-400">Dernier coût d'acquisition</p>
+    </div>
+  </div>
+
+  <!-- Lots Actifs (FEFO) -->
+  <div class="bg-white p-6 rounded-2xl border border-neutral-200/80 shadow-xs space-y-4">
+    <div class="flex items-center justify-between border-b border-neutral-100 pb-3">
+      <h2 class="text-sm font-bold text-neutral-900 flex items-center gap-2">
+        {% include "components/atoms/icon.html" with name="document-text" size="w-4 h-4 text-[#0d9488]" %}
+        <span>{% trans "Lots en stock & Dates de péremption (Ordonnancement FEFO)" %}</span>
+      </h2>
+    </div>
+
+    {% if batches %}
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse text-xs">
+          <thead>
+            <tr class="bg-neutral-50/80 border-b border-neutral-200 text-[11px] font-bold text-neutral-500 uppercase tracking-wider">
+              <th class="py-2.5 px-4">{% trans "Numéro de Lot" %}</th>
+              <th class="py-2.5 px-4">{% trans "Date d'expiration" %}</th>
+              <th class="py-2.5 px-4">{% trans "Fournisseur" %}</th>
+              <th class="py-2.5 px-4 text-right">{% trans "Qté restante" %}</th>
+              <th class="py-2.5 px-4 text-right">{% trans "Statut" %}</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-neutral-100">
+            {% for b in batches %}
+              <tr class="hover:bg-neutral-50/50">
+                <td class="py-3 px-4 font-mono font-bold text-neutral-900">{{ b.batch_number }}</td>
+                <td class="py-3 px-4 font-mono font-semibold {% if b.is_expired %}text-rose-600{% else %}text-neutral-800{% endif %}">
+                  {{ b.expiry_date|date:"d/m/Y" }}
+                  {% if b.is_expired %}
+                    <span class="ml-1 text-[10px] text-rose-600 font-bold bg-rose-50 px-1.5 py-0.5 rounded">{% trans "EXPIRÉ" %}</span>
+                  {% else %}
+                    <span class="ml-1 text-[10px] text-neutral-400 font-normal">({{ b.days_until_expiry }}j restants)</span>
+                  {% endif %}
+                </td>
+                <td class="py-3 px-4 text-neutral-600">{{ b.supplier.name|default:"-" }}</td>
+                <td class="py-3 px-4 text-right font-mono font-bold text-neutral-900">{{ b.current_quantity }}</td>
+                <td class="py-3 px-4 text-right">
+                  <span class="font-mono text-[10px] font-bold px-2 py-0.5 rounded-md {% if b.status == 'ACTIVE' %}bg-emerald-50 text-emerald-700{% elif b.status == 'DEPLETED' %}bg-neutral-100 text-neutral-500{% else %}bg-rose-50 text-rose-700{% endif %}">
+                    {{ b.get_status_display }}
+                  </span>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="text-xs text-neutral-400 text-center py-4">{% trans "Aucun lot enregistré pour ce médicament." %}</p>
+    {% endif %}
+  </div>
+
+  <!-- Historique des Mouvements Récents -->
+  <div class="bg-white p-6 rounded-2xl border border-neutral-200/80 shadow-xs space-y-4">
+    <div class="flex items-center justify-between border-b border-neutral-100 pb-3">
+      <h2 class="text-sm font-bold text-neutral-900 flex items-center gap-2">
+        {% include "components/atoms/icon.html" with name="clock" size="w-4 h-4 text-[#0d9488]" %}
+        <span>{% trans "Journal d'audit des mouvements de stock" %}</span>
+      </h2>
+    </div>
+
+    {% if recent_movements %}
+      <div class="divide-y divide-neutral-100 text-xs">
+        {% for m in recent_movements %}
+          <div class="py-3 flex items-center justify-between gap-4">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="font-bold text-neutral-900">{{ m.get_movement_type_display }}</span>
+                <span class="font-mono text-neutral-400 text-[11px]">({{ m.reference_number }})</span>
+              </div>
+              <p class="text-[11px] text-neutral-500 mt-0.5">
+                {{ m.movement_date|date:"d/m/Y H:i" }} par {{ m.user.full_name }}
+                {% if m.reason %} • <em>{{ m.reason }}</em>{% endif %}
+              </p>
+            </div>
+            <div class="text-right shrink-0">
+              <span class="font-mono font-extrabold text-xs {% if m.quantity > 0 %}text-emerald-600{% else %}text-rose-600{% endif %}">
+                {% if m.quantity > 0 %}+{% endif %}{{ m.quantity }}
+              </span>
+              <span class="text-[10px] text-neutral-400 block">Stock : {{ m.previous_stock }} &rarr; {{ m.new_stock }}</span>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="text-xs text-neutral-400 text-center py-4">{% trans "Aucun mouvement tracé." %}</p>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

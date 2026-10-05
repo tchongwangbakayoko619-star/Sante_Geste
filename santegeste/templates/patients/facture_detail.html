@@ -1,170 +1,331 @@
 {% extends "layouts/dashboard.html" %}
-{% load i18n static %}
+{% load i18n static l10n %}
 
 {% block title %}{% trans "Facture" %} {{ facture.invoice_number }} - SantéGeste{% endblock %}
 
 {% block content_inner %}
 <div class="max-w-4xl mx-auto space-y-6">
-  <!-- En-tête / Reçu de Caisse -->
-  <div class="bg-white p-6 sm:p-8 rounded-2xl border border-neutral-200/80 shadow-sm space-y-6">
+  <!-- En-tête / Détail de Facture -->
+  <div class="bg-white p-6 sm:p-8 rounded-2xl border border-neutral-200/80 shadow-xs space-y-6">
     <div class="flex flex-col sm:flex-row justify-between items-start border-b border-neutral-200 pb-6 gap-4">
       <div>
-        <h1 class="text-3xl font-extrabold text-neutral-900 font-title tracking-tight">
-          {% trans "FACTURE N°" %} {{ facture.invoice_number }}
-        </h1>
+        <div class="flex items-center gap-3">
+          <h1 class="text-2xl sm:text-3xl font-extrabold text-neutral-900 font-title tracking-tight">
+            {% trans "FACTURE N°" %} {{ facture.invoice_number }}
+          </h1>
+          <span class="inline-block px-3 py-1 rounded-full text-xs font-bold {% if facture.status == 'PAID' %}bg-emerald-100 text-emerald-800 border border-emerald-200{% elif facture.status == 'PARTIALLY_PAID' %}bg-amber-100 text-amber-800 border border-amber-200{% elif facture.status == 'CANCELLED' %}bg-rose-100 text-rose-800 border border-rose-200{% else %}bg-neutral-100 text-neutral-800 border border-neutral-200{% endif %}">
+            {{ facture.get_status_display }}
+          </span>
+        </div>
         <p class="text-xs text-neutral-400 mt-1">
           {% trans "Émise le" %} {{ facture.issued_at|date:"d/m/Y à H:i" }} par {{ facture.issued_by.full_name }}
         </p>
       </div>
-      <div class="text-right flex flex-col items-end gap-2">
-        <span class="inline-block px-3 py-1 rounded-full text-xs font-bold {% if facture.status == 'PAID' %}bg-emerald-100 text-emerald-800 border border-emerald-200{% elif facture.status == 'PARTIALLY_PAID' %}bg-amber-100 text-amber-800 border border-amber-200{% elif facture.status == 'CANCELLED' %}bg-rose-100 text-rose-800 border border-rose-200{% else %}bg-neutral-100 text-neutral-800 border border-neutral-200{% endif %}">
-          {{ facture.get_status_display }}
-        </span>
-        <div class="flex flex-wrap items-center justify-end gap-2">
-          {% if facture.status == 'UNPAID' and facture.paid_amount == 0 %}
+
+      <div class="flex flex-wrap items-center justify-end gap-2">
+        {% if facture.status == 'UNPAID' and facture.paid_amount == 0 %}
+          {% if user.is_proprietaire or user.is_superuser %}
             <button type="button" onclick="openEditFactureModal()" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-neutral-300 text-neutral-800 font-bold text-xs rounded-xl hover:bg-neutral-50 transition-colors shadow-2xs cursor-pointer">
               {% include "components/atoms/icon.html" with name="pencil" size="w-3.5 h-3.5 text-neutral-600" %}
-              {% trans "Modifier montant" %}
+              {% trans "Ajuster montant" %}
             </button>
-            <form method="post" action="{% url "patients:facture_cancel" facture.pk %}" class="inline" onsubmit="return confirm('{% trans "Êtes-vous sûr de vouloir annuler cette facture ? Les actes seront déverrouillés pour une nouvelle facturation." %}');">
-              {% csrf_token %}
-              <button type="submit" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 border border-rose-200 text-rose-700 font-bold text-xs rounded-xl hover:bg-rose-100 transition-colors shadow-2xs cursor-pointer">
-                {% include "components/atoms/icon.html" with name="x-mark" size="w-3.5 h-3.5" %}
-                {% trans "Annuler facture" %}
-              </button>
-            </form>
           {% endif %}
-          <a href="{% url "patients:facture_print" facture.pk %}" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#14967F] text-white font-bold text-xs rounded-xl hover:bg-[#0E6A5A] transition-colors shadow-xs">
-            {% include "components/atoms/icon.html" with name="printer" size="w-4 h-4" %}
-            {% trans "Imprimer Reçu / PDF" %}
-          </a>
-        </div>
+          <form method="post" action="{% url "patients:facture_cancel" facture.pk %}" class="inline" onsubmit="return confirm('{% trans "Êtes-vous sûr de vouloir annuler cette facture ? Les actes seront déverrouillés pour une nouvelle facturation." %}');">
+            {% csrf_token %}
+            <button type="submit" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 border border-rose-200 text-rose-700 font-bold text-xs rounded-xl hover:bg-rose-100 transition-colors shadow-2xs cursor-pointer">
+              {% include "components/atoms/icon.html" with name="x-mark" size="w-3.5 h-3.5" %}
+              {% trans "Annuler facture" %}
+            </button>
+          </form>
+        {% endif %}
+        <a href="{% url "patients:facture_print" facture.pk %}" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-neutral-100 text-neutral-800 font-bold text-xs rounded-xl hover:bg-neutral-200 transition-colors">
+          {% include "components/atoms/icon.html" with name="printer" size="w-4 h-4" %}
+          {% trans "Imprimer Facture" %}
+        </a>
       </div>
     </div>
 
     <!-- Client / Patient -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 bg-neutral-50 p-4 rounded-xl text-sm">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 bg-neutral-50 p-4 rounded-xl text-xs sm:text-sm">
       <div>
-        <span class="text-xs font-bold text-neutral-400 uppercase">{% trans "Patient / Bénéficiaire" %}</span>
-        <p class="font-bold text-neutral-900 mt-0.5">{{ facture.patient.full_name }}</p>
-        <p class="text-xs text-neutral-500 font-mono">N° {{ facture.patient.patient_number }}</p>
-        <p class="text-xs text-neutral-500">{{ facture.patient.phone_number }}</p>
+        <span class="text-[10px] font-bold text-neutral-400 uppercase tracking-wider block mb-0.5">{% trans "Patient / Bénéficiaire" %}</span>
+        <p class="font-bold text-neutral-900 text-sm">{{ facture.patient.full_name }}</p>
+        <p class="text-neutral-500 font-mono text-xs">Dossier N° {{ facture.patient.patient_number }}</p>
+        {% if facture.patient.phone_number %}
+          <p class="text-neutral-500 text-xs">{{ facture.patient.phone_number }}</p>
+        {% endif %}
       </div>
-      <div class="text-right sm:text-right">
-        <span class="text-xs font-bold text-neutral-400 uppercase">{% trans "Établissement" %}</span>
-        <p class="font-bold text-neutral-900 mt-0.5">Centre de Santé CS² Health</p>
-        <p class="text-xs text-neutral-500">SantéGeste Care Center</p>
+      <div class="text-left sm:text-right">
+        <span class="text-[10px] font-bold text-neutral-400 uppercase tracking-wider block mb-0.5">{% trans "Établissement & Émetteur" %}</span>
+        <p class="font-bold text-neutral-900 text-sm">Centre Médical CS² Health</p>
+        <p class="text-neutral-500 text-xs">Émetteur : {{ facture.issued_by.full_name }}</p>
       </div>
     </div>
 
-    <!-- Totaux Financiers -->
+    <!-- Détail des Prestations Facturées -->
+    <div class="space-y-3">
+      <h3 class="text-xs font-bold text-[#0d9488] uppercase tracking-wider border-b border-teal-100 pb-2">
+        {% trans "Prestations et Actes Médicaux Facturés" %}
+      </h3>
+      {% if prestations %}
+        <div class="border border-neutral-200/90 rounded-xl overflow-hidden">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="bg-neutral-50 text-[11px] font-bold text-neutral-600 uppercase border-b border-neutral-200">
+                <th class="py-2.5 px-3">{% trans "Code" %}</th>
+                <th class="py-2.5 px-3">{% trans "Acte / Prestation" %}</th>
+                <th class="py-2.5 px-3 text-center">{% trans "Qté" %}</th>
+                <th class="py-2.5 px-3 text-right">{% trans "Prix Unitaire" %}</th>
+                <th class="py-2.5 px-3 text-right">{% trans "Sous-total" %}</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-neutral-100">
+              {% for item in prestations %}
+                <tr class="hover:bg-neutral-50/50">
+                  <td class="py-2.5 px-3 font-mono text-neutral-500">{{ item.prestation.code }}</td>
+                  <td class="py-2.5 px-3 font-semibold text-neutral-900">
+                    {{ item.prestation.name }}
+                    {% if item.doctor %}
+                      <span class="block text-[11px] text-neutral-400 font-normal">Dr. {{ item.doctor.full_name }}</span>
+                    {% endif %}
+                  </td>
+                  <td class="py-2.5 px-3 text-center font-bold">x{{ item.quantity }}</td>
+                  <td class="py-2.5 px-3 text-right font-mono text-neutral-600">{{ item.unit_price }} FCFA</td>
+                  <td class="py-2.5 px-3 text-right font-mono font-bold text-neutral-900">{{ item.total_price }} FCFA</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p class="text-xs text-neutral-400 italic">{% trans "Aucun détail de prestation spécifié." %}</p>
+      {% endif %}
+    </div>
+
+    <!-- Récapitulatif Financier Synthétique -->
     <div class="grid grid-cols-3 gap-4 border-t border-b border-neutral-200 py-4 text-center">
       <div>
         <span class="text-xs text-neutral-500 block">{% trans "Montant Total" %}</span>
-        <span class="text-lg font-bold text-neutral-900">{{ facture.total_amount }} FCFA</span>
+        <span class="text-lg sm:text-xl font-bold text-neutral-900 font-mono">{{ facture.total_amount }} FCFA</span>
       </div>
       <div>
-        <span class="text-xs text-neutral-500 block">{% trans "Déjà Encaissé" %}</span>
-        <span class="text-lg font-bold text-emerald-600">{{ facture.paid_amount }} FCFA</span>
+        <span class="text-xs text-neutral-500 block">{% trans "Déjà Payé" %}</span>
+        <span class="text-lg sm:text-xl font-bold text-emerald-600 font-mono">{{ facture.paid_amount }} FCFA</span>
       </div>
       <div>
         <span class="text-xs text-neutral-500 block">{% trans "Reste à Payer" %}</span>
-        <span class="text-lg font-extrabold text-rose-600">{{ facture.remaining_amount }} FCFA</span>
+        <span class="text-lg sm:text-xl font-extrabold {% if facture.remaining_amount == 0 %}text-neutral-400{% else %}text-rose-600{% endif %} font-mono">
+          {{ facture.remaining_amount }} FCFA
+        </span>
       </div>
     </div>
 
-    <!-- Historique des Paiements -->
+    <!-- Historique des Règlements Perçus & Reçus -->
     <div class="space-y-3">
-      <h3 class="text-sm font-bold text-neutral-900 uppercase tracking-wider">{% trans "Règlements Perçus" %}</h3>
+      <div class="flex items-center justify-between border-b border-neutral-100 pb-2">
+        <h3 class="text-xs font-bold text-neutral-900 uppercase tracking-wider">{% trans "Historique des Règlements & Reçus" %}</h3>
+        <span class="text-xs text-neutral-400">{{ paiements|length }} {% trans "paiement(s)" %}</span>
+      </div>
       {% if paiements %}
-        <div class="divide-y divide-neutral-100 text-sm">
+        <div class="divide-y divide-neutral-100 text-xs">
           {% for p in paiements %}
-            <div class="py-2 flex justify-between items-center">
+            <div class="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-neutral-50/50 px-3 rounded-xl">
               <div>
-                <span class="font-bold text-neutral-800">{{ p.amount }} FCFA</span>
-                <span class="text-xs text-neutral-500 ml-2">({{ p.get_payment_method_display }})</span>
+                <div class="flex items-center gap-2">
+                  <span class="font-bold text-neutral-900 text-sm font-mono">{{ p.amount }} FCFA</span>
+                  <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-50 text-[#0d9488] border border-teal-200">
+                    {{ p.get_payment_method_display }}
+                  </span>
+                </div>
+                <div class="text-[11px] text-neutral-500 mt-1 flex items-center gap-2">
+                  <span>Reçu N° <strong class="font-mono text-neutral-700">{{ p.receipt_number|default:"-" }}</strong></span>
+                  <span>•</span>
+                  <span>{{ p.paid_at|date:"d/m/Y à H:i" }}</span>
+                  <span>•</span>
+                  <span>Caissier : {{ p.cashier.full_name }}</span>
+                </div>
+                {% if p.notes %}
+                  <p class="text-[11px] text-neutral-500 italic mt-0.5">Note : {{ p.notes }}</p>
+                {% endif %}
               </div>
-              <span class="text-xs text-neutral-400">{{ p.paid_at|date:"d/m/Y H:i" }} - Caissier: {{ p.cashier.full_name }}</span>
+              <div class="flex items-center gap-2 self-end sm:self-center">
+                <a href="{% url "patients:paiement_receipt" p.pk %}" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#0d9488] hover:bg-[#0f766e] text-white font-bold text-xs transition-colors shadow-2xs">
+                  {% include "components/atoms/icon.html" with name="printer" size="w-3.5 h-3.5" %}
+                  <span>{% trans "Voir le Reçu" %}</span>
+                </a>
+              </div>
             </div>
           {% endfor %}
         </div>
       {% else %}
-        <p class="text-xs text-neutral-500 italic">{% trans "Aucun règlement perçu pour le moment." %}</p>
+        <p class="text-xs text-neutral-500 italic bg-neutral-50 p-4 rounded-xl text-center">
+          {% trans "Aucun règlement perçu pour le moment. La facture est en attente d'encaissement." %}
+        </p>
       {% endif %}
     </div>
 
-    <!-- Formulaire de Règlement (si facture non entièrement payée) -->
-    {% if facture.remaining_amount > 0 %}
-      <form method="post" action="{% url "patients:paiement_create" facture.pk %}" class="bg-teal-50/50 p-4 rounded-xl border border-teal-200/60 space-y-3 pt-4">
-        {% csrf_token %}
-        <h4 class="text-sm font-bold text-teal-900">{% trans "Enregistrer un Nouveau Règlement à la Caisse" %}</h4>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {% include "components/molecules/form-field.html" with id="id_amount" name="amount" label="Montant perçu (FCFA) *" value=paiement_form.amount.value required=True %}
+    <!-- Action & Formulaire d'Encaissement Explicite par le Caissier -->
+    {% if facture.status != 'CANCELLED' and facture.remaining_amount > 0 %}
+      <div id="caisse-section" class="bg-gradient-to-br from-teal-50/70 via-emerald-50/40 to-white p-5 sm:p-6 rounded-2xl border-2 border-teal-500/30 space-y-4">
+        <div class="flex items-center justify-between border-b border-teal-200/60 pb-3">
+          <div class="flex items-center gap-2">
+            <span class="p-1.5 rounded-lg bg-[#0d9488] text-white">
+              {% include "components/atoms/icon.html" with name="credit-card" size="w-4 h-4" %}
+            </span>
+            <h4 class="text-sm font-bold text-teal-950 font-title">
+              {% if facture.status == 'PARTIALLY_PAID' %}
+                {% trans "Encaisser le Solde Restant" %}
+              {% else %}
+                {% trans "Encaisser un Paiement" %}
+              {% endif %}
+            </h4>
+          </div>
+          <span class="text-xs font-mono font-bold text-rose-700 bg-rose-50 px-2.5 py-1 rounded-lg border border-rose-200">
+            {% trans "Reste dû" %} : {{ facture.remaining_amount }} FCFA
+          </span>
+        </div>
+
+        <form method="post" action="{% url "patients:paiement_create" facture.pk %}" class="space-y-4">
+          {% csrf_token %}
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label for="id_amount" class="block text-xs font-bold text-neutral-700 mb-1">
+                {% trans "Montant Reçu (FCFA) *" %}
+              </label>
+              <input
+                type="number"
+                name="amount"
+                id="id_amount"
+                step="any"
+                min="0.01"
+                max="{{ facture.remaining_amount|unlocalize }}"
+                value="{{ facture.remaining_amount|unlocalize }}"
+                required
+                class="w-full px-4 py-2.5 rounded-xl border border-neutral-300 text-sm font-bold text-neutral-900 focus:outline-none focus:ring-2 focus:ring-[#0d9488]"
+              />
+              <p class="text-[11px] text-neutral-500 mt-1">
+                {% trans "Saisissez la somme effectivement remise par le patient." %}
+              </p>
+            </div>
+
+            <div>
+              <label for="id_payment_method" class="block text-xs font-bold text-neutral-700 mb-1">
+                {% trans "Mode de Paiement *" %}
+              </label>
+              <select
+                name="payment_method"
+                id="id_payment_method"
+                required
+                class="w-full px-4 py-2.5 rounded-xl border border-neutral-300 bg-white text-sm font-semibold text-neutral-900 focus:outline-none focus:ring-2 focus:ring-[#0d9488]"
+              >
+                <option value="ESPECES" selected>{% trans "Espèces" %}</option>
+                <option value="MOBILE_MONEY">{% trans "Mobile Money (Orange/MTN/Moov)" %}</option>
+                <option value="CARTE">{% trans "Carte Bancaire" %}</option>
+                <option value="VIREMENT">{% trans "Virement / Chèque" %}</option>
+              </select>
+            </div>
+          </div>
+
           <div>
-            <label class="block text-xs font-bold text-neutral-700 mb-1">{% trans "Mode de règlement *" %}</label>
-            {{ paiement_form.payment_method }}
+            <label for="id_notes" class="block text-xs font-bold text-neutral-700 mb-1">
+              {% trans "Notes de caisse / Référence de transaction (Optionnel)" %}
+            </label>
+            <input
+              type="text"
+              name="notes"
+              id="id_notes"
+              placeholder="{% trans "Ex: Réf transaction Orange Money CI2409..." %}"
+              class="w-full px-4 py-2 rounded-xl border border-neutral-300 text-xs focus:outline-none focus:ring-2 focus:ring-[#0d9488]"
+            />
+          </div>
+
+          <div class="pt-2">
+            <button
+              type="submit"
+              class="w-full py-3 bg-[#0d9488] hover:bg-[#0f766e] text-white font-bold text-sm rounded-xl transition-colors shadow-sm flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+              <span>{% trans "Confirmer le paiement" %}</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    {% elif facture.status == 'PAID' %}
+      <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <span class="p-2 bg-emerald-100 text-emerald-700 rounded-xl">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+          </span>
+          <div>
+            <h4 class="text-sm font-bold text-emerald-900">{% trans "Facture Intégralement Payée" %}</h4>
+            <p class="text-xs text-emerald-700">{% trans "Tous les règlements ont été validés et enregistrés. Le solde est soldé." %}</p>
           </div>
         </div>
-        <button type="submit" class="w-full py-3 bg-[#14967F] text-white font-bold text-sm rounded-xl hover:bg-[#0E6A5A] transition-colors shadow-sm">
-          {% trans "Valider l'Encaissement & Imprimer le Reçu" %}
-        </button>
-      </form>
-    {% endif %}
-  </div>
-
-  <!-- MODAL DE MODIFICATION DU MONTANT DE LA FACTURE -->
-  <div id="edit-facture-modal" class="fixed inset-0 z-50 hidden bg-neutral-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl border border-neutral-200/80 shadow-2xl max-w-md w-full p-6 space-y-5">
-      <div class="flex items-center justify-between border-b border-neutral-100 pb-3">
-        <h3 class="text-sm font-bold text-neutral-900 font-title flex items-center gap-2">
-          {% include "components/atoms/icon.html" with name="pencil" size="w-4 h-4 text-[#14967F]" %}
-          <span>{% trans "Ajuster le montant de la facture" %}</span>
-        </h3>
-        <button type="button" onclick="closeEditFactureModal()" class="text-neutral-400 hover:text-neutral-700 p-1.5 rounded-lg hover:bg-neutral-100 transition cursor-pointer">
-          {% include "components/atoms/icon.html" with name="x-mark" size="w-4 h-4" %}
-        </button>
+        {% if paiements %}
+          <a href="{% url "patients:paiement_receipt" paiements.0.pk %}" target="_blank" class="px-4 py-2 bg-[#0d9488] text-white text-xs font-bold rounded-xl hover:bg-[#0f766e] transition-colors">
+            {% trans "Voir le Reçu de Caisse" %}
+          </a>
+        {% endif %}
       </div>
+    {% endif %}
 
-      <form method="post" action="{% url "patients:facture_update" facture.pk %}" class="space-y-4">
-        {% csrf_token %}
-        <div>
-          <label for="id_total_amount" class="block text-xs font-bold text-neutral-700 mb-1.5">
-            {% trans "Nouveau Montant Total (FCFA) *" %}
-          </label>
-          <input
-            type="number"
-            step="100"
-            min="0"
-            name="total_amount"
-            id="id_total_amount"
-            value="{{ facture.total_amount }}"
-            required
-            class="w-full px-4 py-2.5 rounded-xl border border-neutral-300 text-sm font-bold text-neutral-900 focus:outline-none focus:ring-2 focus:ring-[#14967F]"
-          />
-          <p class="text-[11px] text-neutral-400 mt-1">
-            {% trans "Ajustez le tarif global ou appliquez une remise convenue avant encaissement." %}
-          </p>
-        </div>
-
-        <div class="flex items-center justify-end gap-2 pt-2 border-t border-neutral-100">
-          <button type="button" onclick="closeEditFactureModal()" class="px-4 py-2 rounded-xl border border-neutral-300 text-neutral-700 font-semibold text-xs hover:bg-neutral-50 cursor-pointer">
-            {% trans "Annuler" %}
-          </button>
-          <button type="submit" class="px-5 py-2 bg-[#14967F] hover:bg-[#0E6A5A] text-white font-bold text-xs rounded-xl shadow-xs cursor-pointer">
-            {% trans "Valider l'ajustement" %}
-          </button>
-        </div>
-      </form>
-    </div>
   </div>
 
-  <script>
-    function openEditFactureModal() {
-      document.getElementById('edit-facture-modal').classList.remove('hidden');
-    }
-    function closeEditFactureModal() {
-      document.getElementById('edit-facture-modal').classList.add('hidden');
-    }
-  </script>
+  <!-- MODAL DE MODIFICATION DU MONTANT DE LA FACTURE (RÉSERVÉ AU PROPRIÉTAIRE) -->
+  {% if user.is_proprietaire or user.is_superuser %}
+    <div id="edit-facture-modal" class="fixed inset-0 z-50 hidden bg-neutral-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+      <div class="bg-white rounded-3xl border border-neutral-200/80 shadow-2xl max-w-md w-full p-6 space-y-5">
+        <div class="flex items-center justify-between border-b border-neutral-100 pb-3">
+          <h3 class="text-sm font-bold text-neutral-900 font-title flex items-center gap-2">
+            {% include "components/atoms/icon.html" with name="pencil" size="w-4 h-4 text-[#0d9488]" %}
+            <span>{% trans "Ajuster le montant de la facture" %}</span>
+          </h3>
+          <button type="button" onclick="closeEditFactureModal()" class="text-neutral-400 hover:text-neutral-700 p-1.5 rounded-lg hover:bg-neutral-100 transition cursor-pointer">
+            {% include "components/atoms/icon.html" with name="x-mark" size="w-4 h-4" %}
+          </button>
+        </div>
+
+        <form method="post" action="{% url "patients:facture_update" facture.pk %}" class="space-y-4">
+          {% csrf_token %}
+          <div>
+            <label for="id_total_amount" class="block text-xs font-bold text-neutral-700 mb-1.5">
+              {% trans "Nouveau Montant Total (FCFA) *" %}
+            </label>
+            <input
+              type="number"
+              step="any"
+              min="0"
+              name="total_amount"
+              id="id_total_amount"
+              value="{{ facture.total_amount|unlocalize }}"
+              required
+              class="w-full px-4 py-2.5 rounded-xl border border-neutral-300 text-sm font-bold text-neutral-900 focus:outline-none focus:ring-2 focus:ring-[#0d9488]"
+            />
+            <p class="text-[11px] text-neutral-400 mt-1">
+              {% trans "Autorisation d'ajustement réservée à l'administration." %}
+            </p>
+          </div>
+
+          <div class="flex items-center justify-end gap-2 pt-2 border-t border-neutral-100">
+            <button type="button" onclick="closeEditFactureModal()" class="px-4 py-2 rounded-xl border border-neutral-300 text-neutral-700 font-semibold text-xs hover:bg-neutral-50 cursor-pointer">
+              {% trans "Annuler" %}
+            </button>
+            <button type="submit" class="px-5 py-2 bg-[#0d9488] hover:bg-[#0f766e] text-white font-bold text-xs rounded-xl shadow-xs cursor-pointer">
+              {% trans "Valider l'ajustement" %}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script>
+      function openEditFactureModal() {
+        document.getElementById('edit-facture-modal').classList.remove('hidden');
+      }
+      function closeEditFactureModal() {
+        document.getElementById('edit-facture-modal').classList.add('hidden');
+      }
+    </script>
+  {% endif %}
 </div>
 {% endblock %}

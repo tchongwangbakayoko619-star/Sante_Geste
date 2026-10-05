@@ -1,0 +1,28 @@
+{% extends "layouts/dashboard.html" %}
+{% load i18n static %}
+
+{% block title %}{% trans "Nouvelle Catégorie" %} - SantéGeste{% endblock %}
+
+{% block content_inner %}
+<div class="max-w-xl mx-auto space-y-6">
+  <div class="bg-white p-6 rounded-2xl border border-neutral-200/80 shadow-xs flex items-center justify-between">
+    <h1 class="text-xl font-bold text-neutral-900 font-title tracking-tight">{% trans "Créer une Catégorie" %}</h1>
+    <a href="{% url "pharmacy:category_list" %}" class="px-3 py-2 rounded-xl bg-neutral-100 text-neutral-700 text-xs font-semibold">{% trans "Annuler" %}</a>
+  </div>
+
+  <form method="post" class="bg-white p-6 sm:p-8 rounded-2xl border border-neutral-200/80 shadow-xs space-y-4">
+    {% csrf_token %}
+    <div>
+      <label class="block text-xs font-bold text-neutral-800 uppercase tracking-wider mb-1">{% trans "Nom de la catégorie" %} *</label>
+      <input type="text" name="name" required class="w-full px-4 py-2.5 border border-neutral-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-[#0d9488] outline-none">
+    </div>
+    <div>
+      <label class="block text-xs font-bold text-neutral-800 uppercase tracking-wider mb-1">{% trans "Description" %}</label>
+      <textarea name="description" rows="3" class="w-full px-4 py-2.5 border border-neutral-200 rounded-xl text-xs focus:ring-2 focus:ring-[#0d9488] outline-none"></textarea>
+    </div>
+    <button type="submit" class="w-full py-2.5 bg-[#0d9488] hover:bg-[#0f766e] text-white font-bold text-xs rounded-xl shadow-xs transition cursor-pointer">
+      {% trans "Enregistrer la catégorie" %}
+    </button>
+  </form>
+</div>
+{% endblock %}

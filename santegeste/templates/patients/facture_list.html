@@ -1,27 +1,94 @@
 {% extends "layouts/dashboard.html" %}
 {% load i18n static %}
 
-{% block title %}{% trans "Historique des Factures de Caisse" %} - SantéGeste{% endblock %}
+{% block title %}{% trans "Module Caisse - Factures et Règlements" %} - SantéGeste{% endblock %}
 
 {% block content_inner %}
 <div class="space-y-6">
   <!-- En-tête -->
   <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-neutral-200/80 shadow-xs">
     <div>
-      <h1 class="text-xl font-bold text-neutral-900 font-title tracking-tight flex items-center gap-3">
-        <span class="p-2 rounded-xl bg-teal-50 text-[#0d9488]">
-          {% include "components/atoms/icon.html" with name="credit-card" size="w-5 h-5" %}
+      <h1 class="text-xl sm:text-2xl font-bold text-neutral-900 font-title tracking-tight flex items-center gap-3">
+        <span class="p-2.5 rounded-xl bg-teal-50 text-[#0d9488]">
+          {% include "components/atoms/icon.html" with name="credit-card" size="w-6 h-6" %}
         </span>
-        {% trans "Historique des Factures" %}
+        {% trans "Caisse & Facturation Médicale" %}
       </h1>
       <p class="text-xs text-neutral-500 mt-1">
-        {% trans "Consultez l'ensemble des factures émises et le suivi des règlements de caisse." %}
+        {% trans "Gestion des encaissements, suivi des factures et délivrance des reçus de caisse." %}
       </p>
     </div>
-    <a href="{% url "patients:caisse_pending_list" %}" class="px-4 py-2 rounded-xl bg-[#0d9488] hover:bg-[#0f766e] text-white font-bold text-xs transition-colors shadow-xs inline-flex items-center gap-2">
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-      <span>{% trans "Actes à encaisser" %}</span>
+    <div class="flex items-center gap-2">
+      <a href="{% url "patients:caisse_pending_list" %}" class="px-4 py-2.5 rounded-xl bg-[#0d9488] hover:bg-[#0f766e] text-white font-bold text-xs transition-colors shadow-xs inline-flex items-center gap-2 cursor-pointer">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        <span>{% trans "Actes à facturer & encaisser" %}</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Filtres par statut (Onglets / Badges) -->
+  <div class="flex flex-wrap items-center gap-2">
+    <a href="{% url "patients:facture_list" %}{% if query %}?q={{ query }}{% endif %}" class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all {% if not selected_status %}bg-[#0d9488] text-white shadow-xs{% else %}bg-white border border-neutral-200 text-neutral-600 hover:bg-neutral-50{% endif %}">
+      {% trans "Toutes" %} <span class="ml-1 opacity-80">({{ count_total }})</span>
     </a>
+    <a href="{% url "patients:facture_list" %}?status=UNPAID{% if query %}&q={{ query }}{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}" class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all {% if selected_status == 'UNPAID' %}bg-rose-600 text-white shadow-xs{% else %}bg-white border border-neutral-200 text-rose-700 hover:bg-rose-50/50{% endif %}">
+      <span class="inline-block w-2 h-2 rounded-full bg-rose-500 mr-1.5 {% if selected_status == 'UNPAID' %}bg-white{% endif %}"></span>
+      {% trans "Non payées" %} <span class="ml-1 opacity-80">({{ count_unpaid }})</span>
+    </a>
+    <a href="{% url "patients:facture_list" %}?status=PARTIALLY_PAID{% if query %}&q={{ query }}{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}" class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all {% if selected_status == 'PARTIALLY_PAID' %}bg-amber-600 text-white shadow-xs{% else %}bg-white border border-neutral-200 text-amber-700 hover:bg-amber-50/50{% endif %}">
+      <span class="inline-block w-2 h-2 rounded-full bg-amber-500 mr-1.5 {% if selected_status == 'PARTIALLY_PAID' %}bg-white{% endif %}"></span>
+      {% trans "Partiellement payées" %} <span class="ml-1 opacity-80">({{ count_partially_paid }})</span>
+    </a>
+    <a href="{% url "patients:facture_list" %}?status=PAID{% if query %}&q={{ query }}{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}" class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all {% if selected_status == 'PAID' %}bg-emerald-600 text-white shadow-xs{% else %}bg-white border border-neutral-200 text-emerald-700 hover:bg-emerald-50/50{% endif %}">
+      <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 mr-1.5 {% if selected_status == 'PAID' %}bg-white{% endif %}"></span>
+      {% trans "Payées" %} <span class="ml-1 opacity-80">({{ count_paid }})</span>
+    </a>
+    <a href="{% url "patients:facture_list" %}?status=CANCELLED{% if query %}&q={{ query }}{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}" class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all {% if selected_status == 'CANCELLED' %}bg-neutral-700 text-white shadow-xs{% else %}bg-white border border-neutral-200 text-neutral-500 hover:bg-neutral-50{% endif %}">
+      {% trans "Annulées" %} <span class="ml-1 opacity-80">({{ count_cancelled }})</span>
+    </a>
+  </div>
+
+  <!-- Barre de Recherche et Filtre par Date -->
+  <div class="bg-white p-4 rounded-2xl border border-neutral-200/80 shadow-xs">
+    <form method="get" action="{% url "patients:facture_list" %}" class="flex flex-col sm:flex-row items-center gap-3">
+      {% if selected_status %}
+        <input type="hidden" name="status" value="{{ selected_status }}">
+      {% endif %}
+      <div class="relative flex-1 w-full">
+        <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-neutral-400">
+          {% include "components/atoms/icon.html" with name="magnifying-glass" size="w-4 h-4" %}
+        </div>
+        <input
+          type="text"
+          name="q"
+          value="{{ query }}"
+          placeholder="{% trans "Rechercher par patient (nom, dossier) ou N° de facture..." %}"
+          class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-neutral-200 text-xs text-neutral-800 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#0d9488]"
+        />
+      </div>
+
+      <div class="flex items-center gap-2 w-full sm:w-auto">
+        <label for="id_date" class="text-xs font-semibold text-neutral-500 whitespace-nowrap">{% trans "Date" %} :</label>
+        <input
+          type="date"
+          id="id_date"
+          name="date"
+          value="{{ date_filter }}"
+          class="px-3 py-2 rounded-xl border border-neutral-200 text-xs text-neutral-800 focus:outline-none focus:ring-2 focus:ring-[#0d9488]"
+        />
+      </div>
+
+      <div class="flex items-center gap-2 w-full sm:w-auto">
+        <button type="submit" class="w-full sm:w-auto px-4 py-2.5 bg-[#0d9488] hover:bg-[#0f766e] text-white text-xs font-bold rounded-xl transition-colors shadow-2xs cursor-pointer">
+          {% trans "Filtrer" %}
+        </button>
+        {% if query or date_filter or selected_status %}
+          <a href="{% url "patients:facture_list" %}" class="p-2.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-600 rounded-xl transition-colors" title="{% trans "Réinitialiser les filtres" %}">
+            {% include "components/atoms/icon.html" with name="x-mark" size="w-4 h-4" %}
+          </a>
+        {% endif %}
+      </div>
+    </form>
   </div>
 
   <!-- Tableau des Factures -->
@@ -31,30 +98,41 @@
         <table class="w-full text-left border-collapse text-xs">
           <thead>
             <tr class="bg-neutral-50/80 border-b border-neutral-200 text-[11px] font-bold text-neutral-500 uppercase tracking-wider">
-              <th class="py-3 px-5">{% trans "N° Facture" %}</th>
-              <th class="py-3 px-5">{% trans "Date Émission" %}</th>
-              <th class="py-3 px-5">{% trans "Patient" %}</th>
-              <th class="py-3 px-5">{% trans "Montant Total" %}</th>
-              <th class="py-3 px-5">{% trans "Statut" %}</th>
-              <th class="py-3 px-5 text-right">{% trans "Action" %}</th>
+              <th class="py-3 px-4">{% trans "N° Facture" %}</th>
+              <th class="py-3 px-4">{% trans "Date Émission" %}</th>
+              <th class="py-3 px-4">{% trans "Patient" %}</th>
+              <th class="py-3 px-4 text-right">{% trans "Total" %}</th>
+              <th class="py-3 px-4 text-right">{% trans "Payé" %}</th>
+              <th class="py-3 px-4 text-right">{% trans "Reste à Payer" %}</th>
+              <th class="py-3 px-4 text-center">{% trans "Statut" %}</th>
+              <th class="py-3 px-4 text-right">{% trans "Actions Caisse" %}</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-neutral-100">
             {% for f in factures %}
               <tr class="hover:bg-neutral-50/50 transition-colors">
-                <td class="py-3.5 px-5 font-mono font-bold text-neutral-900">
-                  {{ f.invoice_number }}
+                <td class="py-3.5 px-4 font-mono font-bold text-neutral-900 whitespace-nowrap">
+                  <a href="{% url "patients:facture_detail" f.pk %}" class="hover:text-[#0d9488] underline decoration-neutral-300">
+                    {{ f.invoice_number }}
+                  </a>
                 </td>
-                <td class="py-3.5 px-5 text-neutral-600 font-mono">
+                <td class="py-3.5 px-4 text-neutral-600 font-mono whitespace-nowrap">
                   {{ f.issued_at|date:"d/m/Y - H:i" }}
                 </td>
-                <td class="py-3.5 px-5 font-bold text-neutral-900">
-                  {{ f.patient.full_name }}
+                <td class="py-3.5 px-4 font-bold text-neutral-900">
+                  <div>{{ f.patient.full_name }}</div>
+                  <span class="text-[10px] text-neutral-400 font-mono font-normal">N° {{ f.patient.patient_number }}</span>
                 </td>
-                <td class="py-3.5 px-5 font-bold text-neutral-900 font-mono">
+                <td class="py-3.5 px-4 text-right font-bold text-neutral-900 font-mono whitespace-nowrap">
                   {{ f.total_amount }} FCFA
                 </td>
-                <td class="py-3.5 px-5">
+                <td class="py-3.5 px-4 text-right font-semibold text-emerald-600 font-mono whitespace-nowrap">
+                  {{ f.paid_amount }} FCFA
+                </td>
+                <td class="py-3.5 px-4 text-right font-bold font-mono whitespace-nowrap {% if f.remaining_amount == 0 %}text-neutral-400{% else %}text-rose-600{% endif %}">
+                  {{ f.remaining_amount }} FCFA
+                </td>
+                <td class="py-3.5 px-4 text-center whitespace-nowrap">
                   {% if f.status == 'PAID' %}
                     <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                       <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
@@ -65,6 +143,11 @@
                       <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
                       {{ f.get_status_display }}
                     </span>
+                  {% elif f.status == 'CANCELLED' %}
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-[11px] font-bold bg-neutral-100 text-neutral-600 border border-neutral-300">
+                      <span class="w-1.5 h-1.5 rounded-full bg-neutral-400"></span>
+                      {{ f.get_status_display }}
+                    </span>
                   {% else %}
                     <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
                       <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
@@ -72,11 +155,30 @@
                     </span>
                   {% endif %}
                 </td>
-                <td class="py-3.5 px-5 text-right whitespace-nowrap">
-                  <div class="flex items-center justify-end gap-2">
-                    <a href="{% url "patients:facture_detail" f.pk %}" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-teal-50 text-[#0d9488] font-bold text-xs hover:bg-teal-100 transition-colors">
-                      <span>{% if f.status == 'UNPAID' and f.paid_amount == 0 %}{% trans "Gérer / Modifier" %}{% else %}{% trans "Voir" %}{% endif %}</span>
-                      &rarr;
+                <td class="py-3.5 px-4 text-right whitespace-nowrap">
+                  <div class="flex items-center justify-end gap-1.5">
+                    {% if f.status == 'UNPAID' %}
+                      <a href="{% url "patients:facture_detail" f.pk %}#caisse-section" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#0d9488] hover:bg-[#0f766e] text-white font-bold text-xs transition-colors shadow-2xs">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                        <span>{% trans "Encaisser" %}</span>
+                      </a>
+                    {% elif f.status == 'PARTIALLY_PAID' %}
+                      <a href="{% url "patients:facture_detail" f.pk %}#caisse-section" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs transition-colors shadow-2xs">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                        <span>{% trans "Encaisser le solde" %}</span>
+                      </a>
+                    {% elif f.status == 'PAID' %}
+                      {% with first_p=f.paiements.first %}
+                        {% if first_p %}
+                          <a href="{% url "patients:paiement_receipt" first_p.pk %}" target="_blank" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-bold text-xs transition-colors border border-emerald-200">
+                            {% include "components/atoms/icon.html" with name="printer" size="w-3.5 h-3.5" %}
+                            <span>{% trans "Voir le reçu" %}</span>
+                          </a>
+                        {% endif %}
+                      {% endwith %}
+                    {% endif %}
+                    <a href="{% url "patients:facture_detail" f.pk %}" class="inline-flex items-center px-2.5 py-1.5 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-700 font-semibold text-xs transition-colors" title="{% trans "Consulter les détails" %}">
+                      {% trans "Détails" %} &rarr;
                     </a>
                   </div>
                 </td>
@@ -85,9 +187,29 @@
           </tbody>
         </table>
       </div>
+
+      <!-- Pagination -->
+      {% if is_paginated %}
+        <div class="px-5 py-3 bg-neutral-50/50 border-t border-neutral-200 flex items-center justify-between text-xs text-neutral-500">
+          <span>{% trans "Page" %} {{ page_obj.number }} {% trans "sur" %} {{ page_obj.paginator.num_pages }}</span>
+          <div class="flex items-center gap-1">
+            {% if page_obj.has_previous %}
+              <a href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}{% if selected_status %}&status={{ selected_status }}{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}" class="px-3 py-1 bg-white border border-neutral-200 rounded-lg hover:bg-neutral-50">&larr; {% trans "Précédent" %}</a>
+            {% endif %}
+            {% if page_obj.has_next %}
+              <a href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}{% if selected_status %}&status={{ selected_status }}{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}" class="px-3 py-1 bg-white border border-neutral-200 rounded-lg hover:bg-neutral-50">{% trans "Suivant" %} &rarr;</a>
+            {% endif %}
+          </div>
+        </div>
+      {% endif %}
+
     {% else %}
-      <div class="py-12 text-center text-neutral-400 text-xs">
-        <p class="text-sm font-semibold text-neutral-600">{% trans "Aucune facture enregistrée." %}</p>
+      <div class="py-16 text-center text-neutral-400 text-xs">
+        <div class="w-12 h-12 mx-auto mb-3 rounded-2xl bg-neutral-100 flex items-center justify-center text-neutral-400">
+          {% include "components/atoms/icon.html" with name="credit-card" size="w-6 h-6" %}
+        </div>
+        <p class="text-sm font-semibold text-neutral-700">{% trans "Aucune facture trouvée." %}</p>
+        <p class="text-neutral-400 mt-1">{% trans "Aucune facture ne correspond aux critères sélectionnés." %}</p>
       </div>
     {% endif %}
   </div>

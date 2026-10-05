@@ -113,6 +113,7 @@ LOCAL_APPS = [
     "apps.users",
     "apps.patients",
     "apps.dashboard",
+    "apps.pharmacy",
     # Your stuff: custom apps go here
 ]
 

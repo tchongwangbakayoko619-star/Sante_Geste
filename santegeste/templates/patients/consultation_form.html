@@ -21,35 +21,43 @@
             {% if is_update %}{% trans "Mode modification" %}{% else %}{% trans "En cours" %}{% endif %}
           </span>
         </div>
-        <p class="text-xs text-neutral-600 mt-1 flex flex-wrap items-center gap-2">
-          <span>{% trans "Patient" %} : <strong class="text-neutral-900">{{ patient.full_name }}</strong></span>
-          <span class="text-neutral-300">•</span>
-          <span class="font-mono text-neutral-500">{{ patient.patient_number }}</span>
-          {% if patient.age %}
+        {% if patient %}
+          <p class="text-xs text-neutral-600 mt-1 flex flex-wrap items-center gap-2">
+            <span>{% trans "Patient" %} : <strong class="text-neutral-900">{{ patient.full_name }}</strong></span>
             <span class="text-neutral-300">•</span>
-            <span>{{ patient.age }} ans</span>
-          {% endif %}
-          {% if patient.blood_group and patient.blood_group != "UNKNOWN" %}
-            <span class="text-neutral-300">•</span>
-            <span class="font-bold text-rose-600">{{ patient.blood_group }}</span>
-          {% endif %}
-        </p>
+            <span class="font-mono text-neutral-500">{{ patient.patient_number }}</span>
+            {% if patient.age %}
+              <span class="text-neutral-300">•</span>
+              <span>{{ patient.age }} ans</span>
+            {% endif %}
+            {% if patient.blood_group and patient.blood_group != "UNKNOWN" %}
+              <span class="text-neutral-300">•</span>
+              <span class="font-bold text-rose-600">{{ patient.blood_group }}</span>
+            {% endif %}
+          </p>
+        {% else %}
+          <p class="text-xs text-neutral-500 mt-1">
+            {% trans "Sélectionnez le patient à ausculter pour démarrer l'enregistrement." %}
+          </p>
+        {% endif %}
       </div>
     </div>
 
     <div class="flex items-center gap-2 shrink-0">
-      <a href="{% url "patients:patient_detail" patient.pk %}" target="_blank" class="px-3.5 py-2 rounded-xl bg-white border border-neutral-200 text-neutral-700 font-semibold text-xs hover:bg-neutral-50 transition-colors inline-flex items-center gap-1.5 shadow-2xs">
-        {% include "components/atoms/icon.html" with name="user" size="w-3.5 h-3.5 text-neutral-500" %}
-        <span>{% trans "Dossier 360°" %}</span>
-      </a>
-      <a href="{% url "patients:my_appointments" %}" class="px-3.5 py-2 rounded-xl bg-neutral-100 text-neutral-600 font-semibold text-xs hover:bg-neutral-200 transition-colors">
+      {% if patient %}
+        <a href="{% url "patients:patient_detail" patient.pk %}" target="_blank" class="px-3.5 py-2 rounded-xl bg-white border border-neutral-200 text-neutral-700 font-semibold text-xs hover:bg-neutral-50 transition-colors inline-flex items-center gap-1.5 shadow-2xs">
+          {% include "components/atoms/icon.html" with name="user" size="w-3.5 h-3.5 text-neutral-500" %}
+          <span>{% trans "Dossier 360°" %}</span>
+        </a>
+      {% endif %}
+      <a href="{% url "patients:consultation_list" %}" class="px-3.5 py-2 rounded-xl bg-neutral-100 text-neutral-600 font-semibold text-xs hover:bg-neutral-200 transition-colors">
         {% trans "Quitter" %}
       </a>
     </div>
   </div>
 
   <!-- Alerte allergies / vigilances cliniques -->
-  {% if patient.has_critical_alerts %}
+  {% if patient and patient.has_critical_alerts %}
     <div class="bg-rose-50 border border-rose-200 text-rose-900 p-4 rounded-2xl flex items-start gap-3 shadow-2xs">
       <svg class="w-5 h-5 text-rose-600 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
         <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
@@ -91,10 +99,12 @@
   </div>
 
   <!-- Formulaire Général de Consultation -->
-  <form method="post" id="consultation-form" class="space-y-6">
+  <form method="post" id="consultation-form" novalidate class="space-y-6">
     {% csrf_token %}
     {% if appointment %}<input type="hidden" name="appointment" value="{{ appointment.pk }}">{% endif %}
-    {% if patient %}<input type="hidden" name="patient" value="{{ patient.pk }}">{% endif %}
+    {% if patient %}
+      <input type="hidden" name="patient" id="id_patient_hidden" value="{{ patient.pk }}">
+    {% endif %}
 
     <!-- CONTENU ÉTAPE 1 : Motif & Symptômes -->
     <div id="step-pane-1" class="step-pane bg-white p-6 sm:p-8 rounded-2xl border border-neutral-200/80 shadow-xs space-y-6">
@@ -106,6 +116,25 @@
           {% trans "Consignez les plaintes du patient et les signes initiaux d'observation" %}
         </p>
       </div>
+
+      {% if not patient %}
+        <div class="p-4 bg-teal-50/70 border border-teal-200 rounded-xl space-y-2">
+          <label for="id_patient_select" class="block text-xs font-bold text-neutral-800 uppercase tracking-wider">
+            {% trans "Sélectionner le patient" %} <span class="text-rose-500">*</span>
+          </label>
+          <select
+            id="id_patient_select"
+            name="patient"
+            required
+            class="w-full px-4 py-2.5 border border-teal-300 rounded-xl text-sm font-semibold text-neutral-900 bg-white focus:ring-2 focus:ring-[#0d9488] focus:border-transparent outline-none"
+          >
+            <option value="">-- {% trans "Choisir un patient..." %} --</option>
+            {% for p in patients_list %}
+              <option value="{{ p.pk }}">{{ p.full_name }} ({{ p.patient_number }})</option>
+            {% endfor %}
+          </select>
+        </div>
+      {% endif %}
 
       <div class="space-y-4">
         <div>
@@ -145,13 +174,25 @@
 
       <!-- Navigation Étape 1 -->
       <div class="flex items-center justify-between pt-4 border-t border-neutral-100">
-        <a href="{% url "patients:patient_detail" patient.pk %}" class="px-4 py-2.5 rounded-xl border border-neutral-200 text-neutral-700 text-xs font-semibold hover:bg-neutral-50 transition-colors">
-          {% trans "Annuler" %}
-        </a>
-        <button type="button" onclick="goToStep(2)" class="bg-[#0d9488] hover:bg-[#0f766e] text-white text-xs font-bold py-2.5 px-5 rounded-xl inline-flex items-center gap-2 shadow-xs transition-colors cursor-pointer">
-          <span>{% trans "Suivant : Constantes" %}</span>
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-        </button>
+        {% if patient %}
+          <a href="{% url "patients:patient_detail" patient.pk %}" class="px-4 py-2.5 rounded-xl border border-neutral-200 text-neutral-700 text-xs font-semibold hover:bg-neutral-50 transition-colors">
+            {% trans "Annuler" %}
+          </a>
+        {% else %}
+          <a href="{% url "patients:consultation_list" %}" class="px-4 py-2.5 rounded-xl border border-neutral-200 text-neutral-700 text-xs font-semibold hover:bg-neutral-50 transition-colors">
+            {% trans "Annuler" %}
+          </a>
+        {% endif %}
+        <div class="flex items-center gap-2">
+          <button type="submit" class="bg-white hover:bg-neutral-50 text-neutral-800 border border-neutral-300 font-bold text-xs py-2.5 px-4 rounded-xl inline-flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer">
+            <svg class="w-3.5 h-3.5 text-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
+            <span>{% trans "Enregistrer maintenant" %}</span>
+          </button>
+          <button type="button" onclick="goToStep(2)" class="bg-[#0d9488] hover:bg-[#0f766e] text-white text-xs font-bold py-2.5 px-5 rounded-xl inline-flex items-center gap-2 shadow-xs transition-colors cursor-pointer">
+            <span>{% trans "Suivant : Constantes" %}</span>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+          </button>
+        </div>
       </div>
     </div>
 
@@ -231,10 +272,16 @@
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
           <span>{% trans "Précédent" %}</span>
         </button>
-        <button type="button" onclick="goToStep(3)" class="bg-[#0d9488] hover:bg-[#0f766e] text-white text-xs font-bold py-2.5 px-5 rounded-xl inline-flex items-center gap-2 shadow-xs transition-colors cursor-pointer">
-          <span>{% trans "Suivant : Diagnostic" %}</span>
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-        </button>
+        <div class="flex items-center gap-2">
+          <button type="submit" class="bg-white hover:bg-neutral-50 text-neutral-800 border border-neutral-300 font-bold text-xs py-2.5 px-4 rounded-xl inline-flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer">
+            <svg class="w-3.5 h-3.5 text-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
+            <span>{% trans "Enregistrer maintenant" %}</span>
+          </button>
+          <button type="button" onclick="goToStep(3)" class="bg-[#0d9488] hover:bg-[#0f766e] text-white text-xs font-bold py-2.5 px-5 rounded-xl inline-flex items-center gap-2 shadow-xs transition-colors cursor-pointer">
+            <span>{% trans "Suivant : Diagnostic" %}</span>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+          </button>
+        </div>
       </div>
     </div>
 
@@ -252,13 +299,12 @@
       <div class="space-y-4">
         <div>
           <label for="id_diagnosis" class="block text-xs font-bold text-neutral-800 uppercase tracking-wider mb-1.5">
-            {% trans "Diagnostic clinique retenu" %} <span class="text-rose-500">*</span>
+            {% trans "Diagnostic clinique retenu" %}
           </label>
           <textarea
             id="id_diagnosis"
             name="diagnosis"
             rows="3"
-            required
             placeholder="{% trans "ex: Gastrite aiguë consécutive à prise d'AINS..." %}"
             class="w-full px-4 py-3 border border-neutral-200 rounded-xl text-sm font-bold text-neutral-800 placeholder-neutral-400 focus:ring-2 focus:ring-[#0d9488] focus:border-transparent outline-none shadow-2xs resize-none"
           >{{ form.diagnosis.value|default:'' }}</textarea>
@@ -290,10 +336,16 @@
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
           <span>{% trans "Précédent" %}</span>
         </button>
-        <button type="button" onclick="goToStep(4)" class="bg-[#0d9488] hover:bg-[#0f766e] text-white text-xs font-bold py-2.5 px-5 rounded-xl inline-flex items-center gap-2 shadow-xs transition-colors cursor-pointer">
-          <span>{% trans "Suivant : Ordonnance & Actes" %}</span>
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-        </button>
+        <div class="flex items-center gap-2">
+          <button type="submit" class="bg-white hover:bg-neutral-50 text-neutral-800 border border-neutral-300 font-bold text-xs py-2.5 px-4 rounded-xl inline-flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer">
+            <svg class="w-3.5 h-3.5 text-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
+            <span>{% trans "Enregistrer maintenant" %}</span>
+          </button>
+          <button type="button" onclick="goToStep(4)" class="bg-[#0d9488] hover:bg-[#0f766e] text-white text-xs font-bold py-2.5 px-5 rounded-xl inline-flex items-center gap-2 shadow-xs transition-colors cursor-pointer">
+            <span>{% trans "Suivant : Ordonnance & Actes" %}</span>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+          </button>
+        </div>
       </div>
     </div>
 
@@ -408,7 +460,6 @@
             placeholder="{% trans "Nom du paramètre (ex: SpO2, Glycémie...)" %}"
             class="vital-name-input w-full text-xs font-bold text-neutral-800 bg-transparent border-b border-dashed border-neutral-300 focus:border-[#14967F] focus:outline-none pb-0.5 tracking-tight"
             oninput="syncVitalsToHiddenFields()"
-            required
           />
         </div>
         <button
@@ -623,6 +674,36 @@
 
   document.addEventListener('DOMContentLoaded', function() {
     renderInitialVitals();
+
+    const form = document.getElementById('consultation-form');
+    if (form) {
+      form.addEventListener('submit', function(e) {
+        syncVitalsToHiddenFields();
+
+        // 1. Validation du patient (si sélecteur présent)
+        const patientSelect = document.getElementById('id_patient_select');
+        const patientHidden = document.getElementById('id_patient_hidden');
+        if (patientSelect && !patientSelect.value && !patientHidden) {
+          e.preventDefault();
+          goToStep(1);
+          patientSelect.focus();
+          patientSelect.classList.add('ring-2', 'ring-rose-500');
+          setTimeout(() => patientSelect.classList.remove('ring-2', 'ring-rose-500'), 2500);
+          return false;
+        }
+
+        // 2. Validation du motif (obligatoire)
+        const reasonInput = document.getElementById('id_reason');
+        if (reasonInput && !reasonInput.value.trim()) {
+          e.preventDefault();
+          goToStep(1);
+          reasonInput.focus();
+          reasonInput.classList.add('ring-2', 'ring-rose-500');
+          setTimeout(() => reasonInput.classList.remove('ring-2', 'ring-rose-500'), 2500);
+          return false;
+        }
+      });
+    }
   });
 </script>
 {% endblock %}

@@ -1,0 +1,41 @@
+{% extends "layouts/dashboard.html" %}
+{% load i18n static %}
+
+{% block title %}{% trans "Fournisseurs Pharmaceutiques" %} - SantéGeste{% endblock %}
+
+{% block content_inner %}
+<div class="space-y-6 max-w-4xl mx-auto">
+  <div class="flex items-center justify-between bg-white p-6 rounded-2xl border border-neutral-200/80 shadow-xs">
+    <div>
+      <h1 class="text-xl font-bold text-neutral-900 font-title tracking-tight">{% trans "Fournisseurs & Laboratoires" %}</h1>
+      <p class="text-xs text-neutral-500 mt-1">{% trans "Partenaires d'approvisionnement pharmaceutique." %}</p>
+    </div>
+    <a href="{% url "pharmacy:supplier_create" %}" class="px-4 py-2.5 rounded-xl bg-[#0d9488] hover:bg-[#0f766e] text-white font-bold text-xs shadow-xs transition-colors">
+      + {% trans "Nouveau Fournisseur" %}
+    </a>
+  </div>
+
+  <div class="bg-white rounded-2xl border border-neutral-200/80 shadow-xs overflow-hidden">
+    {% if suppliers %}
+      <div class="divide-y divide-neutral-100 text-xs">
+        {% for s in suppliers %}
+          <div class="p-5 flex items-center justify-between gap-4 hover:bg-neutral-50/50">
+            <div>
+              <h3 class="font-bold text-neutral-900 text-sm">{{ s.name }}</h3>
+              <p class="text-[11px] text-neutral-500 mt-0.5">
+                {% if s.contact_person %}Contact: {{ s.contact_person }} • {% endif %}
+                Tel: {{ s.telephone|default:"-" }} • Email: {{ s.email|default:"-" }}
+              </p>
+            </div>
+            <span class="font-mono text-[10px] font-bold px-2 py-0.5 rounded {% if s.is_active %}bg-emerald-50 text-emerald-700{% else %}bg-neutral-100 text-neutral-600{% endif %}">
+              {% if s.is_active %}{% trans "Actif" %}{% else %}{% trans "Inactif" %}{% endif %}
+            </span>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="text-xs text-neutral-400 text-center py-8">{% trans "Aucun fournisseur enregistré." %}</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,114 @@
+{% extends "layouts/dashboard.html" %}
+{% load i18n static %}
+
+{% block title %}{% trans "Historique des Ventes Pharmacie" %} - SantéGeste{% endblock %}
+
+{% block content_inner %}
+<div class="space-y-6">
+
+  <!-- En-tête -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-neutral-200/80 shadow-xs">
+    <div>
+      <h1 class="text-xl font-bold text-neutral-900 font-title tracking-tight flex items-center gap-3">
+        <span class="p-2 rounded-xl bg-teal-50 text-[#0d9488]">
+          {% include "components/atoms/icon.html" with name="shopping-bag" size="w-5 h-5" %}
+        </span>
+        {% trans "Historique des Ventes & Délivrances" %}
+      </h1>
+      <p class="text-xs text-neutral-500 mt-1">
+        {% trans "Suivi de toutes les ventes de pharmacie, factures associées et état de paiement." %}
+      </p>
+    </div>
+    <a href="{% url "pharmacy:sale_create" %}" class="px-4 py-2.5 rounded-xl bg-[#0d9488] hover:bg-[#0f766e] text-white font-bold text-xs shadow-xs transition-colors inline-flex items-center gap-2">
+      {% include "components/atoms/icon.html" with name="plus" size="w-4 h-4" %}
+      <span>{% trans "Nouvelle Vente" %}</span>
+    </a>
+  </div>
+
+  <!-- Filtres -->
+  <div class="bg-white p-4 rounded-2xl border border-neutral-200/80 shadow-xs">
+    <form method="get" class="flex flex-col sm:flex-row items-center gap-3">
+      <div class="relative flex-1 w-full">
+        <input type="text" name="q" value="{{ q }}" placeholder="{% trans "Rechercher par numéro de vente ou nom du client..." %}" class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-neutral-200 text-xs focus:ring-2 focus:ring-[#0d9488] outline-none">
+        <span class="absolute left-3.5 top-3 text-neutral-400">
+          {% include "components/atoms/icon.html" with name="magnifying-glass" size="w-4 h-4" %}
+        </span>
+      </div>
+      <div class="w-full sm:w-60">
+        <select name="status" class="w-full px-3 py-2.5 rounded-xl border border-neutral-200 text-xs focus:ring-2 focus:ring-[#0d9488] outline-none bg-white">
+          <option value="">{% trans "Tous les statuts" %}</option>
+          {% for code, label in status_choices %}
+            <option value="{{ code }}" {% if selected_status == code %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <button type="submit" class="w-full sm:w-auto px-5 py-2.5 bg-[#0d9488] hover:bg-[#0f766e] text-white font-bold text-xs rounded-xl shadow-xs transition-colors">
+        {% trans "Filtrer" %}
+      </button>
+    </form>
+  </div>
+
+  <!-- Table des Ventes -->
+  <div class="bg-white rounded-2xl border border-neutral-200/80 shadow-xs overflow-hidden">
+    {% if sales %}
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse text-xs">
+          <thead>
+            <tr class="bg-neutral-50/80 border-b border-neutral-200 text-[11px] font-bold text-neutral-500 uppercase tracking-wider">
+              <th class="py-3 px-5">{% trans "N° Vente" %}</th>
+              <th class="py-3 px-5">{% trans "Date & Heure" %}</th>
+              <th class="py-3 px-5">{% trans "Bénéficiaire" %}</th>
+              <th class="py-3 px-5">{% trans "Vendeur" %}</th>
+              <th class="py-3 px-5 text-right">{% trans "Montant Total" %}</th>
+              <th class="py-3 px-5 text-center">{% trans "Statut Vente" %}</th>
+              <th class="py-3 px-5 text-right">{% trans "Action" %}</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-neutral-100">
+            {% for s in sales %}
+              <tr class="hover:bg-neutral-50/50">
+                <td class="py-3.5 px-5 font-mono font-bold text-neutral-900">
+                  <a href="{% url "pharmacy:sale_detail" s.pk %}" class="hover:text-[#0d9488]">
+                    {{ s.sale_number }}
+                  </a>
+                </td>
+                <td class="py-3.5 px-5 font-mono text-neutral-600">
+                  {{ s.sale_date|date:"d/m/Y - H:i" }}
+                </td>
+                <td class="py-3.5 px-5 font-semibold text-neutral-800">
+                  {% if s.patient %}
+                    {{ s.patient.full_name }}
+                  {% else %}
+                    {{ s.client_name|default:_("Comptoir") }}
+                  {% endif %}
+                </td>
+                <td class="py-3.5 px-5 text-neutral-600">
+                  {{ s.seller.full_name }}
+                </td>
+                <td class="py-3.5 px-5 text-right font-mono font-extrabold text-neutral-900">
+                  {{ s.total_amount }} FCFA
+                </td>
+                <td class="py-3.5 px-5 text-center">
+                  <span class="font-mono text-[10px] font-bold px-2 py-0.5 rounded-lg {% if s.status == 'COMPLETED' %}bg-emerald-50 text-emerald-700 border border-emerald-200{% elif s.status == 'PENDING_PAYMENT' %}bg-amber-50 text-amber-700 border border-amber-200{% else %}bg-neutral-100 text-neutral-500{% endif %}">
+                    {{ s.get_status_display }}
+                  </span>
+                </td>
+                <td class="py-3.5 px-5 text-right">
+                  <a href="{% url "pharmacy:sale_detail" s.pk %}" class="px-3 py-1.5 rounded-lg bg-neutral-100 hover:bg-neutral-200 text-neutral-700 font-bold text-xs inline-flex items-center gap-1">
+                    {% trans "Détails" %} &rarr;
+                  </a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="p-12 text-center text-neutral-400">
+        <p class="text-sm font-bold text-neutral-700">{% trans "Aucune vente enregistrée." %}</p>
+      </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

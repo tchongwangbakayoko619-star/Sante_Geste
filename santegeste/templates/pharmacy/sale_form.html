@@ -1,0 +1,312 @@
+{% extends "layouts/dashboard.html" %}
+{% load i18n static %}
+
+{% block title %}{% trans "Nouvelle Vente Pharmacie" %} - SantéGeste{% endblock %}
+
+{% block content_inner %}
+<div class="space-y-6 max-w-5xl mx-auto">
+
+  <!-- En-tête Vente -->
+  <div class="bg-white p-6 rounded-2xl border border-neutral-200/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-xl font-bold text-neutral-900 font-title tracking-tight flex items-center gap-3">
+        <span class="p-2 rounded-xl bg-teal-50 text-[#0d9488]">
+          {% include "components/atoms/icon.html" with name="shopping-bag" size="w-5 h-5" %}
+        </span>
+        {% if ordonnance %}
+          {% trans "Délivrance sur Ordonnance Médicale" %}
+        {% else %}
+          {% trans "Nouvelle Vente au Comptoir" %}
+        {% endif %}
+      </h1>
+      <p class="text-xs text-neutral-500 mt-1">
+        {% if ordonnance %}
+          {% trans "Ordonnance prescrite par le Dr." %} {{ ordonnance.doctor.full_name }} {% trans "pour le patient" %} <strong>{{ ordonnance.patient.full_name }}</strong>
+        {% else %}
+          {% trans "Sélectionnez les médicaments demandés. Les lots seront déstockés selon la règle FEFO." %}
+        {% endif %}
+      </p>
+    </div>
+    <a href="{% url "pharmacy:dashboard" %}" class="px-3.5 py-2 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-700 font-semibold text-xs transition-colors">
+      {% trans "Quitter" %}
+    </a>
+  </div>
+
+  {% if ordonnance %}
+    <!-- Récapitulatif Ordonnance Médicale -->
+    <div class="bg-teal-50/70 border border-teal-200 p-5 rounded-2xl space-y-3">
+      <div class="flex items-center justify-between">
+        <h3 class="text-xs font-bold text-teal-950 uppercase tracking-wider flex items-center gap-2">
+          <span>🩺 {% trans "Lignes prescrites sur l'ordonnance" %}</span>
+        </h3>
+        <span class="text-[11px] font-mono text-teal-700">{{ ordonnance.prescribed_at|date:"d/m/Y - H:i" }}</span>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+        {% for item in preloaded_items %}
+          <div class="p-3 bg-white rounded-xl border border-teal-100 flex items-start justify-between gap-2">
+            <div>
+              <p class="font-bold text-neutral-900">{{ item.line.medication_name }}</p>
+              <p class="text-[11px] text-neutral-500">{{ item.line.posology }} • {{ item.line.duration }}</p>
+            </div>
+            {% if item.matched_product %}
+              <button type="button" onclick="addProductToCart('{{ item.matched_product.pk }}', '{{ item.matched_product.name|escapejs }}', '{{ item.matched_product.selling_price }}', '{{ item.matched_product.current_stock }}', '{{ item.line.quantity|default:1 }}')" class="px-2.5 py-1.5 rounded-lg bg-teal-50 hover:bg-teal-100 text-[#0d9488] font-bold text-[11px] border border-teal-200 transition cursor-pointer">
+                + {% trans "Ajouter" %}
+              </button>
+            {% else %}
+              <span class="text-[10px] text-amber-700 font-semibold bg-amber-50 px-2 py-0.5 rounded border border-amber-200">{% trans "À associer manuellement" %}</span>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+
+  <!-- Interface de Saisie & Panier de Vente -->
+  <form method="post" id="sale-form" class="space-y-6">
+    {% csrf_token %}
+    {% if ordonnance %}<input type="hidden" name="ordonnance_id" value="{{ ordonnance.pk }}">{% endif %}
+    {% if patient %}<input type="hidden" name="patient_id" value="{{ patient.pk }}">{% endif %}
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+      <!-- Colonne Gauche : Sélection des Produits & Panier (2 tiers) -->
+      <div class="lg:col-span-2 space-y-6">
+
+        <!-- Sélecteur Rapide de Produit -->
+        <div class="bg-white p-5 rounded-2xl border border-neutral-200/80 shadow-xs space-y-3">
+          <label class="block text-xs font-bold text-neutral-800 uppercase tracking-wider">
+            {% trans "Rechercher et ajouter un médicament" %}
+          </label>
+          <div class="flex items-center gap-3">
+            <select id="product-picker" class="flex-1 px-4 py-2.5 border border-neutral-200 rounded-xl text-xs font-semibold text-neutral-900 focus:ring-2 focus:ring-[#0d9488] outline-none bg-white">
+              <option value="">-- {% trans "Sélectionner un produit dans le catalogue..." %} --</option>
+              {% for p in available_products %}
+                <option value="{{ p.pk }}" data-name="{{ p.name }}" data-price="{{ p.selling_price }}" data-stock="{{ p.current_stock }}">
+                  {{ p.name }} (Stock: {{ p.current_stock }} {{ p.unit }} - {{ p.selling_price }} FCFA)
+                </option>
+              {% endfor %}
+            </select>
+            <button type="button" onclick="addSelectedProduct()" class="px-4 py-2.5 bg-[#0d9488] hover:bg-[#0f766e] text-white font-bold text-xs rounded-xl shadow-xs transition cursor-pointer shrink-0">
+              + {% trans "Ajouter" %}
+            </button>
+          </div>
+        </div>
+
+        <!-- Tableau des Lignes du Panier -->
+        <div class="bg-white rounded-2xl border border-neutral-200/80 shadow-xs overflow-hidden">
+          <div class="p-4 bg-neutral-50/80 border-b border-neutral-200 flex items-center justify-between">
+            <h3 class="text-xs font-bold text-neutral-800 uppercase tracking-wider">
+              {% trans "Panier de vente" %}
+            </h3>
+            <span id="cart-item-count" class="text-xs font-mono font-bold text-[#0d9488]">0 produit(s)</span>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="bg-neutral-50/40 border-b border-neutral-100 text-[10px] font-bold text-neutral-400 uppercase tracking-wider">
+                  <th class="py-2.5 px-4">{% trans "Médicament" %}</th>
+                  <th class="py-2.5 px-4 w-28">{% trans "Prix unitaire" %}</th>
+                  <th class="py-2.5 px-4 w-24">{% trans "Quantité" %}</th>
+                  <th class="py-2.5 px-4 text-right w-28">{% trans "Sous-total" %}</th>
+                  <th class="py-2.5 px-4 text-center w-12"></th>
+                </tr>
+              </thead>
+              <tbody id="cart-table-body" class="divide-y divide-neutral-100">
+                <!-- Rempli dynamiquement en JS -->
+              </tbody>
+            </table>
+          </div>
+
+          <div id="cart-empty-msg" class="p-8 text-center text-neutral-400 text-xs">
+            {% trans "Le panier est actuellement vide. Ajoutez des médicaments ci-dessus." %}
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Colonne Droite : Informations Client & Encaissement Caisse (1 tiers) -->
+      <div class="space-y-6">
+
+        <div class="bg-white p-6 rounded-2xl border border-neutral-200/80 shadow-xs space-y-4">
+          <h3 class="text-xs font-bold text-neutral-800 uppercase tracking-wider border-b border-neutral-100 pb-2">
+            {% trans "Bénéficiaire / Client" %}
+          </h3>
+
+          {% if patient %}
+            <div class="p-3 bg-neutral-50 rounded-xl border border-neutral-100 space-y-1">
+              <span class="text-[10px] font-bold text-neutral-400 uppercase tracking-wider block">{% trans "Patient enregistré" %}</span>
+              <p class="text-xs font-bold text-neutral-900">{{ patient.full_name }}</p>
+              <p class="text-[11px] font-mono text-neutral-500">{{ patient.patient_number }}</p>
+            </div>
+          {% else %}
+            <div>
+              <label class="block text-xs font-bold text-neutral-800 uppercase tracking-wider mb-1.5">
+                {% trans "Nom du client (comptoir)" %}
+              </label>
+              <input type="text" name="client_name" placeholder="ex: Client de passage, M. Koffi..." class="w-full px-3.5 py-2.5 border border-neutral-200 rounded-xl text-xs focus:ring-2 focus:ring-[#0d9488] outline-none">
+            </div>
+          {% endif %}
+
+          <div>
+            <label class="block text-xs font-bold text-neutral-800 uppercase tracking-wider mb-1.5">
+              {% trans "Remise commerciale (FCFA)" %}
+            </label>
+            <input type="number" id="discount-input" min="0" step="0.01" name="discount_amount" value="0.00" oninput="recalculateTotals()" class="w-full px-3.5 py-2.5 border border-neutral-200 rounded-xl text-xs font-mono font-bold focus:ring-2 focus:ring-[#0d9488] outline-none">
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-neutral-800 uppercase tracking-wider mb-1.5">
+              {% trans "Notes / Recommandations" %}
+            </label>
+            <textarea name="notes" rows="2" placeholder="Conseils de prise..." class="w-full px-3.5 py-2 border border-neutral-200 rounded-xl text-xs focus:ring-2 focus:ring-[#0d9488] outline-none"></textarea>
+          </div>
+
+          <!-- Total net et bouton de validation -->
+          <div class="pt-4 border-t border-neutral-100 space-y-3">
+            <div class="flex items-center justify-between text-xs text-neutral-500">
+              <span>{% trans "Sous-total brut" %} :</span>
+              <span id="subtotal-display" class="font-mono font-bold text-neutral-800">0 FCFA</span>
+            </div>
+            <div class="flex items-center justify-between text-xs text-rose-600">
+              <span>{% trans "Remise" %} :</span>
+              <span id="discount-display" class="font-mono font-bold">- 0 FCFA</span>
+            </div>
+            <div class="flex items-center justify-between text-base font-extrabold text-neutral-900 border-t border-dashed border-neutral-200 pt-2">
+              <span>{% trans "Net à payer" %} :</span>
+              <span id="total-display" class="font-mono text-xl text-[#0d9488]">0 FCFA</span>
+            </div>
+
+            <div class="p-3 bg-amber-50 rounded-xl border border-amber-200 text-[11px] text-amber-800 flex items-start gap-2">
+              <span>ℹ️</span>
+              <span>{% trans "Dès validation, le stock sera décrémenté selon FEFO et la facture transmise à la Caisse pour règlement." %}</span>
+            </div>
+
+            <button type="submit" id="submit-sale-btn" disabled class="w-full py-3 bg-[#0d9488] hover:bg-[#0f766e] disabled:bg-neutral-300 disabled:cursor-not-allowed text-white font-bold text-xs rounded-xl shadow-xs transition-colors cursor-pointer flex items-center justify-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+              <span>{% trans "Valider & Transmettre à la Caisse" %}</span>
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </form>
+
+</div>
+
+<script>
+  let cart = [];
+
+  function addProductToCart(productId, name, price, stock, defaultQty = 1) {
+    const existing = cart.find(i => i.id === productId);
+    if (existing) {
+      existing.quantity += parseInt(defaultQty, 10);
+    } else {
+      cart.push({
+        id: productId,
+        name: name,
+        unitPrice: parseFloat(price),
+        maxStock: parseInt(stock, 10),
+        quantity: parseInt(defaultQty, 10)
+      });
+    }
+    renderCart();
+  }
+
+  function addSelectedProduct() {
+    const picker = document.getElementById('product-picker');
+    if (!picker || !picker.value) return;
+
+    const opt = picker.options[picker.selectedIndex];
+    addProductToCart(
+      picker.value,
+      opt.dataset.name,
+      opt.dataset.price,
+      opt.dataset.stock,
+      1
+    );
+    picker.value = "";
+  }
+
+  function updateQuantity(productId, newQty) {
+    const item = cart.find(i => i.id === productId);
+    if (item) {
+      item.quantity = Math.max(1, parseInt(newQty, 10) || 1);
+      renderCart();
+    }
+  }
+
+  function removeFromCart(productId) {
+    cart = cart.filter(i => i.id !== productId);
+    renderCart();
+  }
+
+  function renderCart() {
+    const tbody = document.getElementById('cart-table-body');
+    const emptyMsg = document.getElementById('cart-empty-msg');
+    const submitBtn = document.getElementById('submit-sale-btn');
+    const countSpan = document.getElementById('cart-item-count');
+
+    tbody.innerHTML = '';
+
+    if (cart.length === 0) {
+      emptyMsg.classList.remove('hidden');
+      submitBtn.disabled = true;
+      countSpan.textContent = '0 produit(s)';
+      recalculateTotals();
+      return;
+    }
+
+    emptyMsg.classList.add('hidden');
+    submitBtn.disabled = false;
+    countSpan.textContent = `${cart.length} produit(s)`;
+
+    cart.forEach(item => {
+      const lineTotal = item.unitPrice * item.quantity;
+      const tr = document.createElement('tr');
+      tr.className = "hover:bg-neutral-50/50";
+      tr.innerHTML = `
+        <td class="py-3 px-4">
+          <strong class="text-neutral-900 block">${item.name}</strong>
+          <span class="text-[10px] text-neutral-400">Stock max: ${item.maxStock}</span>
+          <input type="hidden" name="product_id[]" value="${item.id}">
+        </td>
+        <td class="py-3 px-4 font-mono font-semibold text-neutral-800">
+          ${item.unitPrice.toFixed(2)}
+        </td>
+        <td class="py-3 px-4">
+          <input type="number" name="quantity[]" min="1" max="${item.maxStock}" value="${item.quantity}" onchange="updateQuantity('${item.id}', this.value)" class="w-16 px-2 py-1 border border-neutral-200 rounded-lg text-center font-mono font-bold outline-none focus:ring-1 focus:ring-[#0d9488]">
+        </td>
+        <td class="py-3 px-4 text-right font-mono font-bold text-neutral-900">
+          ${lineTotal.toFixed(2)} FCFA
+        </td>
+        <td class="py-3 px-4 text-center">
+          <button type="button" onclick="removeFromCart('${item.id}')" class="text-neutral-400 hover:text-rose-600 p-1 rounded transition cursor-pointer">
+            &times;
+          </button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    recalculateTotals();
+  }
+
+  function recalculateTotals() {
+    let subtotal = 0;
+    cart.forEach(item => {
+      subtotal += item.unitPrice * item.quantity;
+    });
+
+    const discountInput = document.getElementById('discount-input');
+    const discount = parseFloat(discountInput ? discountInput.value : 0) || 0;
+    const netTotal = Math.max(0, subtotal - discount);
+
+    document.getElementById('subtotal-display').textContent = `${subtotal.toFixed(2)} FCFA`;
+    document.getElementById('discount-display').textContent = `- ${discount.toFixed(2)} FCFA`;
+    document.getElementById('total-display').textContent = `${netTotal.toFixed(2)} FCFA`;
+  }
+</script>
+{% endblock %}

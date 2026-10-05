@@ -1,20 +1,8 @@
-{# Molecule: Brand Lockup (Logo Squircle + CS² Health Title) #}
-{# Props: class, custom_classes #}
-{% load i18n %}
-<div class="flex items-center justify-center gap-3.5 {{ class }} {{ custom_classes }}">
-  <!-- Squircle Icon -->
-  <div class="brand-lockup-logo">
-    {% include "components/atoms/icon.html" with name="cross-heartbeat" size="w-full h-full text-white" %}
-  </div>
-
-  <!-- Text Lockup -->
-  <div class="flex flex-col justify-center text-left">
-    <div class="brand-lockup-title">
-      CS<sup class="text-sm font-bold text-neutral-900 ml-0.5">2</sup>
-    </div>
-    <span class="brand-lockup-subtitle">
-      {% trans "Health" %}
-    </span>
-  </div>
+{# Molecule: Brand Lockup (SantéGeste Official Logo) #}
+{# Props: class, custom_classes, size (sm|md|lg) #}
+{% load i18n static %}
+{% with logo_size=size|default:"md" %}
+<div class="flex items-center justify-center select-none {{ class|default:'' }} {{ custom_classes|default:'' }}">
+  <img src="{% static 'images/logo_full.png' %}" alt="SantéGeste - Gestion de centre de santé" class="object-contain {% if logo_size == 'sm' %}h-9{% elif logo_size == 'lg' %}h-14{% else %}h-11{% endif %} w-auto">
 </div>
-
+{% endwith %}
