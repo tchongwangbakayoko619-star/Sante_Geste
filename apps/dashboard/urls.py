@@ -5,13 +5,25 @@ from django.urls import path
 from apps.dashboard.report_views import ReportDetailView
 from apps.dashboard.report_views import ReportExportView
 from apps.dashboard.report_views import ReportsHomeView
-from apps.dashboard.views import DashboardApiView
-from apps.dashboard.views import DashboardHomeView
+from apps.dashboard.views import (
+    AccueilDashboardView,
+    CaisseDashboardView,
+    DashboardApiView,
+    DashboardHomeView,
+    MedicalDashboardView,
+    PharmacieVendeurDashboardView,
+    ProprietaireDashboardView,
+)
 
 app_name = "dashboard"
 
 urlpatterns = [
     path("", DashboardHomeView.as_view(), name="home"),
+    path("accueil/", AccueilDashboardView.as_view(), name="accueil"),
+    path("medical/", MedicalDashboardView.as_view(), name="medical"),
+    path("caisse/", CaisseDashboardView.as_view(), name="caisse"),
+    path("pharmacie/vendeur/", PharmacieVendeurDashboardView.as_view(), name="pharmacie_vendeur"),
+    path("proprietaire/", ProprietaireDashboardView.as_view(), name="proprietaire"),
     path("api/data/", DashboardApiView.as_view(), name="api_data"),
     path("rapports/", ReportsHomeView.as_view(), name="reports_home"),
     path("rapports/<str:report_code>/", ReportDetailView.as_view(), name="report_detail"),

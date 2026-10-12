@@ -1,0 +1,256 @@
+{% extends "layouts/dashboard.html" %}
+{% load i18n static l10n %}
+
+{% block title %}{% trans "Accueil & Admissions" %} - CS² Health{% endblock title %}
+
+{% block breadcrumbs %}
+  <nav class="flex items-center gap-2 text-xs text-neutral-500 mb-4" aria-label="Breadcrumb">
+    <a href="{% url "home" %}" class="hover:text-primary transition-colors">{% trans "SantéGeste" %}</a>
+    <span>/</span>
+    <span class="font-semibold text-neutral-800">{% trans "Accueil & Admissions" %}</span>
+  </nav>
+{% endblock breadcrumbs %}
+
+{% block content_inner %}
+<div class="space-y-6 sm:space-y-8">
+
+  <!-- 1. En-tête de bienvenue & Filtre de période -->
+  {% include "components/molecules/dashboards/dashboard_welcome_header.html" %}
+
+  <!-- 2. Raccourcis d'actions rapides métier pour l'Accueil -->
+  <div class="flex flex-wrap items-center gap-3 bg-white p-4 rounded-2xl border border-neutral-200/80 shadow-xs">
+    <span class="text-xs font-bold uppercase tracking-wider text-neutral-400 pl-1">{% trans "Actions directes" %} :</span>
+    
+    <a href="{% url "patients:patient_create" %}" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#0D9488] hover:bg-[#0F766E] text-white text-xs font-bold transition shadow-xs">
+      {% include "components/atoms/icon.html" with name="plus" size="w-4 h-4" %}
+      <span>{% trans "Nouveau Patient" %}</span>
+    </a>
+
+    <a href="{% url "patients:appointment_create" %}" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-teal-50 hover:bg-teal-100 text-[#0F766E] border border-teal-200 text-xs font-bold transition">
+      {% include "components/atoms/icon.html" with name="calendar" size="w-4 h-4" %}
+      <span>{% trans "Planifier un RDV" %}</span>
+    </a>
+
+    <a href="{% url "patients:appointment_list" %}" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white hover:bg-neutral-50 text-neutral-700 border border-neutral-200 text-xs font-bold transition">
+      <span>{% trans "Agenda du Jour" %}</span>
+    </a>
+
+    <a href="{% url "patients:patient_list" %}" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white hover:bg-neutral-50 text-neutral-700 border border-neutral-200 text-xs font-bold transition">
+      <span>{% trans "Tous les Dossiers" %}</span>
+    </a>
+  </div>
+
+  <!-- 3. Grille des 4 KPIs Accueil -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <!-- KPI 1 : File d'attente active -->
+    <div class="bg-white border {% if appointments_waiting_count > 0 %}border-amber-300 bg-amber-50/15{% else %}border-neutral-200/80{% endif %} rounded-2xl p-5 shadow-xs flex flex-col justify-between">
+      <div class="flex items-start justify-between">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-wider text-amber-800">{% trans "En Salle d'Attente" %}</p>
+          <p class="text-3xl font-extrabold font-title {% if appointments_waiting_count > 0 %}text-amber-700{% else %}text-neutral-900{% endif %} mt-2">
+            {{ appointments_waiting_count|default:0 }}
+          </p>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+          {% include "components/atoms/icon.html" with name="clock" size="w-5 h-5" %}
+        </div>
+      </div>
+      <div class="pt-3 mt-3 border-t border-neutral-100 flex items-center justify-between text-xs font-semibold">
+        <span class="text-neutral-500">{% trans "Patients enregistrés" %}</span>
+        <span class="text-amber-700">{{ appointments_today_count|default:0 }} {% trans "RDV aujourd'hui" %}</span>
+      </div>
+    </div>
+
+    <!-- KPI 2 : Nouveaux Patients -->
+    <div class="bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-xs flex flex-col justify-between">
+      <div class="flex items-start justify-between">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-wider text-neutral-500">{% trans "Admissions / Patients" %}</p>
+          <p class="text-3xl font-extrabold font-title text-neutral-900 mt-2">
+            {{ total_patients|default:0 }}
+          </p>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-teal-50 text-[#0D9488] flex items-center justify-center shrink-0">
+          {% include "components/atoms/icon.html" with name="users" size="w-5 h-5" %}
+        </div>
+      </div>
+      <div class="pt-3 mt-3 border-t border-neutral-100 flex items-center gap-1.5 text-xs font-semibold text-emerald-600">
+        {% include "components/atoms/icon.html" with name="trend-up" size="w-3.5 h-3.5" %}
+        <span>+{{ new_patients_today|default:0 }} {% trans "aujourd'hui" %}</span>
+        <span class="text-neutral-400 font-normal">(+{{ new_patients_period|default:0 }} {{ period_label }})</span>
+      </div>
+    </div>
+
+    <!-- KPI 3 : RDV Honorés / Terminés -->
+    <div class="bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-xs flex flex-col justify-between">
+      <div class="flex items-start justify-between">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-wider text-neutral-500">{% trans "Consultations Prises" %}</p>
+          <p class="text-3xl font-extrabold font-title text-neutral-900 mt-2">
+            {{ appointments_completed_period|default:0 }}
+          </p>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+          {% include "components/atoms/icon.html" with name="check" size="w-5 h-5" %}
+        </div>
+      </div>
+      <div class="pt-3 mt-3 border-t border-neutral-100 flex items-center gap-1.5 text-xs font-semibold text-blue-600">
+        <span>{% trans "Statut Honoré sur la période" %}</span>
+      </div>
+    </div>
+
+    <!-- KPI 4 : Créneaux à venir -->
+    <div class="bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-xs flex flex-col justify-between">
+      <div class="flex items-start justify-between">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-wider text-neutral-500">{% trans "Créneaux à Venir" %}</p>
+          <p class="text-3xl font-extrabold font-title text-neutral-900 mt-2">
+            {{ upcoming_count|default:0 }}
+          </p>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
+          {% include "components/atoms/icon.html" with name="calendar" size="w-5 h-5" %}
+        </div>
+      </div>
+      <div class="pt-3 mt-3 border-t border-neutral-100 flex items-center justify-between text-xs font-semibold text-neutral-500">
+        <span>{% trans "Annulés :" %} {{ appointments_cancelled_period|default:0 }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. Alertes Opérationnelles (RDV Imminents & Dossiers Incomplets) -->
+  {% if imminent_appointments or missing_info_patients %}
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {% if imminent_appointments %}
+        <div class="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 space-y-2">
+          <div class="flex items-center gap-2 font-bold text-xs uppercase tracking-wider text-amber-800">
+            <span>⏰ {% trans "Rendez-vous dans l'heure (À accueillir)" %}</span>
+          </div>
+          <div class="space-y-1.5">
+            {% for rdv in imminent_appointments %}
+              <div class="flex items-center justify-between text-xs bg-white/70 p-2 rounded-xl">
+                <span class="font-bold">{{ rdv.patient.full_name }} ({{ rdv.patient.patient_number }})</span>
+                <span class="font-mono text-amber-800">{{ rdv.scheduled_at|date:"H:i" }} • Dr. {{ rdv.doctor.full_name }}</span>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+
+      {% if missing_info_patients %}
+        <div class="p-4 rounded-2xl bg-sky-50 border border-sky-200 text-sky-900 space-y-2">
+          <div class="flex items-center gap-2 font-bold text-xs uppercase tracking-wider text-sky-800">
+            <span>ℹ️ {% trans "Dossiers récents avec contact à compléter" %}</span>
+          </div>
+          <div class="space-y-1.5">
+            {% for p in missing_info_patients %}
+              <div class="flex items-center justify-between text-xs bg-white/70 p-2 rounded-xl">
+                <span class="font-bold">{{ p.full_name }}</span>
+                <a href="{% url "patients:patient_update" p.pk %}" class="text-[#0D9488] font-bold hover:underline">{% trans "Compléter" %} &rarr;</a>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  {% endif %}
+
+  <!-- 5. Graphiques d'Activité & Prise en Charge -->
+  {% include "components/organisms/dashboards/activity_charts_section.html" %}
+
+  <!-- 6. Listes Opérationnelles : File d'Attente du Jour & Nouveaux Patients -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+    <!-- Colonne 1 : File d'attente active & RDV du Jour -->
+    <div class="bg-white rounded-3xl border border-neutral-200/80 p-6 shadow-2xs space-y-4">
+      <div class="flex items-center justify-between border-b border-neutral-100 pb-3">
+        <h3 class="text-base font-bold text-neutral-900 font-title flex items-center gap-2">
+          <span>{% trans "File d'attente & Rendez-vous du jour" %}</span>
+        </h3>
+        <a href="{% url "patients:appointment_list" %}" class="text-xs font-semibold text-[#0D9488] hover:text-[#0F766E] flex items-center gap-1">
+          <span>{% trans "Voir l'agenda complet" %}</span>
+          <span>&rarr;</span>
+        </a>
+      </div>
+
+      <div class="space-y-3">
+        {% for rdv in today_rdv_list %}
+          <div class="p-3.5 rounded-2xl border border-neutral-200/80 bg-white hover:border-[#0D9488]/40 transition shadow-2xs flex items-center justify-between gap-3">
+            <div class="flex items-center gap-3 min-w-0">
+              <div class="px-3 py-1.5 rounded-xl {% if rdv.status == 'waiting' or rdv.status == 'WAITING' %}bg-amber-500 text-white{% else %}bg-[#0D9488] text-white{% endif %} font-extrabold text-xs font-mono text-center shrink-0">
+                {{ rdv.scheduled_at|date:"H:i" }}
+              </div>
+              <div class="truncate">
+                <h4 class="text-xs font-extrabold text-neutral-900 truncate">{{ rdv.patient.full_name }}</h4>
+                <p class="text-[11px] text-neutral-500 truncate">
+                  {{ rdv.patient.patient_number }} • Dr. {{ rdv.doctor.full_name }}
+                </p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              {% if rdv.status == "waiting" or rdv.status == "WAITING" %}
+                <span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-amber-50 text-amber-700 border border-amber-200">{% trans "En salle d'attente" %}</span>
+              {% elif rdv.status == "completed" or rdv.status == "COMPLETED" %}
+                <span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200">{% trans "Terminé" %}</span>
+              {% elif rdv.status == "in_consultation" or rdv.status == "IN_CONSULTATION" %}
+                <span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-indigo-50 text-indigo-700 border border-indigo-200">{% trans "En consultation" %}</span>
+              {% else %}
+                <span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-blue-50 text-blue-700 border border-blue-200">{% trans "Planifié" %}</span>
+              {% endif %}
+            </div>
+          </div>
+        {% empty %}
+          <div class="py-8 text-center text-xs text-neutral-400 border-2 border-dashed border-neutral-200 rounded-2xl bg-neutral-50/50">
+            <p class="font-bold text-neutral-600">{% trans "Aucun rendez-vous aujourd'hui" %}</p>
+            <p class="mt-1">{% trans "Planifiez un nouveau rendez-vous via le bouton ci-dessus." %}</p>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Colonne 2 : Derniers Patients Admis -->
+    <div class="bg-white rounded-3xl border border-neutral-200/80 p-6 shadow-2xs space-y-4">
+      <div class="flex items-center justify-between border-b border-neutral-100 pb-3">
+        <h3 class="text-base font-bold text-neutral-900 font-title flex items-center gap-2">
+          <span>{% trans "Derniers patients enregistrés" %}</span>
+        </h3>
+        <a href="{% url "patients:patient_list" %}" class="text-xs font-semibold text-[#0D9488] hover:text-[#0F766E] flex items-center gap-1">
+          <span>{% trans "Répertoire complet" %}</span>
+          <span>&rarr;</span>
+        </a>
+      </div>
+
+      <div class="space-y-3">
+        {% for pat in recent_patients %}
+          <div class="p-3.5 rounded-2xl border border-neutral-200/80 bg-white hover:border-[#0D9488]/40 transition shadow-2xs flex items-center justify-between gap-3">
+            <div class="flex items-center gap-3 min-w-0">
+              <div class="w-9 h-9 rounded-xl bg-teal-50 text-[#0D9488] font-extrabold text-xs flex items-center justify-center shrink-0 border border-teal-100">
+                {{ pat.first_name|slice:":1" }}{{ pat.last_name|slice:":1" }}
+              </div>
+              <div class="truncate">
+                <a href="{% url "patients:patient_detail" pat.pk %}" class="text-xs font-extrabold text-neutral-900 hover:text-[#0D9488] truncate block">
+                  {{ pat.full_name }}
+                </a>
+                <p class="text-[11px] text-neutral-500 truncate">
+                  {{ pat.patient_number }} • {% if pat.phone_number %}{{ pat.phone_number }}{% else %}<span class="text-amber-600">{% trans "Sans tél." %}</span>{% endif %}
+                </p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              <a href="{% url "patients:patient_detail" pat.pk %}" class="px-2.5 py-1 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-700 text-xs font-bold transition">
+                {% trans "Dossier" %} &rarr;
+              </a>
+            </div>
+          </div>
+        {% empty %}
+          <div class="py-8 text-center text-xs text-neutral-400 border-2 border-dashed border-neutral-200 rounded-2xl bg-neutral-50/50">
+            <p class="font-bold text-neutral-600">{% trans "Aucun patient enregistré" %}</p>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+  </div>
+
+</div>
+{% endblock content_inner %}

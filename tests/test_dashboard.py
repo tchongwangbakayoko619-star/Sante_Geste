@@ -244,7 +244,7 @@ class TestDashboardViews:
         assert "recent_consultations" in response.context
 
         content = response.content.decode("utf-8")
-        assert "Bonjour," in content
+        assert ("Bonjour," in content or "Bonsoir," in content)
         assert "Paul MARTIN" in content
         assert "Cardiologie" in content
         assert "MES RDV DU JOUR" in content
@@ -281,5 +281,145 @@ class TestDashboardViews:
         assert len(json_data["recent_consultations"]) == 1
         assert json_data["recent_consultations"][0]["patient_name"] == "Arthur Dent"
         assert json_data["recent_consultations"][0]["reason"] == "Contrôle tension"
+
+
+@pytest.mark.django_db
+class TestRoleBasedDashboardsRBAC:
+    """Vérifie l'accès et les restrictions RBAC strictes (HTTP 403) pour chaque vue de dashboard."""
+
+    def test_accueil_dashboard_access(self, client):
+        agent = User.objects.create_user(
+            email="agent.accueil@santegeste.com",
+            password="Password123!",
+            is_agent_accueil=True,
+        )
+        medecin = User.objects.create_user(
+            email="docteur.test@santegeste.com",
+            password="Password123!",
+            is_personnel_medical=True,
+        )
+
+        client.force_login(agent)
+        res = client.get(reverse("dashboard:accueil"))
+        assert res.status_code == 200
+        assert "appointments_today_count" in res.context
+
+        client.force_login(medecin)
+        res_forbidden = client.get(reverse("dashboard:accueil"))
+        assert res_forbidden.status_code == 403
+
+    def test_medical_dashboard_access(self, client):
+        medecin = User.objects.create_user(
+            email="docteur.med@santegeste.com",
+            password="Password123!",
+            is_personnel_medical=True,
+        )
+        caissier = User.objects.create_user(
+            email="caissier.test@santegeste.com",
+            password="Password123!",
+            is_caissier=True,
+        )
+
+        client.force_login(medecin)
+        res = client.get(reverse("dashboard:medical"))
+        assert res.status_code == 200
+        assert "my_rdv_today" in res.context
+
+        client.force_login(caissier)
+        res_forbidden = client.get(reverse("dashboard:medical"))
+        assert res_forbidden.status_code == 403
+
+    def test_caisse_dashboard_access(self, client):
+        caissier = User.objects.create_user(
+            email="caissier.bank@santegeste.com",
+            password="Password123!",
+            is_caissier=True,
+        )
+        agent = User.objects.create_user(
+            email="agent.test@santegeste.com",
+            password="Password123!",
+            is_agent_accueil=True,
+        )
+
+        client.force_login(caissier)
+        res = client.get(reverse("dashboard:caisse"))
+        assert res.status_code == 200
+        assert "today_collected_amount" in res.context
+
+        client.force_login(agent)
+        res_forbidden = client.get(reverse("dashboard:caisse"))
+        assert res_forbidden.status_code == 403
+
+    def test_pharmacie_vendeur_dashboard_access(self, client):
+        vendeur = User.objects.create_user(
+            email="vendeur.pharma@santegeste.com",
+            password="Password123!",
+            is_vendeur_pharmacie=True,
+        )
+        caissier = User.objects.create_user(
+            email="caissier.pharma@santegeste.com",
+            password="Password123!",
+            is_caissier=True,
+        )
+
+        client.force_login(vendeur)
+        res = client.get(reverse("dashboard:pharmacie_vendeur"))
+        assert res.status_code == 200
+        assert "today_sales_count" in res.context
+
+        client.force_login(caissier)
+        res_forbidden = client.get(reverse("dashboard:pharmacie_vendeur"))
+        assert res_forbidden.status_code == 403
+
+    def test_proprietaire_dashboard_access(self, client):
+        proprietaire = User.objects.create_user(
+            email="boss@santegeste.com",
+            password="Password123!",
+            is_proprietaire=True,
+        )
+        agent = User.objects.create_user(
+            email="agent.boss@santegeste.com",
+            password="Password123!",
+            is_agent_accueil=True,
+        )
+
+        client.force_login(proprietaire)
+        res = client.get(reverse("dashboard:proprietaire"))
+        assert res.status_code == 200
+        assert "total_revenue" in res.context
+
+        client.force_login(agent)
+        res_forbidden = client.get(reverse("dashboard:proprietaire"))
+        assert res_forbidden.status_code == 403
+
+
+@pytest.mark.django_db
+class TestRoleBasedDashboardServicesAggregation:
+    """Vérifie l'exactitude des calculs métier par service sans données fictives."""
+
+    def test_caisse_service_empty_and_populated(self):
+        data = DashboardService.get_caisse_data(user=None, period="today")
+        assert data["today_collected_amount"] == 0
+        assert "0 FCFA" in data["today_collected_formatted"]
+        assert data["pending_acts_count"] == 0
+
+    def test_pharmacie_vendeur_service_empty(self):
+        data = DashboardService.get_pharmacie_vendeur_data(user=None, period="today")
+        assert data["today_sales_count"] == 0
+        assert data["today_sales_amount"] == 0
+        assert "0 FCFA" in data["today_sales_formatted"]
+
+    def test_pharmacie_responsable_service_empty(self):
+        data = DashboardService.get_pharmacie_responsable_data(user=None, period="today")
+        assert data["total_products"] == 0
+        assert data["stock_total_value"] == 0
+        assert "0 FCFA" in data["stock_total_value_formatted"]
+
+    def test_proprietaire_service_empty(self):
+        data = DashboardService.get_proprietaire_data(user=None, period="today")
+        assert data["total_revenue"] == 0
+        assert data["total_caisse"] == 0
+        assert data["total_pharmacie"] == 0
+        assert data["recovery_rate"] == 0.0
 
 

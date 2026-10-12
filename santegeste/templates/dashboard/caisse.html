@@ -1,0 +1,297 @@
+{% extends "layouts/dashboard.html" %}
+{% load i18n static l10n %}
+
+{% block title %}{% trans "Caisse & Facturation" %} - CS² Health{% endblock title %}
+
+{% block breadcrumbs %}
+  <nav class="flex items-center gap-2 text-xs text-neutral-500 mb-4" aria-label="Breadcrumb">
+    <a href="{% url "home" %}" class="hover:text-primary transition-colors">{% trans "SantéGeste" %}</a>
+    <span>/</span>
+    <span class="font-semibold text-neutral-800">{% trans "Caisse & Recouvrement" %}</span>
+  </nav>
+{% endblock breadcrumbs %}
+
+{% block content_inner %}
+<div class="space-y-6 sm:space-y-8">
+
+  <!-- 1. En-tête de bienvenue & Filtre de période -->
+  {% include "components/molecules/dashboards/dashboard_welcome_header.html" %}
+
+  <!-- 2. Raccourcis d'actions rapides métier pour le Caissier -->
+  <div class="flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-neutral-200/80 shadow-xs">
+    <div class="flex flex-wrap items-center gap-2.5">
+      <span class="text-xs font-bold uppercase tracking-wider text-neutral-400 pl-1">{% trans "Opérations Caisse" %} :</span>
+      
+      <a href="{% url "patients:caisse_pending_list" %}" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#0D9488] hover:bg-[#0F766E] text-white text-xs font-bold transition shadow-xs">
+        {% include "components/atoms/icon.html" with name="banknotes" size="w-4 h-4" %}
+        <span>{% trans "Actes à Encaisser" %}</span>
+        {% if pending_acts_count > 0 %}
+          <span class="px-1.5 py-0.5 rounded-full bg-white text-[#0D9488] font-bold text-[10px]">{{ pending_acts_count }}</span>
+        {% endif %}
+      </a>
+
+      <a href="{% url "patients:facture_list" %}" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-teal-50 hover:bg-teal-100 text-[#0F766E] border border-teal-200 text-xs font-bold transition">
+        <span>{% trans "Historique des Factures" %}</span>
+      </a>
+
+      <a href="{% url "patients:facture_list" %}?status=UNPAID" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-bold transition">
+        <span>{% trans "Impayés" %} ({{ unpaid_invoices_count|default:0 }})</span>
+      </a>
+    </div>
+
+    <!-- Badge intégrité financière -->
+    <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold">
+      <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+      <span>{% trans "Encaissements réels tracés" %}</span>
+    </div>
+  </div>
+
+  <!-- 3. Grille des 4 KPIs Financiers du Caissier -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <!-- KPI 1 : Recettes encaissées aujourd'hui -->
+    <div class="bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-xs flex flex-col justify-between">
+      <div class="flex items-start justify-between">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-wider text-emerald-800">{% trans "Recettes Encaissées (Aujourd'hui)" %}</p>
+          <p class="text-2xl sm:text-3xl font-extrabold font-mono text-neutral-900 mt-2">
+            {{ today_collected_formatted }}
+          </p>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+          {% include "components/atoms/icon.html" with name="banknotes" size="w-5 h-5" %}
+        </div>
+      </div>
+      <div class="pt-3 mt-3 border-t border-neutral-100 flex items-center justify-between text-xs font-semibold">
+        <span class="text-neutral-500">{% trans "Transactions validées" %}</span>
+        <span class="text-emerald-700 font-mono font-bold">{{ today_payments_count|default:0 }} {% trans "reçus" %}</span>
+      </div>
+    </div>
+
+    <!-- KPI 2 : Total Encaissé sur la Période -->
+    <div class="bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-xs flex flex-col justify-between">
+      <div class="flex items-start justify-between">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-wider text-neutral-500">{% trans "Recettes Période" %} ({{ period_label }})</p>
+          <p class="text-2xl sm:text-3xl font-extrabold font-mono text-[#0D9488] mt-2">
+            {{ period_collected_formatted }}
+          </p>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-teal-50 text-[#0D9488] flex items-center justify-center shrink-0">
+          {% include "components/atoms/icon.html" with name="trend-up" size="w-5 h-5" %}
+        </div>
+      </div>
+      <div class="pt-3 mt-3 border-t border-neutral-100 flex items-center justify-between text-xs font-semibold">
+        <span class="text-neutral-500">{% trans "Volume période" %}</span>
+        <span class="text-neutral-700 font-mono font-bold">{{ period_payments_count|default:0 }} {% trans "paiements" %}</span>
+      </div>
+    </div>
+
+    <!-- KPI 3 : Actes en attente de facturation -->
+    <div class="bg-white border {% if pending_acts_count > 0 %}border-amber-300 bg-amber-50/15{% else %}border-neutral-200/80{% endif %} rounded-2xl p-5 shadow-xs flex flex-col justify-between">
+      <div class="flex items-start justify-between">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-wider text-amber-800">{% trans "Actes Médicaux en Attente" %}</p>
+          <p class="text-3xl font-extrabold font-title {% if pending_acts_count > 0 %}text-amber-700{% else %}text-neutral-900{% endif %} mt-2">
+            {{ pending_acts_count|default:0 }}
+          </p>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+          {% include "components/atoms/icon.html" with name="clock" size="w-5 h-5" %}
+        </div>
+      </div>
+      <div class="pt-3 mt-3 border-t border-neutral-100 flex items-center justify-between text-xs font-semibold">
+        <span class="text-amber-800">{% trans "Transmis par les médecins" %}</span>
+        <a href="{% url "patients:caisse_pending_list" %}" class="text-[#0D9488] font-bold hover:underline">{% trans "Encaisser" %} &rarr;</a>
+      </div>
+    </div>
+
+    <!-- KPI 4 : Reste à recouvrer (Factures impayées) -->
+    <div class="bg-white border {% if unpaid_invoices_count > 0 %}border-rose-300 bg-rose-50/15{% else %}border-neutral-200/80{% endif %} rounded-2xl p-5 shadow-xs flex flex-col justify-between">
+      <div class="flex items-start justify-between">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-wider text-rose-800">{% trans "Reste à Recouvrer" %}</p>
+          <p class="text-2xl sm:text-3xl font-extrabold font-mono {% if unpaid_invoices_count > 0 %}text-rose-700{% else %}text-neutral-900{% endif %} mt-2">
+            {{ total_remaining_formatted }}
+          </p>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+          {% include "components/atoms/icon.html" with name="alert-triangle" size="w-5 h-5" %}
+        </div>
+      </div>
+      <div class="pt-3 mt-3 border-t border-neutral-100 flex items-center justify-between text-xs font-semibold text-rose-800">
+        <span>{{ unpaid_invoices_count|default:0 }} {% trans "factures impayées" %}</span>
+        <span>({{ partially_paid_count|default:0 }} {% trans "partielles" %})</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. Répartition des Modes de Paiement (Donut & Badges) -->
+  <div class="bg-white rounded-3xl border border-neutral-200/80 p-6 shadow-2xs space-y-5">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-neutral-100 pb-3">
+      <div>
+        <h3 class="text-base font-bold text-neutral-900 font-title flex items-center gap-2">
+          {% include "components/atoms/icon.html" with name="chart-pie" size="w-5 h-5 text-[#0D9488]" %}
+          <span>{% trans "Répartition des Encaissements par Mode de Paiement" %}</span>
+        </h3>
+        <p class="text-xs text-neutral-500 mt-0.5">{% trans "Ventilation des montants effectivement perçus sur la période sélectionnée." %}</p>
+      </div>
+      <span class="text-xs font-extrabold px-3 py-1 rounded-xl bg-teal-50 text-[#0F766E] font-mono border border-teal-200">
+        {{ period_label }}
+      </span>
+    </div>
+
+    {% if payment_methods %}
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {% for pm in payment_methods %}
+          <div class="p-4 rounded-2xl border border-neutral-200/80 bg-neutral-50/50 flex flex-col justify-between space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-neutral-700">{{ pm.label }}</span>
+              <span class="px-2 py-0.5 rounded-full bg-white border border-neutral-200 text-[10px] font-mono font-bold text-neutral-600">
+                {{ pm.count }} {% trans "règl." %}
+              </span>
+            </div>
+            <p class="text-xl font-extrabold font-mono text-neutral-900">{{ pm.total_formatted }}</p>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="py-8 text-center text-xs text-neutral-400 border-2 border-dashed border-neutral-200 rounded-2xl bg-neutral-50/50">
+        <p class="font-bold text-neutral-600">{% trans "Aucun encaissement sur cette période" %}</p>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- 5. Grille Opérationnelle 2 Colonnes : Actes à Encaisser & Derniers Paiements Enregistrés -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+    <!-- Colonne 1 : Actes Médicaux en Attente d'Encaissement -->
+    <div class="bg-white rounded-3xl border border-neutral-200/80 p-6 shadow-2xs space-y-4">
+      <div class="flex items-center justify-between border-b border-neutral-100 pb-3">
+        <h3 class="text-base font-bold text-neutral-900 font-title flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+          <span>{% trans "Actes Médicaux à Encaisser" %}</span>
+        </h3>
+        <a href="{% url "patients:caisse_pending_list" %}" class="text-xs font-semibold text-[#0D9488] hover:text-[#0F766E] flex items-center gap-1">
+          <span>{% trans "Voir tous les actes" %}</span>
+          <span>&rarr;</span>
+        </a>
+      </div>
+
+      <div class="space-y-3">
+        {% for act in pending_acts %}
+          <div class="p-3.5 rounded-2xl border border-neutral-200/80 bg-white hover:border-[#0D9488]/40 transition shadow-2xs flex items-center justify-between gap-3">
+            <div class="min-w-0">
+              <h4 class="text-xs font-extrabold text-neutral-900 truncate">{{ act.patient.full_name }}</h4>
+              <p class="text-[11px] text-neutral-500 truncate">
+                {{ act.prestation.name }} • Dr. {{ act.doctor.full_name }}
+              </p>
+              <p class="text-[10px] text-neutral-400 mt-0.5">{{ act.created_at|date:"d/m/Y H:i" }}</p>
+            </div>
+            <div class="flex items-center gap-3 shrink-0">
+              <span class="text-xs font-mono font-bold text-neutral-900">{{ act.prestation.cost_formatted|default:act.prestation.cost }} FCFA</span>
+              <a href="{% url "patients:caisse_pending_list" %}" class="px-2.5 py-1.5 rounded-xl bg-[#0D9488] hover:bg-[#0F766E] text-white text-xs font-bold transition">
+                {% trans "Facturer" %}
+              </a>
+            </div>
+          </div>
+        {% empty %}
+          <div class="py-8 text-center text-xs text-neutral-400 border-2 border-dashed border-neutral-200 rounded-2xl bg-neutral-50/50">
+            <p class="font-bold text-neutral-600">{% trans "Aucun acte en attente d'encaissement" %}</p>
+            <p class="mt-1">{% trans "Toutes les prestations médicales ont été facturées." %}</p>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Colonne 2 : Derniers Règlements Enregistrés -->
+    <div class="bg-white rounded-3xl border border-neutral-200/80 p-6 shadow-2xs space-y-4">
+      <div class="flex items-center justify-between border-b border-neutral-100 pb-3">
+        <h3 class="text-base font-bold text-neutral-900 font-title flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+          <span>{% trans "Derniers Paiements Enregistrés" %}</span>
+        </h3>
+        <a href="{% url "patients:facture_list" %}" class="text-xs font-semibold text-[#0D9488] hover:text-[#0F766E] flex items-center gap-1">
+          <span>{% trans "Historique complet" %}</span>
+          <span>&rarr;</span>
+        </a>
+      </div>
+
+      <div class="space-y-3">
+        {% for pay in recent_payments %}
+          <div class="p-3.5 rounded-2xl border border-neutral-200/80 bg-white hover:border-[#0D9488]/40 transition shadow-2xs flex items-center justify-between gap-3">
+            <div class="min-w-0">
+              <h4 class="text-xs font-extrabold text-neutral-900 truncate">
+                {{ pay.facture.patient.full_name }}
+              </h4>
+              <p class="text-[11px] text-neutral-500 truncate">
+                {% trans "Facture" %} #{{ pay.facture.id }} • {{ pay.payment_method }}
+              </p>
+              <p class="text-[10px] text-neutral-400 mt-0.5">{{ pay.paid_at|date:"d/m/Y H:i" }}</p>
+            </div>
+            <div class="text-right shrink-0">
+              <span class="text-sm font-mono font-black text-emerald-600 block">+{{ pay.amount }} FCFA</span>
+              <a href="{% url "patients:facture_detail" pay.facture.pk %}" class="text-[11px] text-[#0D9488] hover:underline font-semibold">
+                {% trans "Reçu / Facture" %} &rarr;
+              </a>
+            </div>
+          </div>
+        {% empty %}
+          <div class="py-8 text-center text-xs text-neutral-400 border-2 border-dashed border-neutral-200 rounded-2xl bg-neutral-50/50">
+            <p class="font-bold text-neutral-600">{% trans "Aucun règlement enregistré sur cette période" %}</p>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 6. Factures Impayées Critiques -->
+  {% if unpaid_invoices %}
+    <div class="bg-white rounded-3xl border border-neutral-200/80 p-6 shadow-2xs space-y-4">
+      <div class="flex items-center justify-between border-b border-neutral-100 pb-3">
+        <h3 class="text-base font-bold text-neutral-900 font-title flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+          <span>{% trans "Factures en Attente de Solde (Rappels de Recouvrement)" %}</span>
+        </h3>
+        <a href="{% url "patients:facture_list" %}?status=UNPAID" class="text-xs font-semibold text-rose-700 hover:underline">
+          {% trans "Toutes les factures impayées" %} &rarr;
+        </a>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs">
+          <thead>
+            <tr class="border-b border-neutral-200 text-neutral-500 uppercase tracking-wider text-[10px]">
+              <th class="py-2.5 font-bold">{% trans "Facture" %}</th>
+              <th class="py-2.5 font-bold">{% trans "Patient" %}</th>
+              <th class="py-2.5 font-bold">{% trans "Émise le" %}</th>
+              <th class="py-2.5 font-bold text-right">{% trans "Montant Total" %}</th>
+              <th class="py-2.5 font-bold text-right">{% trans "Payé" %}</th>
+              <th class="py-2.5 font-bold text-right">{% trans "Reste Dû" %}</th>
+              <th class="py-2.5 font-bold text-center">{% trans "Action" %}</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-neutral-100 font-medium">
+            {% for f in unpaid_invoices %}
+              <tr class="hover:bg-neutral-50/80 transition-colors">
+                <td class="py-3 font-mono font-bold text-neutral-900">#{{ f.id }}</td>
+                <td class="py-3 font-bold">{{ f.patient.full_name }}</td>
+                <td class="py-3 text-neutral-500">{{ f.issued_at|date:"d/m/Y" }}</td>
+                <td class="py-3 text-right font-mono">{{ f.total_amount }} FCFA</td>
+                <td class="py-3 text-right font-mono text-emerald-600">{{ f.paid_amount|default:"0" }} FCFA</td>
+                <td class="py-3 text-right font-mono font-bold text-rose-600">{{ f.balance }} FCFA</td>
+                <td class="py-3 text-center">
+                  <a href="{% url "patients:facture_detail" f.pk %}" class="inline-flex items-center px-2.5 py-1 rounded-lg bg-teal-50 text-[#0F766E] hover:bg-teal-100 font-bold text-[11px] transition">
+                    {% trans "Régler" %}
+                  </a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock content_inner %}

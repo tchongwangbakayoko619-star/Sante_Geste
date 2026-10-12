@@ -370,9 +370,265 @@
         <span data-sidebar-label>{% trans "Paramètres" %}</span>
       </a>
 
+    {% elif request.user.is_vendeur_pharmacie and not request.user.is_proprietaire and not request.user.is_superuser %}
+      <!-- ======================================================================
+           ESPACE PROFESSIONNEL DÉDIÉ : VENDEUR PHARMACIE
+           ====================================================================== -->
+      <!-- 📊 Tableau de bord -->
+      <a
+        href="{% url "home" %}"
+        aria-label="{% trans "Tableau de bord" %}"
+        data-sidebar-tooltip="{% trans "Tableau de bord" %}"
+        class="sidebar-nav-item flex items-center gap-3.5 px-4 py-3 rounded-xl border-l-[5px] text-sm font-bold text-white transition-all focus-visible:outline-2 focus-visible:outline-emerald-300 {% if current_route == 'home' or current_route == 'pharmacie_vendeur' %}border-emerald-300 bg-teal-400/20 shadow-sm shadow-teal-950/30{% else %}border-transparent hover:bg-white/10{% endif %}"{% if current_route == 'home' or current_route == 'pharmacie_vendeur' %} aria-current="page"{% endif %}>
+        <div class="w-6 h-6 flex items-center justify-center shrink-0">
+          <span class="text-base">📊</span>
+        </div>
+        <span data-sidebar-label>{% trans "Tableau de bord" %}</span>
+      </a>
+
+      <!-- 📦 Produits -->
+      <a
+        href="{% url "pharmacy:product_list" %}"
+        aria-label="{% trans "Produits" %}"
+        data-sidebar-tooltip="{% trans "Produits" %}"
+        class="sidebar-nav-item flex items-center gap-3.5 px-4 py-3 rounded-xl border-l-[5px] text-sm font-semibold transition-all focus-visible:outline-2 focus-visible:outline-emerald-300 {% if current_route == 'product_list' or current_route == 'product_detail' %}border-emerald-300 bg-teal-400/20 text-white shadow-sm shadow-teal-950/30{% else %}border-transparent text-emerald-100/90 hover:text-white hover:bg-white/10{% endif %}">
+        <div class="w-6 h-6 flex items-center justify-center shrink-0">
+          <span class="text-base">📦</span>
+        </div>
+        <span data-sidebar-label>{% trans "Produits" %}</span>
+      </a>
+
+      <!-- 💊 Prescriptions à Délivrer -->
+      <a
+        href="{% url "patients:pharmacy_ordonnance_list" %}"
+        aria-label="{% trans "Prescriptions" %}"
+        data-sidebar-tooltip="{% trans "Prescriptions" %}"
+        class="sidebar-nav-item flex items-center gap-3.5 px-4 py-3 rounded-xl border-l-[5px] text-sm font-semibold transition-all focus-visible:outline-2 focus-visible:outline-emerald-300 {% if current_route == 'pharmacy_ordonnance_list' %}border-emerald-300 bg-teal-400/20 text-white shadow-sm shadow-teal-950/30{% else %}border-transparent text-emerald-100/90 hover:text-white hover:bg-white/10{% endif %}">
+        <div class="w-6 h-6 flex items-center justify-center shrink-0">
+          <span class="text-base">💊</span>
+        </div>
+        <span data-sidebar-label>{% trans "Prescriptions" %}</span>
+      </a>
+
+      <!-- 🧾 Nouvelle Vente -->
+      <a
+        href="{% url "pharmacy:sale_create" %}"
+        aria-label="{% trans "Nouvelle vente" %}"
+        data-sidebar-tooltip="{% trans "Nouvelle vente" %}"
+        class="sidebar-nav-item flex items-center gap-3.5 px-4 py-3 rounded-xl border-l-[5px] text-sm font-semibold transition-all focus-visible:outline-2 focus-visible:outline-emerald-300 {% if current_route == 'sale_create' %}border-emerald-300 bg-teal-400/20 text-white shadow-sm shadow-teal-950/30{% else %}border-transparent text-emerald-100/90 hover:text-white hover:bg-white/10{% endif %}">
+        <div class="w-6 h-6 flex items-center justify-center shrink-0">
+          <span class="text-base">🧾</span>
+        </div>
+        <span data-sidebar-label>{% trans "Nouvelle vente" %}</span>
+      </a>
+
+      <!-- 🧾 Historique Ventes -->
+      <a
+        href="{% url "pharmacy:sale_list" %}"
+        aria-label="{% trans "Historique Ventes" %}"
+        data-sidebar-tooltip="{% trans "Historique Ventes" %}"
+        class="sidebar-nav-item flex items-center gap-3.5 px-4 py-3 rounded-xl border-l-[5px] text-sm font-semibold transition-all focus-visible:outline-2 focus-visible:outline-emerald-300 {% if current_route == 'sale_list' or current_route == 'sale_detail' %}border-emerald-300 bg-teal-400/20 text-white shadow-sm shadow-teal-950/30{% else %}border-transparent text-emerald-100/90 hover:text-white hover:bg-white/10{% endif %}">
+        <div class="w-6 h-6 flex items-center justify-center shrink-0">
+          {% include "components/atoms/icon.html" with name="shopping-bag" size="w-5 h-5 text-emerald-300" %}
+        </div>
+        <span data-sidebar-label>{% trans "Historique Ventes" %}</span>
+      </a>
+
+    {% elif request.user.is_caissier and not request.user.is_proprietaire and not request.user.is_superuser %}
+      <!-- ======================================================================
+           ESPACE PROFESSIONNEL DÉDIÉ : CAISSIER
+           ====================================================================== -->
+      <!-- 📊 Tableau de bord -->
+      <a
+        href="{% url "home" %}"
+        aria-label="{% trans "Tableau de bord" %}"
+        data-sidebar-tooltip="{% trans "Tableau de bord" %}"
+        class="sidebar-nav-item flex items-center gap-3.5 px-4 py-3 rounded-xl border-l-[5px] text-sm font-bold text-white transition-all focus-visible:outline-2 focus-visible:outline-emerald-300 {% if current_route == 'home' or current_route == 'caisse' %}border-emerald-300 bg-teal-400/20 shadow-sm shadow-teal-950/30{% else %}border-transparent hover:bg-white/10{% endif %}"{% if current_route == 'home' or current_route == 'caisse' %} aria-current="page"{% endif %}>
+        <div class="w-6 h-6 flex items-center justify-center shrink-0">
+          {% include "components/atoms/icon.html" with name="dashboard-grid" size="w-5 h-5 text-emerald-200" %}
+        </div>
+        <span data-sidebar-label>{% trans "Tableau de bord" %}</span>
+      </a>
+
+      <!-- Actes à Encaisser -->
+      <a
+        href="{% url "patients:caisse_pending_list" %}"
+        aria-label="{% trans "Actes à encaisser" %}"
+        data-sidebar-tooltip="{% trans "Actes à encaisser" %}"
+        class="sidebar-nav-item flex items-center gap-3.5 px-4 py-3 rounded-xl border-l-[5px] text-sm font-semibold transition-all focus-visible:outline-2 focus-visible:outline-emerald-300 {% if current_route == 'caisse_pending_list' %}border-emerald-300 bg-teal-400/20 text-white shadow-sm shadow-teal-950/30{% else %}border-transparent text-emerald-100/90 hover:text-white hover:bg-white/10{% endif %}">
+        <div class="w-6 h-6 flex items-center justify-center shrink-0">
+          {% include "components/atoms/icon.html" with name="banknotes" size="w-5 h-5 text-emerald-300" %}
+        </div>
+        <span data-sidebar-label>{% trans "Actes à encaisser" %}</span>
+      </a>
+
+      <!-- Historique Factures -->
+      <a
+        href="{% url "patients:facture_list" %}"
+        aria-label="{% trans "Historique Factures" %}"
+        data-sidebar-tooltip="{% trans "Historique Factures" %}"
+        class="sidebar-nav-item flex items-center gap-3.5 px-4 py-3 rounded-xl border-l-[5px] text-sm font-semibold transition-all focus-visible:outline-2 focus-visible:outline-emerald-300 {% if current_route == 'facture_list' or current_route == 'facture_detail' %}border-emerald-300 bg-teal-400/20 text-white shadow-sm shadow-teal-950/30{% else %}border-transparent text-emerald-100/90 hover:text-white hover:bg-white/10{% endif %}">
+        <div class="w-6 h-6 flex items-center justify-center shrink-0">
+          {% include "components/atoms/icon.html" with name="clipboard-document-list" size="w-5 h-5 text-emerald-300" %}
+        </div>
+        <span data-sidebar-label>{% trans "Historique Factures" %}</span>
+      </a>
+
+    {% elif request.user.is_personnel_medical and not request.user.is_proprietaire and not request.user.is_superuser %}
+      <!-- ======================================================================
+           ESPACE PROFESSIONNEL DÉDIÉ : PERSONNEL MÉDICAL
+           ====================================================================== -->
+      <!-- 📊 Tableau de bord -->
+      <a
+        href="{% url "home" %}"
+        aria-label="{% trans "Tableau de bord" %}"
+        data-sidebar-tooltip="{% trans "Tableau de bord" %}"
+        class="sidebar-nav-item flex items-center gap-3.5 px-4 py-3 rounded-xl border-l-[5px] text-sm font-bold text-white transition-all focus-visible:outline-2 focus-visible:outline-emerald-300 {% if current_route == 'home' or current_route == 'medical' %}border-emerald-300 bg-teal-400/20 shadow-sm shadow-teal-950/30{% else %}border-transparent hover:bg-white/10{% endif %}"{% if current_route == 'home' or current_route == 'medical' %} aria-current="page"{% endif %}>
+        <div class="w-6 h-6 flex items-center justify-center shrink-0">
+          {% include "components/atoms/icon.html" with name="dashboard-grid" size="w-5 h-5 text-emerald-200" %}
+        </div>
+        <span data-sidebar-label>{% trans "Tableau de bord" %}</span>
+      </a>
+
+      <!-- Rendez-vous (Mes RDV & Agenda) -->
+      <div class="space-y-1 relative" data-sidebar-item-container>
+        <button
+          type="button"
+          onclick="toggleMenu('med-rdv-submenu', this)"
+          aria-label="{% trans "Rendez-vous" %}"
+          data-sidebar-tooltip="{% trans "Rendez-vous" %}"
+          data-flyout-target="rdv-flyout"
+          class="sidebar-nav-item w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-emerald-300 {% if current_route == 'my_appointments' or current_route == 'appointment_list' %}bg-teal-400/15 text-white border-l-[5px] border-emerald-300{% else %}text-emerald-100/90 hover:text-white hover:bg-white/10 border-l-[5px] border-transparent{% endif %}"
+          aria-controls="med-rdv-submenu"
+          aria-expanded="true">
+          <div class="flex items-center gap-3.5">
+            <div class="w-6 h-6 flex items-center justify-center shrink-0">
+              {% include "components/atoms/icon.html" with name="calendar" size="w-5 h-5 text-emerald-300" %}
+            </div>
+            <span data-sidebar-label>{% trans "Rendez-vous" %}</span>
+          </div>
+          <svg class="w-4 h-4 text-emerald-300 transition-transform transform shrink-0" id="med-rdv-submenu-chevron" data-sidebar-label fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+
+        <div id="med-rdv-submenu" data-sidebar-submenu class="relative ml-12 border-l border-teal-300/30 pl-6 pr-2 space-y-1">
+          <a href="{% url "patients:my_appointments" %}" class="relative flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs {% if current_route == 'my_appointments' %}bg-white/10 text-white font-bold{% else %}text-slate-300 hover:bg-white/10 hover:text-white{% endif %} transition-colors before:absolute before:-left-[31px] before:top-1/2 before:size-2 before:-translate-y-1/2 before:rounded-full before:bg-teal-400 before:ring-4 before:ring-[#052d31]">
+            <span>{% trans "Mes rendez-vous" %}</span>
+          </a>
+          <a href="{% url "patients:appointment_list" %}" class="relative flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs {% if current_route == 'appointment_list' %}bg-white/10 text-white font-bold{% else %}text-slate-300 hover:bg-white/10 hover:text-white{% endif %} transition-colors before:absolute before:-left-[31px] before:top-1/2 before:size-2 before:-translate-y-1/2 before:rounded-full before:bg-teal-400 before:ring-4 before:ring-[#052d31]">
+            <span>{% trans "Agenda complet" %}</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Consultations Médicales -->
+      <a
+        href="{% url "patients:consultation_list" %}"
+        aria-label="{% trans "Consultations" %}"
+        data-sidebar-tooltip="{% trans "Consultations" %}"
+        class="sidebar-nav-item flex items-center gap-3.5 px-4 py-3 rounded-xl border-l-[5px] text-sm font-semibold transition-all focus-visible:outline-2 focus-visible:outline-emerald-300 {% if current_route == 'consultation_list' or current_route == 'consultation_create' or current_route == 'consultation_detail' %}border-emerald-300 bg-teal-400/20 text-white shadow-sm shadow-teal-950/30{% else %}border-transparent text-emerald-100/90 hover:text-white hover:bg-white/10{% endif %}">
+        <div class="w-6 h-6 flex items-center justify-center shrink-0">
+          {% include "components/atoms/icon.html" with name="clipboard-document-list" size="w-5 h-5 text-emerald-300" %}
+        </div>
+        <span data-sidebar-label>{% trans "Consultations" %}</span>
+      </a>
+
+      <!-- Dossiers Patients -->
+      <a
+        href="{% url "patients:patient_list" %}"
+        aria-label="{% trans "Dossiers Patients" %}"
+        data-sidebar-tooltip="{% trans "Dossiers Patients" %}"
+        class="sidebar-nav-item flex items-center gap-3.5 px-4 py-3 rounded-xl border-l-[5px] text-sm font-semibold transition-all focus-visible:outline-2 focus-visible:outline-emerald-300 {% if current_route == 'patient_list' or current_route == 'patient_detail' %}border-emerald-300 bg-teal-400/20 text-white shadow-sm shadow-teal-950/30{% else %}border-transparent text-emerald-100/90 hover:text-white hover:bg-white/10{% endif %}">
+        <div class="w-6 h-6 flex items-center justify-center shrink-0">
+          {% include "components/atoms/icon.html" with name="users" size="w-5 h-5 text-emerald-300" %}
+        </div>
+        <span data-sidebar-label>{% trans "Dossiers Patients" %}</span>
+      </a>
+
+    {% elif request.user.is_agent_accueil and not request.user.is_proprietaire and not request.user.is_superuser %}
+      <!-- ======================================================================
+           ESPACE PROFESSIONNEL DÉDIÉ : AGENT D'ACCUEIL
+           ====================================================================== -->
+      <!-- 📊 Tableau de bord -->
+      <a
+        href="{% url "home" %}"
+        aria-label="{% trans "Tableau de bord" %}"
+        data-sidebar-tooltip="{% trans "Tableau de bord" %}"
+        class="sidebar-nav-item flex items-center gap-3.5 px-4 py-3 rounded-xl border-l-[5px] text-sm font-bold text-white transition-all focus-visible:outline-2 focus-visible:outline-emerald-300 {% if current_route == 'home' or current_route == 'accueil' %}border-emerald-300 bg-teal-400/20 shadow-sm shadow-teal-950/30{% else %}border-transparent hover:bg-white/10{% endif %}"{% if current_route == 'home' or current_route == 'accueil' %} aria-current="page"{% endif %}>
+        <div class="w-6 h-6 flex items-center justify-center shrink-0">
+          {% include "components/atoms/icon.html" with name="dashboard-grid" size="w-5 h-5 text-emerald-200" %}
+        </div>
+        <span data-sidebar-label>{% trans "Tableau de bord" %}</span>
+      </a>
+
+      <!-- Gestion Patients (Tous les dossiers, + Nouveau patient) -->
+      <div class="space-y-1 relative" data-sidebar-item-container>
+        <button
+          type="button"
+          onclick="toggleMenu('acc-patients-submenu', this)"
+          aria-label="{% trans "Gestion Patients" %}"
+          data-sidebar-tooltip="{% trans "Gestion Patients" %}"
+          data-flyout-target="patients-flyout"
+          class="sidebar-nav-item w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-emerald-300 {% if current_route == 'patient_list' or current_route == 'patient_create' or current_route == 'patient_detail' or current_route == 'patient_update' %}bg-teal-400/15 text-white border-l-[5px] border-emerald-300{% else %}text-emerald-100/90 hover:text-white hover:bg-white/10 border-l-[5px] border-transparent{% endif %}"
+          aria-controls="acc-patients-submenu"
+          aria-expanded="true">
+          <div class="flex items-center gap-3.5">
+            <div class="w-6 h-6 flex items-center justify-center shrink-0">
+              {% include "components/atoms/icon.html" with name="users" size="w-5 h-5 text-emerald-300" %}
+            </div>
+            <span data-sidebar-label>{% trans "Gestion Patients" %}</span>
+          </div>
+          <svg class="w-4 h-4 text-emerald-300 transition-transform transform shrink-0" id="acc-patients-submenu-chevron" data-sidebar-label fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+
+        <div id="acc-patients-submenu" data-sidebar-submenu class="relative ml-12 border-l border-teal-300/30 pl-6 pr-2 space-y-1">
+          <a href="{% url "patients:patient_list" %}" class="relative flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs {% if current_route == 'patient_list' or current_route == 'patient_detail' %}bg-white/10 text-white font-bold{% else %}text-slate-300 hover:bg-white/10 hover:text-white{% endif %} transition-colors before:absolute before:-left-[31px] before:top-1/2 before:size-2 before:-translate-y-1/2 before:rounded-full before:bg-teal-400 before:ring-4 before:ring-[#052d31]">
+            <span>{% trans "Tous les dossiers" %}</span>
+          </a>
+          <a href="{% url "patients:patient_create" %}" class="relative flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs {% if current_route == 'patient_create' %}bg-white/10 text-white font-bold{% else %}text-slate-300 hover:bg-white/10 hover:text-white{% endif %} transition-colors before:absolute before:-left-[31px] before:top-1/2 before:size-2 before:-translate-y-1/2 before:rounded-full before:bg-teal-400 before:ring-4 before:ring-[#052d31]">
+            <span>{% trans "+ Nouveau patient" %}</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Rendez-vous & Agenda (Agenda complet, + Planifier un RDV) -->
+      <div class="space-y-1 relative" data-sidebar-item-container>
+        <button
+          type="button"
+          onclick="toggleMenu('acc-rdv-submenu', this)"
+          aria-label="{% trans "Rendez-vous & Agenda" %}"
+          data-sidebar-tooltip="{% trans "Rendez-vous & Agenda" %}"
+          data-flyout-target="rdv-flyout"
+          class="sidebar-nav-item w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-emerald-300 {% if current_route == 'appointment_list' or current_route == 'appointment_create' %}bg-teal-400/15 text-white border-l-[5px] border-emerald-300{% else %}text-emerald-100/90 hover:text-white hover:bg-white/10 border-l-[5px] border-transparent{% endif %}"
+          aria-controls="acc-rdv-submenu"
+          aria-expanded="true">
+          <div class="flex items-center gap-3.5">
+            <div class="w-6 h-6 flex items-center justify-center shrink-0">
+              {% include "components/atoms/icon.html" with name="calendar" size="w-5 h-5 text-emerald-300" %}
+            </div>
+            <span data-sidebar-label>{% trans "Rendez-vous & Ag..." %}</span>
+          </div>
+          <svg class="w-4 h-4 text-emerald-300 transition-transform transform shrink-0" id="acc-rdv-submenu-chevron" data-sidebar-label fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+
+        <div id="acc-rdv-submenu" data-sidebar-submenu class="relative ml-12 border-l border-teal-300/30 pl-6 pr-2 space-y-1">
+          <a href="{% url "patients:appointment_list" %}" class="relative flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs {% if current_route == 'appointment_list' %}bg-white/10 text-white font-bold{% else %}text-slate-300 hover:bg-white/10 hover:text-white{% endif %} transition-colors before:absolute before:-left-[31px] before:top-1/2 before:size-2 before:-translate-y-1/2 before:rounded-full before:bg-teal-400 before:ring-4 before:ring-[#052d31]">
+            <span>{% trans "Agenda complet" %}</span>
+          </a>
+          <a href="{% url "patients:appointment_create" %}" class="relative flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs {% if current_route == 'appointment_create' %}bg-white/10 text-white font-bold{% else %}text-slate-300 hover:bg-white/10 hover:text-white{% endif %} transition-colors before:absolute before:-left-[31px] before:top-1/2 before:size-2 before:-translate-y-1/2 before:rounded-full before:bg-teal-400 before:ring-4 before:ring-[#052d31]">
+            <span>{% trans "+ Planifier un RDV" %}</span>
+          </a>
+        </div>
+      </div>
+
     {% else %}
       <!-- ======================================================================
-           NAVIGATION STANDARD POUR AUTRES RÔLES
+           ESPACE DIRECTION & SUPERVISION GÉNÉRALE (PROPRIÉTAIRE / ADMIN)
            ====================================================================== -->
 
       <!-- Item 1: Dashboard (Active) -->
@@ -380,14 +636,14 @@
         href="{% url "home" %}"
         aria-label="{% trans "Dashboard" %}"
         data-sidebar-tooltip="{% trans "Dashboard" %}"
-        class="sidebar-nav-item flex items-center gap-3.5 px-4 py-3 rounded-xl border-l-[5px] text-sm font-bold text-white transition-all focus-visible:outline-2 focus-visible:outline-emerald-300 {% if current_route == 'home' %}border-emerald-300 bg-teal-400/20 shadow-sm shadow-teal-950/30{% else %}border-transparent hover:bg-white/10{% endif %}"{% if current_route == 'home' %} aria-current="page"{% endif %}>
+        class="sidebar-nav-item flex items-center gap-3.5 px-4 py-3 rounded-xl border-l-[5px] text-sm font-bold text-white transition-all focus-visible:outline-2 focus-visible:outline-emerald-300 {% if current_route == 'home' or current_route == 'proprietaire' %}border-emerald-300 bg-teal-400/20 shadow-sm shadow-teal-950/30{% else %}border-transparent hover:bg-white/10{% endif %}"{% if current_route == 'home' or current_route == 'proprietaire' %} aria-current="page"{% endif %}>
         <div class="w-6 h-6 flex items-center justify-center shrink-0">
           {% include "components/atoms/icon.html" with name="dashboard-grid" size="w-5 h-5 text-emerald-200" %}
         </div>
-        <span data-sidebar-label>{% trans "Dashboard" %}</span>
+        <span data-sidebar-label>{% trans "Tableau de bord" %}</span>
       </a>
 
-      <!-- Item 2: Gestion Patients (Collapsible / Flyout in Mini) -->
+      <!-- Item 2: Gestion Patients -->
       <div class="space-y-1 relative" data-sidebar-item-container>
         <button
           type="button"
@@ -395,7 +651,7 @@
           aria-label="{% trans "Gestion Patients" %}"
           data-sidebar-tooltip="{% trans "Gestion Patients" %}"
           data-flyout-target="patients-flyout"
-          class="sidebar-nav-item w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-emerald-300 {% if current_route == 'patient_list' or current_route == 'patient_create' or current_route == 'patient_detail' or current_route == 'patient_update' or current_route == 'patient_medical_update' or current_route == 'patient_allergy_create' or current_route == 'patient_allergy_delete' %}bg-teal-400/15 text-white border-l-[5px] border-emerald-300{% else %}text-emerald-100/90 hover:text-white hover:bg-white/10 border-l-[5px] border-transparent{% endif %}"
+          class="sidebar-nav-item w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-emerald-300 {% if current_route == 'patient_list' or current_route == 'patient_create' or current_route == 'patient_detail' or current_route == 'patient_update' %}bg-teal-400/15 text-white border-l-[5px] border-emerald-300{% else %}text-emerald-100/90 hover:text-white hover:bg-white/10 border-l-[5px] border-transparent{% endif %}"
           aria-controls="patients-submenu"
           aria-expanded="true">
           <div class="flex items-center gap-3.5">
@@ -409,22 +665,19 @@
           </svg>
         </button>
 
-        <!-- Inline Accordion Submenu (Mode Expanded) -->
         <div id="patients-submenu" data-sidebar-submenu class="relative ml-12 border-l border-teal-300/30 pl-6 pr-2 space-y-1">
-          <a href="{% url "patients:patient_list" %}" class="relative flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs {% if current_route == 'patient_list' or current_route == 'patient_detail' or current_route == 'patient_update' or current_route == 'patient_medical_update' or current_route == 'patient_allergy_create' or current_route == 'patient_allergy_delete' %}bg-white/10 text-white{% else %}text-slate-300 hover:bg-white/10 hover:text-white{% endif %} transition-colors before:absolute before:-left-[31px] before:top-1/2 before:size-2 before:-translate-y-1/2 before:rounded-full before:bg-teal-400 before:ring-4 before:ring-[#052d31]">
+          <a href="{% url "patients:patient_list" %}" class="relative flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs {% if current_route == 'patient_list' or current_route == 'patient_detail' or current_route == 'patient_update' %}bg-white/10 text-white{% else %}text-slate-300 hover:bg-white/10 hover:text-white{% endif %} transition-colors before:absolute before:-left-[31px] before:top-1/2 before:size-2 before:-translate-y-1/2 before:rounded-full before:bg-teal-400 before:ring-4 before:ring-[#052d31]">
             {% include "components/atoms/icon.html" with name="users" size="w-3.5 h-3.5 shrink-0" %}
             <span>{% trans "Tous les dossiers" %}</span>
           </a>
-          {% if request.user.is_agent_accueil or request.user.is_superuser %}
-            <a href="{% url "patients:patient_create" %}" class="relative flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs {% if current_route == 'patient_create' %}bg-white/10 text-white{% else %}text-slate-300 hover:bg-white/10 hover:text-white{% endif %} transition-colors before:absolute before:-left-[31px] before:top-1/2 before:size-2 before:-translate-y-1/2 before:rounded-full before:bg-teal-400 before:ring-4 before:ring-[#052d31]">
-              <svg class="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" d="M12 5v14m-7-7h14" /></svg>
-              <span>{% trans "+ Nouveau patient" %}</span>
-            </a>
-          {% endif %}
+          <a href="{% url "patients:patient_create" %}" class="relative flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs {% if current_route == 'patient_create' %}bg-white/10 text-white{% else %}text-slate-300 hover:bg-white/10 hover:text-white{% endif %} transition-colors before:absolute before:-left-[31px] before:top-1/2 before:size-2 before:-translate-y-1/2 before:rounded-full before:bg-teal-400 before:ring-4 before:ring-[#052d31]">
+            <svg class="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" d="M12 5v14m-7-7h14" /></svg>
+            <span>{% trans "+ Nouveau patient" %}</span>
+          </a>
         </div>
       </div>
 
-      <!-- Item 3: Rendez-vous & Agenda (Collapsible / Flyout in Mini) -->
+      <!-- Item 3: Rendez-vous & Agenda -->
       <div class="space-y-1 relative" data-sidebar-item-container>
         <button
           type="button"
@@ -432,7 +685,7 @@
           aria-label="{% trans "Rendez-vous & Agenda" %}"
           data-sidebar-tooltip="{% trans "Rendez-vous & Agenda" %}"
           data-flyout-target="rdv-flyout"
-          class="sidebar-nav-item w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-emerald-300 {% if current_route == 'appointment_list' or current_route == 'appointment_create' or current_route == 'appointment_status_update' or current_route == 'appointment_cancel' %}bg-teal-400/15 text-white border-l-[5px] border-emerald-300{% else %}text-emerald-100/90 hover:text-white hover:bg-white/10 border-l-[5px] border-transparent{% endif %}"
+          class="sidebar-nav-item w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-emerald-300 {% if current_route == 'appointment_list' or current_route == 'appointment_create' or current_route == 'my_appointments' %}bg-teal-400/15 text-white border-l-[5px] border-emerald-300{% else %}text-emerald-100/90 hover:text-white hover:bg-white/10 border-l-[5px] border-transparent{% endif %}"
           aria-controls="rdv-submenu"
           aria-expanded="true">
           <div class="flex items-center gap-3.5">
@@ -446,29 +699,22 @@
           </svg>
         </button>
 
-        <!-- Inline Accordion Submenu (Mode Expanded) -->
         <div id="rdv-submenu" data-sidebar-submenu class="relative ml-12 border-l border-teal-300/30 pl-6 pr-2 space-y-1">
           <a href="{% url "patients:appointment_list" %}" class="relative flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs {% if current_route == 'appointment_list' %}bg-white/10 text-white{% else %}text-slate-300 hover:bg-white/10 hover:text-white{% endif %} transition-colors before:absolute before:-left-[31px] before:top-1/2 before:size-2 before:-translate-y-1/2 before:rounded-full before:bg-teal-400 before:ring-4 before:ring-[#052d31]">
             {% include "components/atoms/icon.html" with name="calendar" size="w-3.5 h-3.5 shrink-0" %}
             <span>{% trans "Agenda complet" %}</span>
           </a>
-          {% if request.user.is_personnel_medical or request.user.is_superuser %}
-            <a href="{% url "patients:my_appointments" %}" class="relative flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs {% if current_route == 'my_appointments' %}bg-white/10 text-white{% else %}text-slate-300 hover:bg-white/10 hover:text-white{% endif %} transition-colors before:absolute before:-left-[31px] before:top-1/2 before:size-2 before:-translate-y-1/2 before:rounded-full before:bg-teal-400 before:ring-4 before:ring-[#052d31]">
-              {% include "components/atoms/icon.html" with name="calendar" size="w-3.5 h-3.5 shrink-0" %}
-              <span>{% trans "Mes rendez-vous" %}</span>
-            </a>
-          {% endif %}
-          {% if request.user.is_agent_accueil or request.user.is_superuser %}
-            <a href="{% url "patients:appointment_create" %}" class="relative flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs {% if current_route == 'appointment_create' %}bg-white/10 text-white{% else %}text-slate-300 hover:bg-white/10 hover:text-white{% endif %} transition-colors before:absolute before:-left-[31px] before:top-1/2 before:size-2 before:-translate-y-1/2 before:rounded-full before:bg-teal-400 before:ring-4 before:ring-[#052d31]">
-              <svg class="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" d="M12 5v14m-7-7h14" /></svg>
-              <span>{% trans "+ Planifier un RDV" %}</span>
-            </a>
-          {% endif %}
+          <a href="{% url "patients:my_appointments" %}" class="relative flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs {% if current_route == 'my_appointments' %}bg-white/10 text-white{% else %}text-slate-300 hover:bg-white/10 hover:text-white{% endif %} transition-colors before:absolute before:-left-[31px] before:top-1/2 before:size-2 before:-translate-y-1/2 before:rounded-full before:bg-teal-400 before:ring-4 before:ring-[#052d31]">
+            <span>{% trans "Mes rendez-vous" %}</span>
+          </a>
+          <a href="{% url "patients:appointment_create" %}" class="relative flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs {% if current_route == 'appointment_create' %}bg-white/10 text-white{% else %}text-slate-300 hover:bg-white/10 hover:text-white{% endif %} transition-colors before:absolute before:-left-[31px] before:top-1/2 before:size-2 before:-translate-y-1/2 before:rounded-full before:bg-teal-400 before:ring-4 before:ring-[#052d31]">
+            <svg class="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" d="M12 5v14m-7-7h14" /></svg>
+            <span>{% trans "+ Planifier un RDV" %}</span>
+          </a>
         </div>
       </div>
 
       <!-- Item 4: Consultations Médicales -->
-      {% if request.user.is_personnel_medical or request.user.is_agent_accueil or request.user.is_superuser %}
       <a
         href="{% url "patients:consultation_list" %}"
         aria-label="{% trans "Consultations" %}"
@@ -479,10 +725,8 @@
         </div>
         <span data-sidebar-label>{% trans "Consultations" %}</span>
       </a>
-      {% endif %}
 
       <!-- Item 5: Module Caisse & Factures -->
-      {% if request.user.is_caissier or request.user.is_proprietaire or request.user.is_superuser %}
       <div class="space-y-1 relative" data-sidebar-item-container>
         <button
           type="button"
@@ -513,10 +757,8 @@
           </a>
         </div>
       </div>
-      {% endif %}
 
       <!-- Item 5.5: Module Pharmacie -->
-      {% if request.user.is_responsable_pharmacie or request.user.is_vendeur_pharmacie or request.user.is_proprietaire or request.user.is_superuser %}
       <div class="space-y-1 relative" data-sidebar-item-container>
         <button
           type="button"
@@ -544,7 +786,7 @@
             <span>📊 {% trans "Tableau de bord" %}</span>
           </a>
 
-          <!-- 📦 Stock (Responsable / Admin) -->
+          <!-- 📦 Stock -->
           <div class="pt-1">
             <span class="block px-2 text-[10px] font-bold uppercase tracking-wider text-teal-300/70">
               📦 {% trans "Stock" %}
@@ -553,7 +795,6 @@
               <a href="{% url "pharmacy:product_list" %}" class="flex items-center rounded-lg px-2 py-1 text-xs {% if current_route == 'product_list' or current_route == 'product_detail' or current_route == 'product_create' or current_route == 'product_update' %}bg-white/10 text-white font-bold{% else %}text-slate-300 hover:bg-white/10 hover:text-white{% endif %} transition-colors">
                 <span>{% trans "Produits" %}</span>
               </a>
-              {% if request.user.is_responsable_pharmacie or request.user.is_proprietaire or request.user.is_superuser %}
               <a href="{% url "pharmacy:batch_list" %}" class="flex items-center rounded-lg px-2 py-1 text-xs {% if current_route == 'batch_list' %}bg-white/10 text-white font-bold{% else %}text-slate-300 hover:bg-white/10 hover:text-white{% endif %} transition-colors">
                 <span>{% trans "Lots" %}</span>
               </a>
@@ -563,12 +804,10 @@
               <a href="{% url "pharmacy:stock_adjustment" %}" class="flex items-center rounded-lg px-2 py-1 text-xs {% if current_route == 'stock_adjustment' %}bg-white/10 text-white font-bold{% else %}text-slate-300 hover:bg-white/10 hover:text-white{% endif %} transition-colors">
                 <span>{% trans "Inventaire" %}</span>
               </a>
-              {% endif %}
             </div>
           </div>
 
-          <!-- 🚚 Approvisionnement (Responsable / Admin) -->
-          {% if request.user.is_responsable_pharmacie or request.user.is_proprietaire or request.user.is_superuser %}
+          <!-- 🚚 Approvisionnement -->
           <div class="pt-1">
             <span class="block px-2 text-[10px] font-bold uppercase tracking-wider text-teal-300/70">
               🚚 {% trans "Approvisionnement" %}
@@ -582,7 +821,6 @@
               </a>
             </div>
           </div>
-          {% endif %}
 
           <!-- 💊 Délivrance -->
           <div class="pt-1">
@@ -617,8 +855,7 @@
             </div>
           </div>
 
-          <!-- 📈 Rapports & ⚙️ Paramètres (Responsable / Admin) -->
-          {% if request.user.is_responsable_pharmacie or request.user.is_proprietaire or request.user.is_superuser %}
+          <!-- 📈 Rapports & ⚙️ Paramètres -->
           <div class="pt-2 border-t border-teal-300/20 space-y-1">
             <a href="{% url "pharmacy:reports" %}" class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs {% if current_route == 'reports' %}bg-white/10 text-white font-bold{% else %}text-slate-300 hover:bg-white/10 hover:text-white{% endif %} transition-colors">
               <span>📈 {% trans "Rapports" %}</span>
@@ -627,12 +864,10 @@
               <span>⚙️ {% trans "Paramètres" %}</span>
             </a>
           </div>
-          {% endif %}
         </div>
       </div>
-      {% endif %}
 
-      <!-- Item 6: Rapports & Statistiques -->
+      <!-- Item 6: Rapports & Statistiques Globaux -->
       <a
         href="{% url "dashboard:reports_home" %}"
         aria-label="{% trans "Rapports & Exports" %}"

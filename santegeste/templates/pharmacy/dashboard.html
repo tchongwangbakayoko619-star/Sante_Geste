@@ -34,14 +34,14 @@
 
   <!-- Cartes d'indicateurs KPIs -->
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-    <!-- KPI 1 : Produits en stock -->
+    <!-- KPI 1 : Valorisation du Stock -->
     <div class="bg-white p-5 rounded-2xl border border-neutral-200/80 shadow-xs space-y-2">
       <div class="flex items-center justify-between text-neutral-500">
-        <span class="text-xs font-bold uppercase tracking-wider">{% trans "Catalogue Produits" %}</span>
+        <span class="text-xs font-bold uppercase tracking-wider text-[#0d9488]">{% trans "Valorisation Stock" %}</span>
         <span class="p-2 rounded-xl bg-teal-50 text-[#0d9488]">📦</span>
       </div>
-      <div class="text-2xl font-black text-neutral-900 font-mono">{{ total_products }}</div>
-      <p class="text-[11px] text-neutral-400">{% trans "Références médicales enregistrées" %}</p>
+      <div class="text-2xl font-black text-neutral-900 font-mono">{{ stock_total_value_formatted|default:"0 FCFA" }}</div>
+      <p class="text-[11px] text-neutral-400">{{ total_products|default:0 }} {% trans "médicaments catalogués" %}</p>
     </div>
 
     <!-- KPI 2 : Alertes Stock Faible -->
@@ -50,7 +50,7 @@
         <span class="text-xs font-bold uppercase tracking-wider text-amber-800">{% trans "Stock Faible / Rupture" %}</span>
         <span class="p-2 rounded-xl bg-amber-50 text-amber-600">⚠️</span>
       </div>
-      <div class="text-2xl font-black {% if low_stock_count > 0 %}text-amber-700{% else %}text-neutral-900{% endif %} font-mono">{{ low_stock_count }}</div>
+      <div class="text-2xl font-black {% if low_stock_count > 0 %}text-amber-700{% else %}text-neutral-900{% endif %} font-mono">{{ low_stock_count|default:0 }}</div>
       <p class="text-[11px] text-amber-800/80">{% trans "Articles sous le seuil d'alerte" %}</p>
     </div>
 
@@ -60,8 +60,8 @@
         <span class="text-xs font-bold uppercase tracking-wider text-rose-800">{% trans "Péremptions (< 90j)" %}</span>
         <span class="p-2 rounded-xl bg-rose-50 text-rose-600">⏳</span>
       </div>
-      <div class="text-2xl font-black {% if expiring_soon_count > 0 or expired_batches_count > 0 %}text-rose-700{% else %}text-neutral-900{% endif %} font-mono">{{ expiring_soon_count }}</div>
-      <p class="text-[11px] text-rose-800/80">{{ expired_batches_count }} {% trans "lots déjà expirés" %}</p>
+      <div class="text-2xl font-black {% if expiring_soon_count > 0 or expired_batches_count > 0 %}text-rose-700{% else %}text-neutral-900{% endif %} font-mono">{{ expiring_soon_count|default:expiring_batches_count|default:0 }}</div>
+      <p class="text-[11px] text-rose-800/80">{{ expired_batches_count|default:0 }} {% trans "lots déjà expirés" %}</p>
     </div>
 
     <!-- KPI 4 : Ventes du jour -->
@@ -70,8 +70,8 @@
         <span class="text-xs font-bold uppercase tracking-wider text-emerald-800">{% trans "Ventes du jour" %}</span>
         <span class="p-2 rounded-xl bg-emerald-50 text-emerald-600">💰</span>
       </div>
-      <div class="text-2xl font-black text-neutral-900 font-mono">{{ today_revenue }} FCFA</div>
-      <p class="text-[11px] text-neutral-500">{{ today_sales_count }} {% trans "ventes enregistrées aujourd'hui" %}</p>
+      <div class="text-2xl font-black text-neutral-900 font-mono">{{ today_revenue|default:today_sales_formatted|default:"0 FCFA" }}</div>
+      <p class="text-[11px] text-neutral-500">{{ today_sales_count|default:0 }} {% trans "ventes enregistrées aujourd'hui" %}</p>
     </div>
   </div>
 

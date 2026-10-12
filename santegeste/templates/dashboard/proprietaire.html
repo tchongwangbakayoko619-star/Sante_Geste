@@ -1,0 +1,246 @@
+{% extends "layouts/dashboard.html" %}
+{% load i18n static l10n %}
+
+{% block title %}{% trans "Direction & Gouvernance Hospitalière" %} - CS² Health{% endblock title %}
+
+{% block breadcrumbs %}
+  <nav class="flex items-center gap-2 text-xs text-neutral-500 mb-4" aria-label="Breadcrumb">
+    <a href="{% url "home" %}" class="hover:text-primary transition-colors">{% trans "SantéGeste" %}</a>
+    <span>/</span>
+    <span class="font-semibold text-neutral-800">{% trans "Direction & Pilotage" %}</span>
+  </nav>
+{% endblock breadcrumbs %}
+
+{% block content_inner %}
+<div class="space-y-6 sm:space-y-8">
+
+  <!-- 1. En-tête de bienvenue & Filtre de période -->
+  {% include "components/molecules/dashboards/dashboard_welcome_header.html" %}
+
+  <!-- 2. Raccourcis d'actions rapides et gouvernance -->
+  <div class="flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-neutral-200/80 shadow-xs">
+    <div class="flex flex-wrap items-center gap-2.5">
+      <span class="text-xs font-bold uppercase tracking-wider text-neutral-400 pl-1">{% trans "Pilotage Direction" %} :</span>
+      
+      <a href="{% url "dashboard:reports_home" %}" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#0D9488] hover:bg-[#0F766E] text-white text-xs font-bold transition shadow-xs">
+        {% include "components/atoms/icon.html" with name="chart-bar" size="w-4 h-4" %}
+        <span>{% trans "Rapports d'Activité & Exports" %}</span>
+      </a>
+
+      <a href="{% url "patients:facture_list" %}" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-teal-50 hover:bg-teal-100 text-[#0F766E] border border-teal-200 text-xs font-bold transition">
+        <span>{% trans "Suivi Facturation" %}</span>
+      </a>
+
+      <a href="{% url "pharmacy:dashboard" %}" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white hover:bg-neutral-50 text-neutral-700 border border-neutral-200 text-xs font-bold transition">
+        <span>{% trans "Valorisation Pharmacie" %}</span>
+      </a>
+
+      <a href="{% url "patients:patient_list" %}" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white hover:bg-neutral-50 text-neutral-700 border border-neutral-200 text-xs font-bold transition">
+        <span>{% trans "Registre Général Patients" %}</span>
+      </a>
+    </div>
+
+    <!-- Taux de Recouvrement Global -->
+    <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold">
+      <span>{% trans "Taux de Recouvrement" %} :</span>
+      <span class="font-mono text-sm text-[#0D9488]">{{ recovery_rate }}%</span>
+    </div>
+  </div>
+
+  <!-- 3. Grille des 4 KPIs Stratégiques de Direction -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <!-- KPI 1 : Recettes Totales Réelles (Caisse + Pharmacie) -->
+    <div class="bg-white border border-teal-300/80 bg-teal-50/10 rounded-2xl p-5 shadow-xs flex flex-col justify-between">
+      <div class="flex items-start justify-between">
+        <div>
+          <p class="text-xs font-bold uppercase tracking-wider text-[#0D9488]">{% trans "Recettes Réelles Totales" %}</p>
+          <p class="text-2xl sm:text-3xl font-extrabold font-mono text-neutral-900 mt-2">
+            {{ total_revenue_formatted }}
+          </p>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-teal-50 text-[#0D9488] flex items-center justify-center shrink-0">
+          {% include "components/atoms/icon.html" with name="banknotes" size="w-5 h-5" %}
+        </div>
+      </div>
+      <div class="pt-3 mt-3 border-t border-neutral-100 flex items-center justify-between text-xs font-semibold">
+        <span class="text-neutral-500">{% trans "Caisse :" %} {{ total_caisse_formatted }}</span>
+        <span class="text-neutral-500">{% trans "Pharmacie :" %} {{ total_pharmacie_formatted }}</span>
+      </div>
+    </div>
+
+    <!-- KPI 2 : Capital Médicaments en Stock -->
+    <div class="bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-xs flex flex-col justify-between">
+      <div class="flex items-start justify-between">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-wider text-neutral-500">{% trans "Valorisation des Stocks" %}</p>
+          <p class="text-2xl sm:text-3xl font-extrabold font-mono text-neutral-900 mt-2">
+            {{ stock_value_formatted }}
+          </p>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+          {% include "components/atoms/icon.html" with name="beaker" size="w-5 h-5" %}
+        </div>
+      </div>
+      <div class="pt-3 mt-3 border-t border-neutral-100 flex items-center justify-between text-xs font-semibold text-neutral-500">
+        <span>{% trans "Capital pharmacie immobilisé" %}</span>
+      </div>
+    </div>
+
+    <!-- KPI 3 : Activité Médicale Hospitalière -->
+    <div class="bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-xs flex flex-col justify-between">
+      <div class="flex items-start justify-between">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-wider text-neutral-500">{% trans "Activité Médicale" %} ({{ period_label }})</p>
+          <p class="text-3xl font-extrabold font-title text-neutral-900 mt-2">
+            {{ consultations_period|default:0 }}
+          </p>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+          {% include "components/atoms/icon.html" with name="clipboard-document-list" size="w-5 h-5" %}
+        </div>
+      </div>
+      <div class="pt-3 mt-3 border-t border-neutral-100 flex items-center justify-between text-xs font-semibold text-neutral-500">
+        <span>{{ total_patients|default:0 }} {% trans "patients actifs" %}</span>
+        <span class="text-blue-600 font-bold">+{{ new_patients_period|default:0 }} {% trans "admis" %}</span>
+      </div>
+    </div>
+
+    <!-- KPI 4 : Créances Hospitalières Impayées -->
+    <div class="bg-white border {% if unpaid_balance > 0 %}border-rose-300 bg-rose-50/15{% else %}border-neutral-200/80{% endif %} rounded-2xl p-5 shadow-xs flex flex-col justify-between">
+      <div class="flex items-start justify-between">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-wider text-rose-800">{% trans "Créances en Attente" %}</p>
+          <p class="text-2xl sm:text-3xl font-extrabold font-mono {% if unpaid_balance > 0 %}text-rose-700{% else %}text-neutral-900{% endif %} mt-2">
+            {{ unpaid_balance_formatted }}
+          </p>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+          {% include "components/atoms/icon.html" with name="alert-triangle" size="w-5 h-5" %}
+        </div>
+      </div>
+      <div class="pt-3 mt-3 border-t border-neutral-100 flex items-center justify-between text-xs font-semibold text-rose-800">
+        <span>{% trans "Reste à recouvrer" %}</span>
+        <span>{{ recovery_rate }}% {% trans "encaissé" %}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. Tableau de Synthèse des Pôles Hospitaliers -->
+  <div class="bg-white rounded-3xl border border-neutral-200/80 p-6 shadow-2xs space-y-4">
+    <div class="flex items-center justify-between border-b border-neutral-100 pb-3">
+      <h3 class="text-base font-bold text-neutral-900 font-title flex items-center gap-2">
+        <span>🏥 {% trans "Performance & Synthèse par Pôle Opérationnel" %}</span>
+      </h3>
+      <span class="text-xs text-neutral-400 font-medium">{{ period_label }}</span>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {% for dept in departments_summary %}
+        <div class="p-4 rounded-2xl border border-neutral-200/80 bg-neutral-50/50 flex flex-col justify-between space-y-3">
+          <div class="flex items-center justify-between">
+            <h4 class="text-xs font-extrabold text-neutral-900">{{ dept.name }}</h4>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold border {{ dept.badge_class }}">
+              {{ dept.status }}
+            </span>
+          </div>
+          <div>
+            <p class="text-xs text-neutral-500 font-medium">{{ dept.indicator_label }}</p>
+            <p class="text-xl font-extrabold font-mono text-[#0D9488] mt-0.5">{{ dept.indicator_value }}</p>
+          </div>
+          <div class="pt-2 border-t border-neutral-200/60 flex items-center justify-between text-xs font-semibold">
+            <span class="text-neutral-400">{% trans "Volume d'activité" %}</span>
+            <span class="font-mono text-neutral-800">{{ dept.volume }}</span>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- 5. Grille Opérationnelle 2 Colonnes : Dernières Transactions & Principaux Impayés -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+    <!-- Colonne 1 : Flux Financiers Récents (Traçabilité) -->
+    <div class="bg-white rounded-3xl border border-neutral-200/80 p-6 shadow-2xs space-y-4">
+      <div class="flex items-center justify-between border-b border-neutral-100 pb-3">
+        <h3 class="text-base font-bold text-neutral-900 font-title flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+          <span>{% trans "Derniers Encaissements Tracés" %}</span>
+        </h3>
+        <a href="{% url "patients:facture_list" %}" class="text-xs font-semibold text-[#0D9488] hover:text-[#0F766E] flex items-center gap-1">
+          <span>{% trans "Voir tout" %}</span>
+          <span>&rarr;</span>
+        </a>
+      </div>
+
+      <div class="space-y-3">
+        {% for tx in recent_transactions %}
+          <div class="p-3.5 rounded-2xl border border-neutral-200/80 bg-white hover:border-[#0D9488]/40 transition shadow-2xs flex items-center justify-between gap-3">
+            <div class="min-w-0">
+              <h4 class="text-xs font-extrabold text-neutral-900 truncate">
+                {{ tx.facture.patient.full_name }}
+              </h4>
+              <p class="text-[11px] text-neutral-500 truncate">
+                {% trans "Facture" %} #{{ tx.facture.id }} • {{ tx.payment_method }} • {% trans "Par" %} {{ tx.cashier.get_full_name|default:tx.cashier.email }}
+              </p>
+              <p class="text-[10px] text-neutral-400 mt-0.5">{{ tx.paid_at|date:"d/m/Y H:i" }}</p>
+            </div>
+            <div class="text-right shrink-0">
+              <span class="text-sm font-mono font-black text-emerald-600 block">+{{ tx.amount }} FCFA</span>
+              <a href="{% url "patients:facture_detail" tx.facture.pk %}" class="text-[11px] text-[#0D9488] hover:underline font-semibold">
+                {% trans "Facture" %} &rarr;
+              </a>
+            </div>
+          </div>
+        {% empty %}
+          <div class="py-8 text-center text-xs text-neutral-400 border-2 border-dashed border-neutral-200 rounded-2xl bg-neutral-50/50">
+            <p class="font-bold text-neutral-600">{% trans "Aucun encaissement sur la période" %}</p>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Colonne 2 : Créances les Plus Importantes -->
+    <div class="bg-white rounded-3xl border border-neutral-200/80 p-6 shadow-2xs space-y-4">
+      <div class="flex items-center justify-between border-b border-neutral-100 pb-3">
+        <h3 class="text-base font-bold text-neutral-900 font-title flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+          <span>{% trans "Créances Importantes à Recouvrer" %}</span>
+        </h3>
+        <a href="{% url "patients:facture_list" %}?status=UNPAID" class="text-xs font-semibold text-rose-700 hover:underline">
+          {% trans "Toutes les créances" %} &rarr;
+        </a>
+      </div>
+
+      <div class="space-y-3">
+        {% for inv in unpaid_top %}
+          <div class="p-3.5 rounded-2xl border border-neutral-200/80 bg-white hover:border-rose-300 transition shadow-2xs flex items-center justify-between gap-3">
+            <div class="min-w-0">
+              <h4 class="text-xs font-extrabold text-neutral-900 truncate">
+                {{ inv.patient.full_name }}
+              </h4>
+              <p class="text-[11px] text-neutral-500 truncate">
+                {% trans "Facture" %} #{{ inv.id }} • {% trans "Émise le" %} {{ inv.issued_at|date:"d/m/Y" }}
+              </p>
+              <p class="text-[10px] text-neutral-400 mt-0.5">
+                {% trans "Payé :" %} {{ inv.paid_amount|default:0 }} FCFA / {{ inv.total_amount }} FCFA
+              </p>
+            </div>
+            <div class="text-right shrink-0">
+              <span class="text-sm font-mono font-black text-rose-600 block">{{ inv.balance }} FCFA</span>
+              <a href="{% url "patients:facture_detail" inv.pk %}" class="text-[11px] text-[#0D9488] hover:underline font-semibold">
+                {% trans "Détails" %} &rarr;
+              </a>
+            </div>
+          </div>
+        {% empty %}
+          <div class="py-8 text-center text-xs text-neutral-400 border-2 border-dashed border-neutral-200 rounded-2xl bg-neutral-50/50">
+            <p class="font-bold text-neutral-600">{% trans "Aucune créance en attente" %}</p>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+  </div>
+
+</div>
+{% endblock content_inner %}
