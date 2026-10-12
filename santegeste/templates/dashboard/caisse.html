@@ -188,7 +188,7 @@
               <p class="text-[10px] text-neutral-400 mt-0.5">{{ act.created_at|date:"d/m/Y H:i" }}</p>
             </div>
             <div class="flex items-center gap-3 shrink-0">
-              <span class="text-xs font-mono font-bold text-neutral-900">{{ act.prestation.cost_formatted|default:act.prestation.cost }} FCFA</span>
+              <span class="text-xs font-mono font-bold text-neutral-900">{{ act.total_price }} FCFA</span>
               <a href="{% url "patients:caisse_pending_list" %}" class="px-2.5 py-1.5 rounded-xl bg-[#0D9488] hover:bg-[#0F766E] text-white text-xs font-bold transition">
                 {% trans "Facturer" %}
               </a>

@@ -1,6 +1,7 @@
 """Tests unitaires et d'intégration pour le module Dashboard."""
 
 from datetime import timedelta
+from decimal import Decimal
 import pytest
 
 from django.contrib.auth import get_user_model
@@ -340,11 +341,43 @@ class TestRoleBasedDashboardsRBAC:
             password="Password123!",
             is_agent_accueil=True,
         )
+        # Test avec une prestation réalisée pour vérifier que le template s'affiche sans VariableDoesNotExist
+        from apps.patients.models.prestation import Prestation, PrestationRealisee
+        doctor = User.objects.create_user(
+            email="dr.presta@santegeste.com",
+            password="Password123!",
+            is_personnel_medical=True,
+        )
+        patient = Patient.objects.create(
+            first_name="Jean",
+            last_name="Presta",
+            phone_number="+237699887766",
+        )
+        prestation = Prestation.objects.create(
+            name="Consultation Généraliste",
+            code="CONS-001",
+            standard_price=Decimal("5000.00"),
+        )
+        PrestationRealisee.objects.create(
+            patient=patient,
+            doctor=doctor,
+            prestation=prestation,
+            unit_price=Decimal("5000.00"),
+            quantity=1,
+            total_price=Decimal("5000.00"),
+        )
 
         client.force_login(caissier)
+        # 1. Accès via / (qui route vers caisse pour le caissier)
+        res_home = client.get(reverse("home"))
+        assert res_home.status_code == 200
+        assert "5000" in res_home.content.decode("utf-8")
+
+        # 2. Accès direct via dashboard:caisse
         res = client.get(reverse("dashboard:caisse"))
         assert res.status_code == 200
         assert "today_collected_amount" in res.context
+        assert "5000" in res.content.decode("utf-8")
 
         client.force_login(agent)
         res_forbidden = client.get(reverse("dashboard:caisse"))
