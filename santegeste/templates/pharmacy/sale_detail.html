@@ -42,6 +42,51 @@
     </div>
   </div>
 
+  <!-- Alerte de Contrôle Hospitalier : Statut de Paiement & Délivrance -->
+  {% if sale.status == 'COMPLETED' %}
+    <div class="bg-emerald-50 border border-emerald-200 p-4 rounded-2xl flex items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <span class="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold text-sm shrink-0">
+          ✓
+        </span>
+        <div>
+          <h4 class="text-xs font-bold text-emerald-950 uppercase tracking-wider">
+            {% trans "Paiement validé par la Caisse — Délivrance autorisée" %}
+          </h4>
+          <p class="text-[11px] text-emerald-800 mt-0.5">
+            {% trans "Le règlement complet a été perçu à la caisse. Vous pouvez remettre les médicaments au patient en toute conformité." %}
+          </p>
+        </div>
+      </div>
+      {% if latest_payment %}
+        <span class="font-mono text-xs font-bold bg-white text-emerald-800 px-3 py-1.5 rounded-xl border border-emerald-200 shrink-0">
+          Reçu N° {{ latest_payment.receipt_number }}
+        </span>
+      {% endif %}
+    </div>
+  {% elif sale.status == 'PENDING_PAYMENT' %}
+    <div class="bg-amber-50 border border-amber-300 p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <span class="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center font-bold text-sm shrink-0 animate-pulse">
+          ⏳
+        </span>
+        <div>
+          <h4 class="text-xs font-bold text-amber-950 uppercase tracking-wider">
+            {% trans "En attente d'encaissement à la Caisse — Ne pas délivrer les médicaments" %}
+          </h4>
+          <p class="text-[11px] text-amber-800 mt-0.5">
+            {% trans "La facture a été émise et transmise au guichet caisse. Veuillez attendre la validation du paiement avant de remettre les produits au patient." %}
+          </p>
+        </div>
+      </div>
+      {% if sale.facture %}
+        <a href="{% url "patients:facture_detail" sale.facture.pk %}" class="px-3.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-xl transition shrink-0 inline-flex items-center gap-1.5 shadow-2xs">
+          <span>{% trans "Vérifier la caisse" %}</span> &rarr;
+        </a>
+      {% endif %}
+    </div>
+  {% endif %}
+
   <!-- Détails et Lignes de Vente -->
   <div class="bg-white p-6 sm:p-8 rounded-2xl border border-neutral-200/80 shadow-xs space-y-6">
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-4 border-b border-neutral-100 text-xs">

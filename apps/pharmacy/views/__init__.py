@@ -70,7 +70,9 @@ class PharmacyDashboardView(PharmacyAccessRequiredMixin, TemplateView):
         context["today_revenue"] = today_sales.aggregate(total=Sum("total_amount"))["total"] or Decimal("0.00")
 
         # Ordonnances en attente de délivrance
-        context["pending_prescriptions_count"] = Ordonnance.objects.filter(status="PENDING").count()
+        pending_prescriptions_qs = Ordonnance.objects.filter(status="PENDING").select_related("patient", "doctor").prefetch_related("lines").order_by("-prescribed_at")
+        context["pending_prescriptions_count"] = pending_prescriptions_qs.count()
+        context["pending_prescriptions"] = pending_prescriptions_qs[:5]
 
         # Dernières ventes
         context["recent_sales"] = Sale.objects.select_related("seller", "patient").order_by("-sale_date")[:8]
