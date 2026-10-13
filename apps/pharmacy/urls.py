@@ -12,6 +12,7 @@ from apps.pharmacy.views import (
     ProductUpdateView,
     SaleCancelView,
     SaleCreateView,
+    SaleDeliverySlipView,
     SaleDetailView,
     SaleListView,
     StockAdjustmentView,
@@ -48,6 +49,7 @@ urlpatterns = [
     path("ventes/", SaleListView.as_view(), name="sale_list"),
     path("ventes/nouvelle/", SaleCreateView.as_view(), name="sale_create"),
     path("ventes/<uuid:pk>/", SaleDetailView.as_view(), name="sale_detail"),
+    path("ventes/<uuid:pk>/bordereau/", SaleDeliverySlipView.as_view(), name="sale_delivery_slip"),
     path("ventes/<uuid:pk>/annuler/", SaleCancelView.as_view(), name="sale_cancel"),
 
     # Fournisseurs & Catégories

@@ -446,3 +446,33 @@ def test_pharmacy_reports_filtering(client, responsable_pharmacie, vendeur_pharm
         assert "loss_units" in res_r.context
         assert res_r.context["selected_period"] == p
 
+
+@pytest.mark.django_db
+def test_sale_delivery_slip_view(client, vendeur_pharmacie, product_paracetamol, patient, supplier):
+    """Test 14: Accès au bordereau officiel de délivrance physique des médicaments."""
+    StockService.receive_batch(
+        product=product_paracetamol,
+        batch_number="LOT-SLIP-01",
+        expiry_date=date.today() + timedelta(days=120),
+        quantity=50,
+        purchase_price=Decimal("100.00"),
+        selling_price=Decimal("200.00"),
+        user=vendeur_pharmacie,
+        supplier=supplier,
+    )
+    sale = SaleService.create_sale(
+        seller=vendeur_pharmacie,
+        items_data=[{"product": product_paracetamol, "quantity": 5}],
+        patient=patient,
+    )
+
+    client.force_login(vendeur_pharmacie)
+    url = reverse("pharmacy:sale_delivery_slip", kwargs={"pk": sale.pk})
+    response = client.get(url)
+    assert response.status_code == 200
+    assert "sale" in response.context
+    assert response.context["sale"] == sale
+    assert b"BORDEREAU DE D" in response.content or "Bordereau" in response.content.decode("utf-8")
+    assert "LOT-SLIP-01" in response.content.decode("utf-8")
+
+

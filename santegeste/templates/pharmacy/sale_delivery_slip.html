@@ -1,0 +1,260 @@
+{% extends "layouts/base.html" %}
+{% load i18n static %}
+
+{% block title %}{% trans "Bordereau de Délivrance" %} {{ sale.sale_number }} - SantéGeste{% endblock %}
+
+{% block content %}
+<style>
+  @media print {
+    body {
+      background-color: #ffffff !important;
+      color: #020617 !important;
+    }
+    .no-print {
+      display: none !important;
+    }
+    .print-sheet {
+      box-shadow: none !important;
+      border: none !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      max-width: 100% !important;
+      width: 100% !important;
+    }
+    * {
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+    @page {
+      size: A4;
+      margin: 15mm 15mm 15mm 15mm;
+    }
+  }
+</style>
+
+<div class="min-h-screen bg-neutral-100 p-4 sm:p-8 font-sans print:bg-white print:p-0">
+  <div class="max-w-3xl mx-auto bg-white p-8 sm:p-12 rounded-3xl border border-neutral-200/90 shadow-xl print-sheet print:shadow-none print:border-none print:max-w-none print:p-0">
+
+    <!-- Actions / Outils (masqués à l'impression) -->
+    <div class="flex items-center justify-between border-b border-neutral-200 pb-5 mb-8 no-print">
+      <a href="{% url "pharmacy:sale_detail" sale.pk %}" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-neutral-200 text-neutral-700 font-semibold text-xs sm:text-sm hover:bg-neutral-50 transition-colors shadow-2xs">
+        <svg class="w-4 h-4 text-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+        {% trans "Retour au détail de la vente" %}
+      </a>
+      <div class="flex items-center gap-2">
+        {% if latest_payment %}
+          <a href="{% url "patients:paiement_receipt" latest_payment.pk %}" target="_blank" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 font-bold text-xs hover:bg-emerald-100 transition-colors">
+            {% include "components/atoms/icon.html" with name="printer" size="w-3.5 h-3.5 text-emerald-600" %}
+            {% trans "Reçu Caisse (N° " %}{{ latest_payment.receipt_number }})
+          </a>
+        {% endif %}
+        <button onclick="window.print()" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#0d9488] hover:bg-[#0f766e] text-white font-bold text-xs sm:text-sm transition-colors shadow-xs cursor-pointer">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+          {% trans "Imprimer le Bordereau" %}
+        </button>
+      </div>
+    </div>
+
+    <!-- En-tête Hospitalier SantéGeste -->
+    <div class="flex justify-between items-start border-b-2 border-[#0d9488] pb-6 mb-6">
+      <div class="flex items-start gap-3.5">
+        <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-[#0d9488] via-[#0f766e] to-[#042f2e] text-white flex items-center justify-center shrink-0 shadow-xs">
+          <svg class="w-8 h-8 text-white" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M19 6C19 4.89543 19.8954 4 21 4H27C28.1046 4 29 4.89543 29 6V18H41C42.1046 18 43 18.8954 43 20V26C43 27.1046 42.1046 28 41 28H29V42C29 43.1046 28.1046 44 27 44H21C19.8954 44 19 43.1046 19 42V28H7C5.89543 28 5 27.1046 5 26V20C5 18.8954 5.89543 18 7 18H19V6Z" fill="white"/>
+            <path d="M4 24H15L18 17L22 31L26 21L28 25L30 24H44" stroke="#0d9488" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-xl font-extrabold text-[#0f766e] font-title tracking-tight">
+            SantéGeste
+          </h1>
+          <p class="text-xs font-semibold text-[#0d9488]">Pharmacie Hospitalière & Dispensaire</p>
+          <p class="text-[11px] text-neutral-500">Centre de Santé Médical CS² Health • Traçabilité FEFO</p>
+        </div>
+      </div>
+
+      <div class="text-right">
+        <span class="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-teal-100 text-teal-800 border border-teal-300">
+          {% trans "Document Officiel de Délivrance" %}
+        </span>
+        <h2 class="text-base font-extrabold text-neutral-900 font-title uppercase mt-1">{% trans "BORDEREAU DE DÉLIVRANCE" %}</h2>
+        <p class="text-xs font-mono font-bold text-[#0d9488]">{{ sale.sale_number }}</p>
+        <p class="text-[11px] text-neutral-500 font-mono mt-0.5">{{ sale.sale_date|date:"d/m/Y - H:i" }}</p>
+      </div>
+    </div>
+
+    <!-- Informations Patient & Prescription -->
+    <div class="grid grid-cols-2 gap-4 bg-teal-50/40 p-4 rounded-2xl border border-teal-100 text-xs mb-6">
+      <div>
+        <span class="text-[10px] font-bold text-neutral-400 uppercase tracking-wider block mb-0.5">{% trans "Bénéficiaire / Patient" %}</span>
+        <p class="font-bold text-neutral-900 text-sm">
+          {% if sale.patient %}
+            {{ sale.patient.full_name }}
+          {% else %}
+            {{ sale.client_name|default:_("Client au comptoir") }}
+          {% endif %}
+        </p>
+        {% if sale.patient %}
+          <p class="text-neutral-600 font-mono text-[11px]">Dossier N° {{ sale.patient.patient_number }}</p>
+          {% if sale.patient.phone_number %}
+            <p class="text-neutral-500 text-[11px]">{{ sale.patient.phone_number }}</p>
+          {% endif %}
+        {% endif %}
+      </div>
+      <div class="text-right">
+        <span class="text-[10px] font-bold text-neutral-400 uppercase tracking-wider block mb-0.5">{% trans "Dispensation & Contrôle" %}</span>
+        <p class="font-bold text-neutral-900 text-sm">{% trans "Pharmacien" %} : {{ sale.seller.full_name }}</p>
+        {% if sale.ordonnance %}
+          <p class="text-neutral-600 text-[11px]">{% trans "Prescrit par" %} Dr. {{ sale.ordonnance.doctor.full_name }}</p>
+          <p class="text-neutral-500 font-mono text-[10px]">{% trans "Prescription du" %} {{ sale.ordonnance.prescribed_at|date:"d/m/Y" }}</p>
+        {% else %}
+          <p class="text-neutral-600 text-[11px]">{% trans "Vente directe au comptoir" %}</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Statut de Contrôle & Quittance Financière -->
+    <div class="flex items-center justify-between p-3.5 bg-neutral-50 rounded-xl border border-neutral-200 text-xs mb-6">
+      <div class="flex items-center gap-2">
+        <span class="font-bold text-neutral-700">{% trans "Statut de délivrance" %} :</span>
+        <span class="font-bold font-mono px-2 py-0.5 rounded-lg {% if sale.status == 'COMPLETED' %}bg-emerald-100 text-emerald-800{% else %}bg-amber-100 text-amber-800{% endif %}">
+          {{ sale.get_status_display }}
+        </span>
+      </div>
+      {% if latest_payment %}
+        <div class="flex items-center gap-2 text-right">
+          <span class="text-neutral-500">{% trans "Quittance Caisse" %} :</span>
+          <span class="font-mono font-bold text-emerald-700">Reçu N° {{ latest_payment.receipt_number }} ({{ latest_payment.get_payment_method_display }})</span>
+        </div>
+      {% elif sale.facture %}
+        <div class="flex items-center gap-2 text-right">
+          <span class="text-neutral-500">{% trans "Facture Caisse" %} :</span>
+          <span class="font-mono font-bold text-neutral-700">{{ sale.facture.invoice_number }} ({{ sale.facture.get_status_display }})</span>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Tableau Clinique des Médicaments Délivrés, Lots & Traçabilité -->
+    <div class="border border-neutral-200 rounded-2xl overflow-hidden mb-6">
+      <div class="bg-neutral-50/80 px-4 py-2.5 border-b border-neutral-200 flex items-center justify-between">
+        <h3 class="text-xs font-bold text-neutral-800 uppercase tracking-wider">
+          {% trans "Médicaments et Produits Pharmaceutiques Remis" %}
+        </h3>
+        <span class="text-[11px] font-mono text-neutral-500 font-bold">{{ items|length }} {% trans "ligne(s)" %}</span>
+      </div>
+      <table class="w-full text-left border-collapse text-xs">
+        <thead>
+          <tr class="bg-white border-b border-neutral-200 text-[10px] font-extrabold text-neutral-400 uppercase tracking-wider">
+            <th class="py-2.5 px-4">#</th>
+            <th class="py-2.5 px-4">{% trans "Désignation Médicament / Forme" %}</th>
+            <th class="py-2.5 px-4">{% trans "Lot Précis & Péremption" %}</th>
+            <th class="py-2.5 px-4 text-center">{% trans "Quantité" %}</th>
+            <th class="py-2.5 px-4 text-right">{% trans "Prix Unitaire" %}</th>
+            <th class="py-2.5 px-4 text-right">{% trans "Total Ligne" %}</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-neutral-100">
+          {% for item in items %}
+            <tr class="hover:bg-neutral-50/40">
+              <td class="py-3 px-4 font-mono text-neutral-400 text-[11px]">{{ forloop.counter }}</td>
+              <td class="py-3 px-4 font-bold text-neutral-900">
+                {{ item.product.name }}
+                {% if item.product.dci %}
+                  <span class="block text-[10px] text-neutral-500 font-normal">DCI: {{ item.product.dci }}</span>
+                {% endif %}
+              </td>
+              <td class="py-3 px-4 font-mono text-neutral-700">
+                {% if item.batch %}
+                  <strong class="text-neutral-900">{{ item.batch.batch_number }}</strong>
+                  <span class="block text-[10px] text-neutral-400">Exp: {{ item.batch.expiry_date|date:"d/m/Y" }}</span>
+                {% else %}
+                  <span class="text-neutral-400">-</span>
+                {% endif %}
+              </td>
+              <td class="py-3 px-4 text-center font-mono font-bold text-neutral-900 text-sm">
+                {{ item.quantity }}
+              </td>
+              <td class="py-3 px-4 text-right font-mono text-neutral-600">
+                {{ item.unit_price }} FCFA
+              </td>
+              <td class="py-3 px-4 text-right font-mono font-extrabold text-neutral-900">
+                {{ item.total_price }} FCFA
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Récapitulatif Posologie / Instructions si Ordonnance -->
+    {% if sale.ordonnance and sale.ordonnance.lines.all %}
+      <div class="bg-amber-50/60 border border-amber-200/80 rounded-2xl p-4 mb-6 text-xs space-y-2">
+        <h4 class="font-bold text-amber-950 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+          <span>📋 {% trans "Rappel de Posologie & Conseils de Prise (Prescription Médicale)" %}</span>
+        </h4>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+          {% for l in sale.ordonnance.lines.all %}
+            <div class="p-2 bg-white rounded-lg border border-amber-100">
+              <p class="font-bold text-neutral-900">{{ l.medication_name }}</p>
+              <p class="text-[11px] text-neutral-600"><strong>{% trans "Posologie" %} :</strong> {{ l.posology }}</p>
+              {% if l.duration %}
+                <p class="text-[10px] text-neutral-500"><strong>{% trans "Durée" %} :</strong> {{ l.duration }}</p>
+              {% endif %}
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    {% endif %}
+
+    <!-- Notes du Pharmacien -->
+    {% if sale.notes %}
+      <div class="p-3 bg-neutral-50 rounded-xl border border-neutral-200 text-xs mb-6">
+        <strong class="text-neutral-700 block mb-1">{% trans "Recommandations particulières du pharmacien" %} :</strong>
+        <p class="text-neutral-600 italic">« {{ sale.notes }} »</p>
+      </div>
+    {% endif %}
+
+    <!-- Totaux Financiers -->
+    <div class="flex justify-end mb-8 text-xs">
+      <div class="w-72 space-y-1.5 border-t border-neutral-200 pt-3">
+        <div class="flex justify-between text-neutral-500">
+          <span>{% trans "Total brut" %} :</span>
+          <span class="font-mono font-bold text-neutral-800">{{ sale.subtotal }} FCFA</span>
+        </div>
+        {% if sale.discount_amount > 0 %}
+          <div class="flex justify-between text-rose-600">
+            <span>{% trans "Remise" %} :</span>
+            <span class="font-mono font-bold">- {{ sale.discount_amount }} FCFA</span>
+          </div>
+        {% endif %}
+        <div class="flex justify-between text-sm font-extrabold text-neutral-900 border-t border-dashed border-neutral-200 pt-2">
+          <span>{% trans "Net perçu / réglé" %} :</span>
+          <span class="font-mono text-base text-[#0d9488]">{{ sale.total_amount }} FCFA</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Signatures Officielles (Pharmacien & Patient / Destinataire) -->
+    <div class="grid grid-cols-2 gap-8 pt-6 border-t-2 border-neutral-200 text-xs">
+      <div>
+        <p class="font-bold text-neutral-700 uppercase tracking-wider text-[11px]">{% trans "Le Bénéficiaire / Patient" %}</p>
+        <p class="text-[10px] text-neutral-400 mt-0.5">{% trans "Mention « Reçu conforme » et émargement" %}</p>
+        <div class="h-20 border-b border-dashed border-neutral-300 mt-2"></div>
+      </div>
+      <div class="text-right">
+        <p class="font-bold text-neutral-700 uppercase tracking-wider text-[11px]">{% trans "Le Pharmacien Dispensateur" %}</p>
+        <p class="text-[10px] text-neutral-400 mt-0.5">{% trans "Signature & Cachet de la Pharmacie" %}</p>
+        <div class="h-20 border-b border-dashed border-neutral-300 mt-2 flex items-end justify-end pb-1">
+          <span class="font-mono text-[10px] text-neutral-400">Dr / Pharm. {{ sale.seller.full_name }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pied de Page de Conformité -->
+    <div class="text-center text-[10px] text-neutral-400 pt-6 mt-6 border-t border-neutral-100">
+      {% trans "SantéGeste Système Hospitalier • Ce bordereau atteste de la conformité du déstockage FEFO et de la délivrance des produits pharmaceutiques prescrits." %}
+    </div>
+
+  </div>
+</div>
+{% endblock %}
