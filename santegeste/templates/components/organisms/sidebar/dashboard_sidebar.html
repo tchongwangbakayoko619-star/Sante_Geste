@@ -100,15 +100,19 @@
           </button>
           <div id="resp-stock-sub" data-sidebar-submenu class="relative ml-12 border-l border-teal-300/30 pl-6 pr-2 space-y-1">
             <a href="{% url "pharmacy:product_list" %}" class="relative flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs {% if current_route == 'product_list' or current_route == 'product_detail' or current_route == 'product_create' or current_route == 'product_update' %}bg-white/10 text-white font-semibold{% else %}text-slate-300 hover:bg-white/10 hover:text-white{% endif %} transition-colors before:absolute before:-left-[31px] before:top-1/2 before:size-2 before:-translate-y-1/2 before:rounded-full before:bg-teal-400 before:ring-4 before:ring-[#052d31]">
+              {% include "components/atoms/icon.html" with name="pill" size="w-3.5 h-3.5 text-emerald-300/80" %}
               <span>{% trans "Produits" %}</span>
             </a>
             <a href="{% url "pharmacy:batch_list" %}" class="relative flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs {% if current_route == 'batch_list' %}bg-white/10 text-white font-semibold{% else %}text-slate-300 hover:bg-white/10 hover:text-white{% endif %} transition-colors before:absolute before:-left-[31px] before:top-1/2 before:size-2 before:-translate-y-1/2 before:rounded-full before:bg-teal-400 before:ring-4 before:ring-[#052d31]">
+              {% include "components/atoms/icon.html" with name="tag" size="w-3.5 h-3.5 text-emerald-300/80" %}
               <span>{% trans "Lots" %}</span>
             </a>
             <a href="{% url "pharmacy:movement_list" %}" class="relative flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs {% if current_route == 'movement_list' %}bg-white/10 text-white font-semibold{% else %}text-slate-300 hover:bg-white/10 hover:text-white{% endif %} transition-colors before:absolute before:-left-[31px] before:top-1/2 before:size-2 before:-translate-y-1/2 before:rounded-full before:bg-teal-400 before:ring-4 before:ring-[#052d31]">
+              {% include "components/atoms/icon.html" with name="clock" size="w-3.5 h-3.5 text-emerald-300/80" %}
               <span>{% trans "Mouvements" %}</span>
             </a>
             <a href="{% url "pharmacy:stock_adjustment" %}" class="relative flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs {% if current_route == 'stock_adjustment' %}bg-white/10 text-white font-semibold{% else %}text-slate-300 hover:bg-white/10 hover:text-white{% endif %} transition-colors before:absolute before:-left-[31px] before:top-1/2 before:size-2 before:-translate-y-1/2 before:rounded-full before:bg-teal-400 before:ring-4 before:ring-[#052d31]">
+              {% include "components/atoms/icon.html" with name="clipboard-document-list" size="w-3.5 h-3.5 text-emerald-300/80" %}
               <span>{% trans "Inventaire" %}</span>
             </a>
           </div>
@@ -136,15 +140,19 @@
           </button>
           <div id="resp-stock-sub" data-sidebar-submenu class="relative ml-12 border-l border-teal-300/30 pl-6 pr-2 space-y-1 hidden">
             <a href="{% url "pharmacy:product_list" %}" class="relative flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs text-slate-300 hover:bg-white/10 hover:text-white transition-colors before:absolute before:-left-[31px] before:top-1/2 before:size-2 before:-translate-y-1/2 before:rounded-full before:bg-teal-400 before:ring-4 before:ring-[#052d31]">
+              {% include "components/atoms/icon.html" with name="pill" size="w-3.5 h-3.5 text-emerald-300/80" %}
               <span>{% trans "Produits" %}</span>
             </a>
             <a href="{% url "pharmacy:batch_list" %}" class="relative flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs text-slate-300 hover:bg-white/10 hover:text-white transition-colors before:absolute before:-left-[31px] before:top-1/2 before:size-2 before:-translate-y-1/2 before:rounded-full before:bg-teal-400 before:ring-4 before:ring-[#052d31]">
+              {% include "components/atoms/icon.html" with name="tag" size="w-3.5 h-3.5 text-emerald-300/80" %}
               <span>{% trans "Lots" %}</span>
             </a>
             <a href="{% url "pharmacy:movement_list" %}" class="relative flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs text-slate-300 hover:bg-white/10 hover:text-white transition-colors before:absolute before:-left-[31px] before:top-1/2 before:size-2 before:-translate-y-1/2 before:rounded-full before:bg-teal-400 before:ring-4 before:ring-[#052d31]">
+              {% include "components/atoms/icon.html" with name="clock" size="w-3.5 h-3.5 text-emerald-300/80" %}
               <span>{% trans "Mouvements" %}</span>
             </a>
             <a href="{% url "pharmacy:stock_adjustment" %}" class="relative flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs text-slate-300 hover:bg-white/10 hover:text-white transition-colors before:absolute before:-left-[31px] before:top-1/2 before:size-2 before:-translate-y-1/2 before:rounded-full before:bg-teal-400 before:ring-4 before:ring-[#052d31]">
+              {% include "components/atoms/icon.html" with name="clipboard-document-list" size="w-3.5 h-3.5 text-emerald-300/80" %}
               <span>{% trans "Inventaire" %}</span>
             </a>
           </div>
@@ -301,12 +309,15 @@
           </button>
           <div id="resp-ventes-sub" data-sidebar-submenu class="relative ml-12 border-l border-teal-300/30 pl-6 pr-2 space-y-1">
             <a href="{% url "pharmacy:sale_create" %}" class="relative flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs {% if current_route == 'sale_create' %}bg-white/10 text-white font-semibold{% else %}text-slate-300 hover:bg-white/10 hover:text-white{% endif %} transition-colors before:absolute before:-left-[31px] before:top-1/2 before:size-2 before:-translate-y-1/2 before:rounded-full before:bg-teal-400 before:ring-4 before:ring-[#052d31]">
+              {% include "components/atoms/icon.html" with name="plus" size="w-3.5 h-3.5 text-emerald-300/80" %}
               <span>{% trans "Nouvelle vente" %}</span>
             </a>
             <a href="{% url "pharmacy:sale_list" %}" class="relative flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs {% if current_route == 'sale_list' and not request.GET.type and not request.GET.my_sales %}bg-white/10 text-white font-semibold{% else %}text-slate-300 hover:bg-white/10 hover:text-white{% endif %} transition-colors before:absolute before:-left-[31px] before:top-1/2 before:size-2 before:-translate-y-1/2 before:rounded-full before:bg-teal-400 before:ring-4 before:ring-[#052d31]">
+              {% include "components/atoms/icon.html" with name="shopping-bag" size="w-3.5 h-3.5 text-emerald-300/80" %}
               <span>{% trans "Ventes" %}</span>
             </a>
             <a href="{% url "pharmacy:sale_list" %}" class="relative flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs {% if current_route == 'sale_list' and not request.GET.type %}bg-white/10 text-white font-semibold{% else %}text-slate-300 hover:bg-white/10 hover:text-white{% endif %} transition-colors before:absolute before:-left-[31px] before:top-1/2 before:size-2 before:-translate-y-1/2 before:rounded-full before:bg-teal-400 before:ring-4 before:ring-[#052d31]">
+              {% include "components/atoms/icon.html" with name="clock" size="w-3.5 h-3.5 text-emerald-300/80" %}
               <span>{% trans "Historique" %}</span>
             </a>
           </div>
@@ -334,12 +345,15 @@
           </button>
           <div id="resp-ventes-sub" data-sidebar-submenu class="relative ml-12 border-l border-teal-300/30 pl-6 pr-2 space-y-1 hidden">
             <a href="{% url "pharmacy:sale_create" %}" class="relative flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs text-slate-300 hover:bg-white/10 hover:text-white transition-colors before:absolute before:-left-[31px] before:top-1/2 before:size-2 before:-translate-y-1/2 before:rounded-full before:bg-teal-400 before:ring-4 before:ring-[#052d31]">
+              {% include "components/atoms/icon.html" with name="plus" size="w-3.5 h-3.5 text-emerald-300/80" %}
               <span>{% trans "Nouvelle vente" %}</span>
             </a>
             <a href="{% url "pharmacy:sale_list" %}" class="relative flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs text-slate-300 hover:bg-white/10 hover:text-white transition-colors before:absolute before:-left-[31px] before:top-1/2 before:size-2 before:-translate-y-1/2 before:rounded-full before:bg-teal-400 before:ring-4 before:ring-[#052d31]">
+              {% include "components/atoms/icon.html" with name="shopping-bag" size="w-3.5 h-3.5 text-emerald-300/80" %}
               <span>{% trans "Ventes" %}</span>
             </a>
             <a href="{% url "pharmacy:sale_list" %}" class="relative flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs text-slate-300 hover:bg-white/10 hover:text-white transition-colors before:absolute before:-left-[31px] before:top-1/2 before:size-2 before:-translate-y-1/2 before:rounded-full before:bg-teal-400 before:ring-4 before:ring-[#052d31]">
+              {% include "components/atoms/icon.html" with name="clock" size="w-3.5 h-3.5 text-emerald-300/80" %}
               <span>{% trans "Historique" %}</span>
             </a>
           </div>
