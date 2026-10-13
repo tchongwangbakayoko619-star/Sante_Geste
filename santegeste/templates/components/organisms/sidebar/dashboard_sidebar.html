@@ -71,7 +71,7 @@
         data-sidebar-tooltip="{% trans "Tableau de bord" %}"
         class="sidebar-nav-item flex items-center gap-3.5 px-4 py-3 rounded-xl border-l-[5px] text-sm font-bold text-white transition-all focus-visible:outline-2 focus-visible:outline-emerald-300 {% if current_route == 'dashboard' and 'pharmacy' in request.resolver_match.app_names %}border-emerald-300 bg-teal-400/20 shadow-sm shadow-teal-950/30{% else %}border-transparent hover:bg-white/10{% endif %}"{% if current_route == 'dashboard' and 'pharmacy' in request.resolver_match.app_names %} aria-current="page"{% endif %}>
         <div class="w-6 h-6 flex items-center justify-center shrink-0">
-          <span class="text-base">📊</span>
+          {% include "components/atoms/icon.html" with name="dashboard-grid" size="w-5 h-5 text-emerald-200" %}
         </div>
         <span data-sidebar-label>{% trans "Tableau de bord" %}</span>
       </a>
@@ -90,7 +90,7 @@
             aria-expanded="true">
             <div class="flex items-center gap-3.5">
               <div class="w-6 h-6 flex items-center justify-center shrink-0">
-                <span class="text-base">📦</span>
+                {% include "components/atoms/icon.html" with name="package" size="w-5 h-5 text-emerald-200" %}
               </div>
               <span data-sidebar-label>{% trans "Stock" %}</span>
             </div>
@@ -126,7 +126,7 @@
             aria-expanded="false">
             <div class="flex items-center gap-3.5">
               <div class="w-6 h-6 flex items-center justify-center shrink-0">
-                <span class="text-base">📦</span>
+                {% include "components/atoms/icon.html" with name="package" size="w-5 h-5 text-emerald-300" %}
               </div>
               <span data-sidebar-label>{% trans "Stock" %}</span>
             </div>
@@ -152,7 +152,7 @@
       {% endif %}
 
       <!-- 🚚 Approvisionnement (Groupe dépliable) -->
-      {% if current_route == 'supplier_list' or current_route == 'supplier_create' or current_route == 'stock_entry' %}
+      {% if current_route == 'supplier_list' or current_route == 'supplier_create' or current_route == 'supplier_update' or current_route == 'stock_entry' %}
         <div class="space-y-1 relative" data-sidebar-item-container>
           <button
             type="button"
@@ -165,7 +165,7 @@
             aria-expanded="true">
             <div class="flex items-center gap-3.5">
               <div class="w-6 h-6 flex items-center justify-center shrink-0">
-                <span class="text-base">🚚</span>
+                {% include "components/atoms/icon.html" with name="truck" size="w-5 h-5 text-emerald-200" %}
               </div>
               <span data-sidebar-label>{% trans "Approvisionnement" %}</span>
             </div>
@@ -174,7 +174,7 @@
             </svg>
           </button>
           <div id="resp-approv-sub" data-sidebar-submenu class="relative ml-12 border-l border-teal-300/30 pl-6 pr-2 space-y-1">
-            <a href="{% url "pharmacy:supplier_list" %}" class="relative flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs {% if current_route == 'supplier_list' or current_route == 'supplier_create' %}bg-white/10 text-white font-semibold{% else %}text-slate-300 hover:bg-white/10 hover:text-white{% endif %} transition-colors before:absolute before:-left-[31px] before:top-1/2 before:size-2 before:-translate-y-1/2 before:rounded-full before:bg-teal-400 before:ring-4 before:ring-[#052d31]">
+            <a href="{% url "pharmacy:supplier_list" %}" class="relative flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs {% if current_route == 'supplier_list' or current_route == 'supplier_create' or current_route == 'supplier_update' %}bg-white/10 text-white font-semibold{% else %}text-slate-300 hover:bg-white/10 hover:text-white{% endif %} transition-colors before:absolute before:-left-[31px] before:top-1/2 before:size-2 before:-translate-y-1/2 before:rounded-full before:bg-teal-400 before:ring-4 before:ring-[#052d31]">
               <span>{% trans "Fournisseurs" %}</span>
             </a>
             <a href="{% url "pharmacy:stock_entry" %}" class="relative flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs {% if current_route == 'stock_entry' %}bg-white/10 text-white font-semibold{% else %}text-slate-300 hover:bg-white/10 hover:text-white{% endif %} transition-colors before:absolute before:-left-[31px] before:top-1/2 before:size-2 before:-translate-y-1/2 before:rounded-full before:bg-teal-400 before:ring-4 before:ring-[#052d31]">
@@ -195,7 +195,7 @@
             aria-expanded="false">
             <div class="flex items-center gap-3.5">
               <div class="w-6 h-6 flex items-center justify-center shrink-0">
-                <span class="text-base">🚚</span>
+                {% include "components/atoms/icon.html" with name="truck" size="w-5 h-5 text-emerald-300" %}
               </div>
               <span data-sidebar-label>{% trans "Approvisionnement" %}</span>
             </div>
@@ -207,7 +207,7 @@
             <a href="{% url "pharmacy:supplier_list" %}" class="relative flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs text-slate-300 hover:bg-white/10 hover:text-white transition-colors before:absolute before:-left-[31px] before:top-1/2 before:size-2 before:-translate-y-1/2 before:rounded-full before:bg-teal-400 before:ring-4 before:ring-[#052d31]">
               <span>{% trans "Fournisseurs" %}</span>
             </a>
-            <a href="{% url "pharmacy:stock_entry" %}" class="relative flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs text-slate-300 hover:bg-white/10 hover:text-white transition-colors before:absolute before:-left-[31px] before:top-1/2 before:size-2 before:-translate-y-1/2 before:rounded-full before:bg-teal-400 before:ring-4 before:ring-[#052d31]">
+            <a href="{% url "pharmacy:stock_entry" %}" class="relative flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs text-slate-300 hover:bg-white/10 hover:text-white transition-colors before:absolute before:-left-[31px] before:top-1/2 before:size-2 before:-translate-y-1/2 before:rounded-full before:bg-teal-400 border-l border-teal-300/30 pl-6 pr-2 space-y-1 hidden">
               <span>{% trans "Entrées de stock" %}</span>
             </a>
           </div>
@@ -228,7 +228,7 @@
             aria-expanded="true">
             <div class="flex items-center gap-3.5">
               <div class="w-6 h-6 flex items-center justify-center shrink-0">
-                <span class="text-base">💊</span>
+                {% include "components/atoms/icon.html" with name="pill" size="w-5 h-5 text-emerald-200" %}
               </div>
               <span data-sidebar-label>{% trans "Délivrance" %}</span>
             </div>
@@ -258,7 +258,7 @@
             aria-expanded="false">
             <div class="flex items-center gap-3.5">
               <div class="w-6 h-6 flex items-center justify-center shrink-0">
-                <span class="text-base">💊</span>
+                {% include "components/atoms/icon.html" with name="pill" size="w-5 h-5 text-emerald-300" %}
               </div>
               <span data-sidebar-label>{% trans "Délivrance" %}</span>
             </div>
@@ -291,7 +291,7 @@
             aria-expanded="true">
             <div class="flex items-center gap-3.5">
               <div class="w-6 h-6 flex items-center justify-center shrink-0">
-                <span class="text-base">🧾</span>
+                {% include "components/atoms/icon.html" with name="shopping-bag" size="w-5 h-5 text-emerald-200" %}
               </div>
               <span data-sidebar-label>{% trans "Ventes" %}</span>
             </div>
@@ -324,7 +324,7 @@
             aria-expanded="false">
             <div class="flex items-center gap-3.5">
               <div class="w-6 h-6 flex items-center justify-center shrink-0">
-                <span class="text-base">🧾</span>
+                {% include "components/atoms/icon.html" with name="shopping-bag" size="w-5 h-5 text-emerald-300" %}
               </div>
               <span data-sidebar-label>{% trans "Ventes" %}</span>
             </div>
@@ -353,7 +353,7 @@
         data-sidebar-tooltip="{% trans "Rapports" %}"
         class="sidebar-nav-item flex items-center gap-3.5 px-4 py-3 rounded-xl border-l-[5px] text-sm font-semibold transition-all focus-visible:outline-2 focus-visible:outline-emerald-300 {% if current_route == 'reports' and 'pharmacy' in request.resolver_match.app_names %}border-emerald-300 bg-teal-400/20 text-white shadow-sm shadow-teal-950/30{% else %}border-transparent text-emerald-100/90 hover:text-white hover:bg-white/10{% endif %}">
         <div class="w-6 h-6 flex items-center justify-center shrink-0">
-          <span class="text-base">📈</span>
+          {% include "components/atoms/icon.html" with name="chart-bar" size="w-5 h-5 text-emerald-300" %}
         </div>
         <span data-sidebar-label>{% trans "Rapports" %}</span>
       </a>
@@ -365,7 +365,7 @@
         data-sidebar-tooltip="{% trans "Paramètres" %}"
         class="sidebar-nav-item flex items-center gap-3.5 px-4 py-3 rounded-xl border-l-[5px] text-sm font-semibold transition-all focus-visible:outline-2 focus-visible:outline-emerald-300 {% if current_route == 'settings' and 'pharmacy' in request.resolver_match.app_names %}border-emerald-300 bg-teal-400/20 text-white shadow-sm shadow-teal-950/30{% else %}border-transparent text-emerald-100/90 hover:text-white hover:bg-white/10{% endif %}">
         <div class="w-6 h-6 flex items-center justify-center shrink-0">
-          <span class="text-base">⚙️</span>
+          {% include "components/atoms/icon.html" with name="gear" size="w-5 h-5 text-emerald-300" %}
         </div>
         <span data-sidebar-label>{% trans "Paramètres" %}</span>
       </a>
@@ -381,7 +381,7 @@
         data-sidebar-tooltip="{% trans "Tableau de bord" %}"
         class="sidebar-nav-item flex items-center gap-3.5 px-4 py-3 rounded-xl border-l-[5px] text-sm font-bold text-white transition-all focus-visible:outline-2 focus-visible:outline-emerald-300 {% if current_route == 'home' or current_route == 'pharmacie_vendeur' %}border-emerald-300 bg-teal-400/20 shadow-sm shadow-teal-950/30{% else %}border-transparent hover:bg-white/10{% endif %}"{% if current_route == 'home' or current_route == 'pharmacie_vendeur' %} aria-current="page"{% endif %}>
         <div class="w-6 h-6 flex items-center justify-center shrink-0">
-          <span class="text-base">📊</span>
+          {% include "components/atoms/icon.html" with name="dashboard-grid" size="w-5 h-5 text-emerald-200" %}
         </div>
         <span data-sidebar-label>{% trans "Tableau de bord" %}</span>
       </a>
@@ -393,7 +393,7 @@
         data-sidebar-tooltip="{% trans "Produits" %}"
         class="sidebar-nav-item flex items-center gap-3.5 px-4 py-3 rounded-xl border-l-[5px] text-sm font-semibold transition-all focus-visible:outline-2 focus-visible:outline-emerald-300 {% if current_route == 'product_list' or current_route == 'product_detail' %}border-emerald-300 bg-teal-400/20 text-white shadow-sm shadow-teal-950/30{% else %}border-transparent text-emerald-100/90 hover:text-white hover:bg-white/10{% endif %}">
         <div class="w-6 h-6 flex items-center justify-center shrink-0">
-          <span class="text-base">📦</span>
+          {% include "components/atoms/icon.html" with name="package" size="w-5 h-5 text-emerald-300" %}
         </div>
         <span data-sidebar-label>{% trans "Produits" %}</span>
       </a>
@@ -405,7 +405,7 @@
         data-sidebar-tooltip="{% trans "Prescriptions" %}"
         class="sidebar-nav-item flex items-center gap-3.5 px-4 py-3 rounded-xl border-l-[5px] text-sm font-semibold transition-all focus-visible:outline-2 focus-visible:outline-emerald-300 {% if current_route == 'pharmacy_ordonnance_list' %}border-emerald-300 bg-teal-400/20 text-white shadow-sm shadow-teal-950/30{% else %}border-transparent text-emerald-100/90 hover:text-white hover:bg-white/10{% endif %}">
         <div class="w-6 h-6 flex items-center justify-center shrink-0">
-          <span class="text-base">💊</span>
+          {% include "components/atoms/icon.html" with name="pill" size="w-5 h-5 text-emerald-300" %}
         </div>
         <span data-sidebar-label>{% trans "Prescriptions" %}</span>
       </a>
@@ -417,7 +417,7 @@
         data-sidebar-tooltip="{% trans "Nouvelle vente" %}"
         class="sidebar-nav-item flex items-center gap-3.5 px-4 py-3 rounded-xl border-l-[5px] text-sm font-semibold transition-all focus-visible:outline-2 focus-visible:outline-emerald-300 {% if current_route == 'sale_create' %}border-emerald-300 bg-teal-400/20 text-white shadow-sm shadow-teal-950/30{% else %}border-transparent text-emerald-100/90 hover:text-white hover:bg-white/10{% endif %}">
         <div class="w-6 h-6 flex items-center justify-center shrink-0">
-          <span class="text-base">🧾</span>
+          {% include "components/atoms/icon.html" with name="shopping-bag" size="w-5 h-5 text-emerald-300" %}
         </div>
         <span data-sidebar-label>{% trans "Nouvelle vente" %}</span>
       </a>

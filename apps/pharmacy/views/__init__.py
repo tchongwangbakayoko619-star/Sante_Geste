@@ -515,6 +515,57 @@ class SupplierCreateView(ResponsablePharmacieRequiredMixin, CreateView):
         return redirect(self.success_url)
 
 
+class SupplierUpdateView(ResponsablePharmacieRequiredMixin, UpdateView):
+    """Modification d'un fournisseur pharmaceutique."""
+
+    model = Supplier
+    form_class = SupplierForm
+    template_name = "pharmacy/supplier_form.html"
+    success_url = reverse_lazy("pharmacy:supplier_list")
+
+    def form_valid(self, form):
+        supplier = form.save(commit=False)
+        supplier.updated_by = self.request.user
+        supplier.save()
+        messages.success(self.request, _("Fournisseur '%(name)s' mis à jour avec succès.") % {"name": supplier.name})
+        return redirect(self.success_url)
+
+
+class SupplierToggleActiveView(ResponsablePharmacieRequiredMixin, View):
+    """Activation / Désactivation d'un fournisseur."""
+
+    def post(self, request, pk):
+        supplier = get_object_or_404(Supplier, pk=pk)
+        supplier.is_active = not supplier.is_active
+        supplier.updated_by = request.user
+        supplier.save(update_fields=["is_active", "updated_at"])
+        status_label = _("activé") if supplier.is_active else _("désactivé")
+        messages.success(request, _("Fournisseur '%(name)s' %(status)s.") % {"name": supplier.name, "status": status_label})
+        return redirect("pharmacy:supplier_list")
+
+
+class BatchDiscardView(ResponsablePharmacieRequiredMixin, View):
+    """Mise au rebut d'un lot périmé ou endommagé."""
+
+    def post(self, request, pk):
+        batch = get_object_or_404(Batch, pk=pk)
+        reason = request.POST.get("reason", "").strip()
+        try:
+            movement = StockService.discard_expired_batch(
+                batch=batch,
+                user=request.user,
+                reason=reason,
+            )
+            messages.success(
+                request,
+                _("Lot '%(lot)s' (%(prod)s) mis au rebut avec succès (%(qty)d unités sorties du stock).")
+                % {"lot": batch.batch_number, "prod": batch.product.name, "qty": abs(movement.quantity)},
+            )
+        except ValidationError as e:
+            messages.error(request, e.message if hasattr(e, "message") else str(e))
+        return redirect(request.META.get("HTTP_REFERER") or "pharmacy:batch_list")
+
+
 class CategoryListView(ResponsablePharmacieRequiredMixin, ListView):
     """Gestion des catégories pharmaceutiques."""
 
@@ -580,24 +631,52 @@ class PharmacyReportView(ResponsablePharmacieRequiredMixin, TemplateView):
     template_name = "pharmacy/reports.html"
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        from datetime import timedelta
         context = super().get_context_data(**kwargs)
         today = date.today()
-        month_start = today.replace(day=1)
+        period = self.request.GET.get("period", "month")
 
-        # Chiffre d'affaires global et du mois
-        month_sales = Sale.objects.filter(sale_date__gte=month_start).exclude(status="CANCELLED")
-        context["month_revenue"] = month_sales.aggregate(total=Sum("total_amount"))["total"] or Decimal("0.00")
-        context["month_sales_count"] = month_sales.count()
+        if period == "today":
+            start_date = today
+            period_label = _("Aujourd'hui")
+        elif period == "week":
+            start_date = today - timedelta(days=today.weekday())
+            period_label = _("Cette semaine")
+        elif period == "year":
+            start_date = today.replace(month=1, day=1)
+            period_label = _("Cette année")
+        else:
+            period = "month"
+            start_date = today.replace(day=1)
+            period_label = _("Ce mois-ci")
 
-        # Top 5 médicaments les plus vendus
-        from django.db.models import Count
+        # Chiffre d'affaires et volume des ventes sur la période filtrée
+        period_sales = Sale.objects.filter(sale_date__gte=start_date).exclude(status="CANCELLED")
+        context["selected_period"] = period
+        context["period_label"] = period_label
+        context["period_revenue"] = period_sales.aggregate(total=Sum("total_amount"))["total"] or Decimal("0.00")
+        context["period_sales_count"] = period_sales.count()
+
+        # Rétrocompatibilité avec les variables du template
+        context["month_revenue"] = context["period_revenue"]
+        context["month_sales_count"] = context["period_sales_count"]
+
+        # Top 5 médicaments les plus vendus sur la période
         context["top_products"] = (
-            Product.objects.filter(sale_items__sale__status="COMPLETED")
+            Product.objects.filter(sale_items__sale__in=period_sales, sale_items__sale__status="COMPLETED")
             .annotate(total_sold=Sum("sale_items__quantity"))
             .order_by("-total_sold")[:5]
         )
 
-        # Valeur totale du stock
+        # Pertes / Rebuts de stock enregistrés sur la période
+        loss_movements = StockMovement.objects.filter(
+            movement_type__in=["EXPIRED", "NEG_ADJUST"],
+            movement_date__date__gte=start_date,
+        )
+        context["loss_units"] = abs(loss_movements.aggregate(total=Sum("quantity"))["total"] or 0)
+        context["loss_count"] = loss_movements.count()
+
+        # Valeur totale actuelle du stock
         context["stock_val"] = Product.objects.filter(is_deleted=False).aggregate(
             val=Sum(F("current_stock") * F("purchase_price"))
         )["val"] or Decimal("0.00")

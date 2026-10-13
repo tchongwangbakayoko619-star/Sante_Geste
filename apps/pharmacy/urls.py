@@ -19,7 +19,10 @@ from apps.pharmacy.views import (
     StockMovementListView,
     SupplierCreateView,
     SupplierListView,
+    SupplierUpdateView,
+    SupplierToggleActiveView,
     BatchListView,
+    BatchDiscardView,
     PharmacyReportView,
     PharmacySettingsView,
 )
@@ -50,11 +53,14 @@ urlpatterns = [
     # Fournisseurs & Catégories
     path("fournisseurs/", SupplierListView.as_view(), name="supplier_list"),
     path("fournisseurs/nouveau/", SupplierCreateView.as_view(), name="supplier_create"),
+    path("fournisseurs/<uuid:pk>/modifier/", SupplierUpdateView.as_view(), name="supplier_update"),
+    path("fournisseurs/<uuid:pk>/toggle/", SupplierToggleActiveView.as_view(), name="supplier_toggle"),
     path("categories/", CategoryListView.as_view(), name="category_list"),
     path("categories/nouvelle/", CategoryCreateView.as_view(), name="category_create"),
 
-    # Lots, Inventaire, Rapports & Paramètres
+    # Lots, Inventaire, Rebuts, Rapports & Paramètres
     path("stock/lots/", BatchListView.as_view(), name="batch_list"),
+    path("stock/lots/<uuid:pk>/rebut/", BatchDiscardView.as_view(), name="batch_discard"),
     path("rapports/", PharmacyReportView.as_view(), name="reports"),
     path("parametres/", PharmacySettingsView.as_view(), name="settings"),
 ]

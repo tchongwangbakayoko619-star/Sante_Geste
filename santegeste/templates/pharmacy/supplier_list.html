@@ -27,9 +27,20 @@
                 Tel: {{ s.telephone|default:"-" }} • Email: {{ s.email|default:"-" }}
               </p>
             </div>
-            <span class="font-mono text-[10px] font-bold px-2 py-0.5 rounded {% if s.is_active %}bg-emerald-50 text-emerald-700{% else %}bg-neutral-100 text-neutral-600{% endif %}">
-              {% if s.is_active %}{% trans "Actif" %}{% else %}{% trans "Inactif" %}{% endif %}
-            </span>
+            <div class="flex items-center gap-3">
+              <span class="font-mono text-[10px] font-bold px-2 py-0.5 rounded {% if s.is_active %}bg-emerald-50 text-emerald-700{% else %}bg-neutral-100 text-neutral-600{% endif %}">
+                {% if s.is_active %}{% trans "Actif" %}{% else %}{% trans "Inactif" %}{% endif %}
+              </span>
+              <a href="{% url "pharmacy:supplier_update" s.pk %}" class="px-2.5 py-1 rounded-lg bg-neutral-100 hover:bg-neutral-200 text-neutral-700 font-bold text-xs transition-colors">
+                {% trans "Modifier" %}
+              </a>
+              <form method="post" action="{% url "pharmacy:supplier_toggle" s.pk %}" class="inline">
+                {% csrf_token %}
+                <button type="submit" class="px-2.5 py-1 rounded-lg border text-xs font-semibold transition-colors {% if s.is_active %}border-rose-200 text-rose-700 hover:bg-rose-50{% else %}border-emerald-200 text-emerald-700 hover:bg-emerald-50{% endif %}">
+                  {% if s.is_active %}{% trans "Désactiver" %}{% else %}{% trans "Activer" %}{% endif %}
+                </button>
+              </form>
+            </div>
           </div>
         {% endfor %}
       </div>

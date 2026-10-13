@@ -354,3 +354,95 @@ def test_rbac_unauthenticated_or_other_roles_cannot_access_pharmacy(client, mede
     client.force_login(medecin)
     response = client.get(reverse("pharmacy:sale_create"))
     assert response.status_code == 403
+
+
+@pytest.mark.django_db
+def test_supplier_update_and_toggle_active(client, responsable_pharmacie, vendeur_pharmacie, supplier):
+    """Test 11: Le responsable peut modifier et activer/désactiver un fournisseur, le vendeur est bloqué (403)."""
+    # Vendeur bloqué
+    client.force_login(vendeur_pharmacie)
+    res_vendeur = client.post(reverse("pharmacy:supplier_toggle", kwargs={"pk": supplier.pk}))
+    assert res_vendeur.status_code == 403
+
+    # Responsable autorise le toggle
+    client.force_login(responsable_pharmacie)
+    res_resp = client.post(reverse("pharmacy:supplier_toggle", kwargs={"pk": supplier.pk}))
+    assert res_resp.status_code == 302
+    supplier.refresh_from_db()
+    assert supplier.is_active is False
+
+    # Responsable modifie le fournisseur
+    res_update = client.post(
+        reverse("pharmacy:supplier_update", kwargs={"pk": supplier.pk}),
+        {"name": "Labo Central Mis à Jour", "is_active": True},
+    )
+    assert res_update.status_code == 302
+    supplier.refresh_from_db()
+    assert supplier.name == "Labo Central Mis à Jour"
+    assert supplier.is_active is True
+
+
+@pytest.mark.django_db
+def test_batch_discard_workflow(client, responsable_pharmacie, vendeur_pharmacie, product_paracetamol, supplier):
+    """Test 12: Le responsable peut mettre au rebut un lot périmé ou impropre, créant un mouvement EXPIRED."""
+    # Créer un lot valide puis simuler son expiration
+    batch = StockService.receive_batch(
+        product=product_paracetamol,
+        batch_number="LOT-PERIME",
+        expiry_date=date.today() + timedelta(days=30),
+        quantity=20,
+        purchase_price=Decimal("100.00"),
+        user=responsable_pharmacie,
+        supplier=supplier,
+    )
+    batch.expiry_date = date.today() - timedelta(days=1)
+    batch.save(update_fields=["expiry_date"])
+
+    product_paracetamol.refresh_from_db()
+    assert product_paracetamol.current_stock == 20
+
+    # Vendeur bloqué (403)
+    client.force_login(vendeur_pharmacie)
+    res_vendeur = client.post(
+        reverse("pharmacy:batch_discard", kwargs={"pk": batch.pk}),
+        {"reason": "Périmé"},
+    )
+    assert res_vendeur.status_code == 403
+
+    # Responsable valide la mise au rebut
+    client.force_login(responsable_pharmacie)
+    res_resp = client.post(
+        reverse("pharmacy:batch_discard", kwargs={"pk": batch.pk}),
+        {"reason": "Dépassement date limite"},
+    )
+    assert res_resp.status_code in [302, 200]
+    batch.refresh_from_db()
+    product_paracetamol.refresh_from_db()
+
+    assert batch.current_quantity == 0
+    assert batch.status == "EXPIRED"
+    assert product_paracetamol.current_stock == 0
+
+    mov = StockMovement.objects.filter(batch=batch, movement_type="EXPIRED").first()
+    assert mov is not None
+    assert mov.quantity == -20
+    assert mov.new_stock == 0
+
+
+@pytest.mark.django_db
+def test_pharmacy_reports_filtering(client, responsable_pharmacie, vendeur_pharmacie):
+    """Test 13: Rapports d'activité avec filtrage par période (today, week, month, year)."""
+    # Vendeur bloqué (403)
+    client.force_login(vendeur_pharmacie)
+    res_v = client.get(reverse("pharmacy:reports"))
+    assert res_v.status_code == 403
+
+    # Responsable accède et filtre
+    client.force_login(responsable_pharmacie)
+    for p in ["today", "week", "month", "year"]:
+        res_r = client.get(reverse("pharmacy:reports"), {"period": p})
+        assert res_r.status_code == 200
+        assert "period_revenue" in res_r.context
+        assert "loss_units" in res_r.context
+        assert res_r.context["selected_period"] == p
+

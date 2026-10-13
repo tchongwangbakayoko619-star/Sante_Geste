@@ -38,9 +38,9 @@
     <div class="bg-white p-5 rounded-2xl border border-neutral-200/80 shadow-xs space-y-2">
       <div class="flex items-center justify-between text-neutral-500">
         <span class="text-xs font-bold uppercase tracking-wider text-[#0d9488]">{% trans "Valorisation Stock" %}</span>
-        <span class="p-2 rounded-xl bg-teal-50 text-[#0d9488]">📦</span>
+        <span class="p-2 rounded-xl bg-teal-50 text-[#0d9488]">{% include "components/atoms/icon.html" with name="package" size="w-4 h-4 text-[#0d9488]" %}</span>
       </div>
-      <div class="text-2xl font-black text-neutral-900 font-mono">{{ stock_total_value_formatted|default:"0 FCFA" }}</div>
+      <div class="text-2xl font-black text-neutral-900 font-mono">{{ stock_total_value|default:0 }} FCFA</div>
       <p class="text-[11px] text-neutral-400">{{ total_products|default:0 }} {% trans "médicaments catalogués" %}</p>
     </div>
 
@@ -48,7 +48,7 @@
     <div class="bg-white p-5 rounded-2xl border {% if low_stock_count > 0 %}border-amber-300 bg-amber-50/20{% else %}border-neutral-200/80{% endif %} shadow-xs space-y-2">
       <div class="flex items-center justify-between text-neutral-500">
         <span class="text-xs font-bold uppercase tracking-wider text-amber-800">{% trans "Stock Faible / Rupture" %}</span>
-        <span class="p-2 rounded-xl bg-amber-50 text-amber-600">⚠️</span>
+        <span class="p-2 rounded-xl bg-amber-50 text-amber-600">{% include "components/atoms/icon.html" with name="bell-alert" size="w-4 h-4 text-amber-600" %}</span>
       </div>
       <div class="text-2xl font-black {% if low_stock_count > 0 %}text-amber-700{% else %}text-neutral-900{% endif %} font-mono">{{ low_stock_count|default:0 }}</div>
       <p class="text-[11px] text-amber-800/80">{% trans "Articles sous le seuil d'alerte" %}</p>
@@ -58,9 +58,9 @@
     <div class="bg-white p-5 rounded-2xl border {% if expiring_soon_count > 0 or expired_batches_count > 0 %}border-rose-300 bg-rose-50/20{% else %}border-neutral-200/80{% endif %} shadow-xs space-y-2">
       <div class="flex items-center justify-between text-neutral-500">
         <span class="text-xs font-bold uppercase tracking-wider text-rose-800">{% trans "Péremptions (< 90j)" %}</span>
-        <span class="p-2 rounded-xl bg-rose-50 text-rose-600">⏳</span>
+        <span class="p-2 rounded-xl bg-rose-50 text-rose-600">{% include "components/atoms/icon.html" with name="bell-alert" size="w-4 h-4 text-rose-600" %}</span>
       </div>
-      <div class="text-2xl font-black {% if expiring_soon_count > 0 or expired_batches_count > 0 %}text-rose-700{% else %}text-neutral-900{% endif %} font-mono">{{ expiring_soon_count|default:expiring_batches_count|default:0 }}</div>
+      <div class="text-2xl font-black {% if expiring_soon_count > 0 or expired_batches_count > 0 %}text-rose-700{% else %}text-neutral-900{% endif %} font-mono">{{ expiring_soon_count|default:0 }}</div>
       <p class="text-[11px] text-rose-800/80">{{ expired_batches_count|default:0 }} {% trans "lots déjà expirés" %}</p>
     </div>
 
@@ -68,9 +68,9 @@
     <div class="bg-white p-5 rounded-2xl border border-neutral-200/80 shadow-xs space-y-2">
       <div class="flex items-center justify-between text-neutral-500">
         <span class="text-xs font-bold uppercase tracking-wider text-emerald-800">{% trans "Ventes du jour" %}</span>
-        <span class="p-2 rounded-xl bg-emerald-50 text-emerald-600">💰</span>
+        <span class="p-2 rounded-xl bg-emerald-50 text-emerald-600">{% include "components/atoms/icon.html" with name="shopping-bag" size="w-4 h-4 text-emerald-600" %}</span>
       </div>
-      <div class="text-2xl font-black text-neutral-900 font-mono">{{ today_revenue|default:today_sales_formatted|default:"0 FCFA" }}</div>
+      <div class="text-2xl font-black text-neutral-900 font-mono">{{ today_revenue|default:0 }} FCFA</div>
       <p class="text-[11px] text-neutral-500">{{ today_sales_count|default:0 }} {% trans "ventes enregistrées aujourd'hui" %}</p>
     </div>
   </div>
