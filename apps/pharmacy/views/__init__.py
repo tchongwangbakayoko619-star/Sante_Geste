@@ -423,6 +423,8 @@ class SaleDetailView(PharmacyAccessRequiredMixin, DetailView):
         context = super().get_context_data(**kwargs)
         sale = self.get_object()
         context["items"] = sale.items.select_related("product", "batch").all()
+        if sale.facture:
+            context["latest_payment"] = sale.facture.paiements.order_by("-paid_at").first()
         return context
 
 

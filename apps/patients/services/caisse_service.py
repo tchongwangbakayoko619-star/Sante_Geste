@@ -218,6 +218,13 @@ class PaymentService:
                 facture_locked.prestations_realisees.all().update(status="PAYE")
                 if facture_locked.consultation:
                     facture_locked.consultation.prestations.all().update(status="PAYE")
+
+                # Synchronisation avec la vente pharmacie associée
+                if hasattr(facture_locked, "pharmacy_sale") and facture_locked.pharmacy_sale:
+                    sale = facture_locked.pharmacy_sale
+                    if sale.status != "COMPLETED":
+                        sale.status = "COMPLETED"
+                        sale.save(update_fields=["status", "updated_at"])
             else:
                 facture_locked.status = "PARTIALLY_PAID"
 

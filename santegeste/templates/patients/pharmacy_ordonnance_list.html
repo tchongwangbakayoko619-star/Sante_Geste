@@ -288,21 +288,33 @@
                       </a>
                     {% endif %}
 
-                    <!-- Délivrer (Bouton actif si PENDING) -->
+                    <!-- Actions selon le statut PENDING -->
                     {% if ord.status == 'PENDING' %}
+                      <!-- 1. Préparer la vente & déstocker (Vente Caisse / FEFO) -->
+                      <a
+                        href="{% url "pharmacy:sale_create" %}?ordonnance_id={{ ord.pk }}"
+                        class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#0d9488] hover:bg-[#0f766e] text-white font-bold text-xs shadow-xs hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
+                        title="{% trans "Créer la vente en pharmacie, déstocker selon FEFO et transmettre la facture à la Caisse" %}"
+                      >
+                        {% include "components/atoms/icon.html" with name="shopping-bag" size="w-3.5 h-3.5" %}
+                        <span>{% trans "Vente / Caisse" %}</span>
+                      </a>
+
+                      <!-- 2. Délivrance directe simple -->
                       <form
                         method="post"
                         action="{% url "patients:pharmacy_ordonnance_dispense" ord.pk %}"
                         class="inline"
-                        onsubmit="return confirm('{% trans "Confirmer la délivrance complète des médicaments pour ce patient ?" %}');"
+                        onsubmit="return confirm('{% trans "Confirmer la délivrance directe de cette ordonnance sans facturation pharmacie ?" %}');"
                       >
                         {% csrf_token %}
                         <button
                           type="submit"
-                          class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#14967F] hover:bg-[#0E6A5A] text-white font-bold text-xs shadow-xs hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
+                          class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white hover:bg-neutral-50 text-neutral-700 font-bold text-xs border border-neutral-200 shadow-2xs hover:border-neutral-300 transition-colors cursor-pointer"
+                          title="{% trans "Marquer comme délivrée directement" %}"
                         >
-                          {% include "components/atoms/icon.html" with name="check" size="w-3.5 h-3.5" %}
-                          <span>{% trans "Délivrer" %}</span>
+                          {% include "components/atoms/icon.html" with name="check" size="w-3.5 h-3.5 text-emerald-600" %}
+                          <span>{% trans "Délivrer direct" %}</span>
                         </button>
                       </form>
                     {% endif %}

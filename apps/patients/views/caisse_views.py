@@ -25,6 +25,8 @@ from apps.patients.models import PrestationRealisee
 from apps.patients.services import PaymentService
 from apps.users.mixins import CaissierRequiredMixin
 from apps.users.mixins import ProprietaireRequiredMixin
+from apps.users.mixins import RoleRequiredMixin
+from utils.enums import UserRoleEnum
 
 if TYPE_CHECKING:
     from django.db.models import QuerySet
@@ -232,12 +234,20 @@ class PaiementCreateView(CaissierRequiredMixin, View):
         return redirect("patients:facture_detail", pk=facture.pk)
 
 
-class PaiementReceiptView(CaissierRequiredMixin, DetailView):
+class PaiementReceiptView(RoleRequiredMixin, DetailView):
     """Affichage et impression du reçu de paiement officiel (preuve de paiement)."""
 
     model = Paiement
     template_name = "patients/paiement_receipt.html"
     context_object_name = "paiement"
+
+    required_roles = [
+        UserRoleEnum.CAISSIER,
+        UserRoleEnum.VENDEUR_PHARMACIE,
+        UserRoleEnum.RESPONSABLE_PHARMACIE,
+        UserRoleEnum.PROPRIETAIRE,
+    ]
+    require_all_roles = False
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
