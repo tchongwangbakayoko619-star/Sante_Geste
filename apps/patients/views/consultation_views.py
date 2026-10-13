@@ -35,6 +35,7 @@ from apps.patients.models import Ordonnance
 from apps.patients.models import Patient
 from apps.patients.models import Prestation
 from apps.patients.models import PrestationRealisee
+from apps.pharmacy.models import Product
 from apps.users.mixins import PatientManagementRequiredMixin
 from apps.users.mixins import PersonnelMedicalRequiredMixin
 from apps.users.services import rbac as rbac_service
@@ -349,6 +350,7 @@ class ConsultationDetailView(PatientManagementRequiredMixin, DetailView):
         context["ordonnance_form"] = OrdonnanceForm()
         context["ligne_form"] = LigneOrdonnanceForm()
         context["can_prescribe"] = rbac_service.can_prescribe(self.request.user)
+        context["available_products"] = Product.objects.filter(is_deleted=False, is_active=True).order_by("name")
         return context
 
 
