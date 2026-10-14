@@ -430,22 +430,6 @@ class SaleDetailView(PharmacyAccessRequiredMixin, DetailView):
         return context
 
 
-class SaleDeliverySlipView(PharmacyAccessRequiredMixin, DetailView):
-    """Bordereau officiel d'émargement et de délivrance physique des médicaments."""
-
-    model = Sale
-    template_name = "pharmacy/sale_delivery_slip.html"
-    context_object_name = "sale"
-
-    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
-        context = super().get_context_data(**kwargs)
-        sale = self.get_object()
-        context["items"] = sale.items.select_related("product", "batch").all()
-        if sale.facture:
-            context["latest_payment"] = sale.facture.paiements.order_by("-paid_at").first()
-        return context
-
-
 class SaleListView(PharmacyAccessRequiredMixin, ListView):
     """Historique des ventes de la pharmacie."""
 

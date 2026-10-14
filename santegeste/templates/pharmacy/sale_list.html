@@ -93,15 +93,10 @@
                     {{ s.get_status_display }}
                   </span>
                 </td>
-                <td class="py-3.5 px-5 text-right whitespace-nowrap">
-                  <div class="flex items-center justify-end gap-1.5">
-                    <a href="{% url "pharmacy:sale_delivery_slip" s.pk %}" target="_blank" class="p-1.5 rounded-lg bg-white border border-neutral-200 hover:bg-neutral-50 text-neutral-600 transition" title="{% trans "Bordereau de délivrance" %}">
-                      {% include "components/atoms/icon.html" with name="document-text" size="w-3.5 h-3.5 text-neutral-500" %}
-                    </a>
-                    <a href="{% url "pharmacy:sale_detail" s.pk %}" class="px-3 py-1.5 rounded-lg bg-neutral-100 hover:bg-neutral-200 text-neutral-700 font-bold text-xs inline-flex items-center gap-1">
-                      {% trans "Détails" %} &rarr;
-                    </a>
-                  </div>
+                <td class="py-3.5 px-5 text-right">
+                  <a href="{% url "pharmacy:sale_detail" s.pk %}" class="px-3 py-1.5 rounded-lg bg-neutral-100 hover:bg-neutral-200 text-neutral-700 font-bold text-xs inline-flex items-center gap-1">
+                    {% trans "Détails" %} &rarr;
+                  </a>
                 </td>
               </tr>
             {% endfor %}
