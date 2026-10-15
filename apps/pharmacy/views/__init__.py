@@ -313,8 +313,8 @@ class SaleCreateView(PharmacyAccessRequiredMixin, View):
     """Comptoir de vente pharmacie : recherche de médicaments, panier et déstockage FEFO."""
 
     def get(self, request):
-        ordonnance_id = request.GET.get("ordonnance")
-        patient_id = request.GET.get("patient")
+        ordonnance_id = request.GET.get("ordonnance_id") or request.GET.get("ordonnance")
+        patient_id = request.GET.get("patient_id") or request.GET.get("patient")
         ordonnance = None
         patient = None
         preloaded_items = []
@@ -419,6 +419,22 @@ class SaleDetailView(PharmacyAccessRequiredMixin, DetailView):
 
     model = Sale
     template_name = "pharmacy/sale_detail.html"
+    context_object_name = "sale"
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        sale = self.get_object()
+        context["items"] = sale.items.select_related("product", "batch").all()
+        if sale.facture:
+            context["latest_payment"] = sale.facture.paiements.order_by("-paid_at").first()
+        return context
+
+
+class SaleDeliverySlipView(PharmacyAccessRequiredMixin, DetailView):
+    """Bordereau officiel d'émargement et de délivrance physique des médicaments."""
+
+    model = Sale
+    template_name = "pharmacy/sale_delivery_slip.html"
     context_object_name = "sale"
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:

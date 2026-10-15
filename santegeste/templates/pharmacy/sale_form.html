@@ -39,7 +39,12 @@
         <h3 class="text-xs font-bold text-teal-950 uppercase tracking-wider flex items-center gap-2">
           <span>🩺 {% trans "Lignes prescrites sur l'ordonnance" %}</span>
         </h3>
-        <span class="text-[11px] font-mono text-teal-700">{{ ordonnance.prescribed_at|date:"d/m/Y - H:i" }}</span>
+        <div class="flex items-center gap-2">
+          <span class="text-[11px] font-mono text-teal-700">{{ ordonnance.prescribed_at|date:"d/m/Y - H:i" }}</span>
+          <button type="button" onclick="addAllPrescribedToCart()" class="px-2.5 py-1 rounded-lg bg-[#0d9488] hover:bg-[#0f766e] text-white font-bold text-[11px] transition cursor-pointer shadow-2xs inline-flex items-center gap-1">
+            <span>+ {% trans "Tout ajouter au panier" %}</span>
+          </button>
+        </div>
       </div>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
         {% for item in preloaded_items %}
@@ -198,6 +203,34 @@
 
 <script>
   let cart = [];
+
+  const prescribedItems = [
+    {% if ordonnance %}
+      {% for item in preloaded_items %}
+        {% if item.matched_product %}
+          {
+            id: "{{ item.matched_product.pk }}",
+            name: "{{ item.matched_product.name|escapejs }}",
+            price: "{{ item.matched_product.selling_price }}",
+            stock: "{{ item.matched_product.current_stock }}",
+            qty: "{{ item.line.quantity|default:1 }}"
+          },
+        {% endif %}
+      {% endfor %}
+    {% endif %}
+  ];
+
+  function addAllPrescribedToCart() {
+    prescribedItems.forEach(item => {
+      addProductToCart(item.id, item.name, item.price, item.stock, item.qty);
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    if (prescribedItems.length > 0 && cart.length === 0) {
+      addAllPrescribedToCart();
+    }
+  });
 
   function addProductToCart(productId, name, price, stock, defaultQty = 1) {
     const existing = cart.find(i => i.id === productId);
